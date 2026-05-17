@@ -1,5 +1,7 @@
 <script lang="ts">
   import '../app.css';
+  import WalletConnect from '$lib/WalletConnect.svelte';
+  import { page } from '$app/stores';
   let { children } = $props();
 </script>
 
@@ -10,15 +12,14 @@
       <span class="logo-dot"></span>
     </div>
     <div class="nav-links">
-      <a href="/" class="active">Dashboard</a>
-      <a href="/storyline">Storylines</a>
-      <a href="/triage">AI Triage</a>
-      <a href="/identity">Identity</a>
+      <a href="/" class={$page.url.pathname === '/' ? 'active' : ''}>Dashboard</a>
+      <a href="/storyline" class={$page.url.pathname === '/storyline' ? 'active' : ''}>Storylines</a>
+      <a href="/triage" class={$page.url.pathname === '/triage' ? 'active' : ''}>AI Triage</a>
+      <a href="/endpoints" class={$page.url.pathname === '/endpoints' ? 'active' : ''}>Endpoints</a>
+      <a href="/todo" class={$page.url.pathname === '/todo' ? 'active' : ''}>Roadmap</a>
+      <a href="/identity" class={$page.url.pathname === '/identity' ? 'active' : ''}>Identity</a>
     </div>
-    <div class="user-profile">
-      <div class="status-indicator"></div>
-      <span class="user-name">Admin</span>
-    </div>
+    <WalletConnect />
   </nav>
 
   <main>
@@ -98,27 +99,7 @@
     box-shadow: 0 0 8px var(--accent-cyan);
   }
 
-  .user-profile {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.05);
-  }
-
-  .status-indicator {
-    width: 8px;
-    height: 8px;
-    background-color: #00ff88;
-    border-radius: 50%;
-    box-shadow: 0 0 8px #00ff88;
-  }
-
-  .user-name {
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
+  /* Removed static user-profile CSS since it's now in WalletConnect */
 
   main {
     flex: 1;

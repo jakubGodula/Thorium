@@ -58,6 +58,48 @@ async fn initialize_zk_login(
 }
 
 #[tauri::command]
+async fn enroll_agent(
+    state: tauri::State<'_, AgentState>, 
+    jwt: String
+) -> Result<String, String> {
+    // 1. Generate Local Ephemeral Keypair (Mocked for now)
+    let ephemeral_pubkey = format!("ed25519_pub_{}", uuid::Uuid::new_v4());
+    let ephemeral_privkey = format!("ed25519_priv_{}", uuid::Uuid::new_v4());
+    
+    // 2. Generate Hardware Hash (Endpoint ID)
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    let host_name = sys.host_name().unwrap_or_else(|| "Unknown".to_string());
+    let endpoint_id = format!("hash_{}", host_name); // In reality, hash Motherboard Serial + MAC
+
+    println!("[ENROLLMENT] Generated local keypair for Endpoint: {}", endpoint_id);
+
+    // 3. Request ZK Proof from Thorium-hosted Proving Service
+    println!("[ENROLLMENT] Requesting ZK Proof from Thorium Proving Service...");
+    // Simulated HTTP request to https://prover.thorium-xdr.com/v1/prove
+    tokio::time::sleep(tokio::time::Duration::from_secs(2)).await;
+    let mock_proof = "zk_snark_proof_abcd1234".to_string();
+    let mock_salt = "random_salt_5678".to_string();
+
+    // 4. Initialize local zkLogin credential state
+    let mut cred = state.zk_credential.lock().await;
+    let sui_address = "0x7721...deadbeef".to_string(); 
+    
+    *cred = Some(ZkLoginCredential {
+        ephemeral_pubkey: ephemeral_pubkey.clone(),
+        ephemeral_privkey,
+        jwt,
+        proof: mock_proof.clone(),
+        salt: mock_salt,
+        sui_address: sui_address.clone(),
+    });
+    
+    println!("[ENROLLMENT] Successfully received proof. Ready for On-Chain Smart Contract Registration.");
+    
+    Ok(sui_address)
+}
+
+#[tauri::command]
 async fn commit_telemetry_to_chain(
     state: tauri::State<'_, AgentState>,
     app_handle: AppHandle,
@@ -138,7 +180,8 @@ pub fn run() {
             get_agent_status, 
             isolate_host,
             initialize_zk_login,
-            commit_telemetry_to_chain
+            commit_telemetry_to_chain,
+            enroll_agent
         ])
         .run(tauri::generate_context!())
         .expect("error while running thorium agent");
