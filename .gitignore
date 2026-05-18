@@ -21,3 +21,13 @@ Thumbs.db
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+#idea
+.idea
+Thorium.iml
+.ignored
+
+#claude
+.claude/instructions-local.md
+
+/my-app
