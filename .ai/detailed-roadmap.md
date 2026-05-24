@@ -87,10 +87,10 @@ Healthy fleet → live attack on VM → eBPF event fires → agent submits PTB �
 ### Week 3 — Walrus, demo gateway, dashboard MVP, demo recording
 
 **Dev A (Web UI + verifier SDK + demo gateway co-owned):**
-- [ ] `dashboard/` Next.js app with `@mysten/dapp-kit` wallet connection (testnet).
-- [ ] **Fleet view:** table of all `Device` objects under a known `Policy`, with status badge (Healthy / Degraded / Compromised / Unknown), last-attestation epoch, and a link to Sui Explorer.
-  - Implementation: query `getOwnedObjects` for `Device` type, or maintain an indexer that subscribes to `StatusChanged` events.
-- [ ] **Live event stream:** subscribe to `StatusChanged` events via `SuiClient.subscribeEvent`, render newest-first.
+- [ ] Web UI lives at the **repo root SvelteKit app** (`src/routes/`, `src/lib/`). Wire `@mysten/dapp-kit` wallet connection on testnet. (Do not create `dashboard/`; references to it elsewhere in this doc are conceptual.)
+- [ ] **Fleet view (`src/routes/fleet/+page.svelte` or similar under `src/routes/`):** table of all `Device` objects under a known `Policy`, with status badge (Healthy / Degraded / Compromised / Unknown), last-attestation epoch, and a link to Sui Explorer.
+  - Implementation: query `getOwnedObjects` for `Device` type, or maintain an indexer that subscribes to `StatusChanged` events. Sui client lives in `src/lib/sui/`.
+- [ ] **Live event stream:** subscribe to `StatusChanged` events via `SuiClient.subscribeEvent`, render newest-first. Reactive store in `src/lib/stores/`.
 - [ ] `verifier-sdk/` TypeScript package exporting `isDeviceTrusted(deviceId: string): Promise<boolean>` — reads the `Device` object, returns `status === Healthy`.
 - [ ] `demo-gateway/` minimal Node service:
   - `/connect` endpoint that takes a `deviceId`, calls `isDeviceTrusted`, responds 200 or 403.
@@ -130,9 +130,9 @@ Healthy fleet → live attack on VM → eBPF event fires → agent submits PTB �
   - Entry `enrollment::consume(ticket: EnrollmentTicket, policy: &Policy, pubkey, fingerprint, ctx)` — consumes (deletes) the ticket, mints a `Device` object owned by `tx_context::sender`. Same function emits `DeviceEnrolled` event.
   - Replace the manual `device::register` from Phase 1 with `enrollment::consume`.
   - Unit tests covering: expired ticket → fail, double-consume → fail (object gone), wrong policy → fail.
-- [ ] **Admin Web UI** in `dashboard/`:
+- [ ] **Admin Web UI** in the root SvelteKit app (e.g., `src/routes/admin/enroll/+page.svelte`):
   - "Enroll devices" screen: input `count`, picks `Policy`, signs the `mint_batch` PTB, displays the list of ticket IDs.
-  - "Download enrollment bundle" button that produces a small JSON `{ticket_id, policy_id, pkg_id, rpc_url}` per ticket — this is the file the agent reads on first run.
+  - "Download enrollment bundle" button that produces a small JSON `{ticket_id, policy_id, pkg_id, rpc_url}` per ticket — this is the file the agent reads on first run (see `context.md` §6 for the bundle path convention).
 - [ ] **zkLogin via Enoki:** wire `@mysten/enoki` + `@mysten/dapp-kit` for Google OIDC sign-in on the admin UI. Capture admin's Sui address, ensure it owns `AdminCap`.
   - Stretch (only if Week 4 ends early): begin custom OIDC → JWT → zk-SNARK pipeline as a separate package. Don't block Phase 3 on this. Carries into Phase 4 if not done.
 
@@ -258,8 +258,10 @@ Thorium/
 ├── thorium-provision/               (Rust CLI, Phase 2)
 ├── narrator/                        (Phase 3)
 ├── verifier-sdk/                    (TypeScript)
-├── demo-gateway/                    (Node/TS)
-├── dashboard/                       (Next.js + dApp Kit + Enoki)
+├── demo-gateway/                    (Node/TS, Bun runtime)
+├── src/                             (root SvelteKit app — the Web UI / dashboard / admin)
+│   ├── routes/                      (fleet view, drill-in, admin enroll, etc.)
+│   └── lib/{components,stores,sui}/
 ├── demos/
 │   ├── backup.mp4                   (Phase 3 deliverable)
 │   └── attack-scripts/

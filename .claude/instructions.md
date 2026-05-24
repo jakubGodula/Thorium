@@ -20,22 +20,24 @@ nvm use        # picks up .nvmrc automatically
 
 ```sh
 nvm use
-npm install
-npm run dev          # dev server (Vite) at http://localhost:5173
-npm run build        # production build
-npm run preview      # preview production build
-npm run check        # type-check with svelte-check
-npm run lint         # prettier + eslint
-npm run format       # auto-format
+bun install
+bun run dev          # dev server (Vite) at http://localhost:5173
+bun run build        # production build
+bun run preview      # preview production build
+bun run check        # type-check with svelte-check
+bun run lint         # prettier + eslint
+bun run format       # auto-format
 ```
 
 ## Running `my-app`
 
 ```sh
 cd my-app
-npm install
-npm run dev          # dev server at http://localhost:5173
+bun install
+bun run dev          # dev server at http://localhost:5173
 ```
+
+> **Package manager: `bun`.** Never use `npm`, `npx`, `pnpm`, or `yarn`. `npx <x>` → `bunx <x>`; `npm ci` → `bun install --frozen-lockfile`. See `.ai/context.md` §12.
 
 ## Key Dependencies
 
