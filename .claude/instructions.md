@@ -1,5 +1,9 @@
 # Thorium — Project Instructions
 
+## Read this first
+
+**Project documentation lives in `.ai/`.** Open **`.ai/README.md`** before doing any work — it's the map of the directory and tells you what each file is authoritative for. Then read `.ai/context.md` (architectural ground truth) and `.ai/detailed-roadmap.md` (active week's tasks). All other `.ai/*.md` files have self-orienting headers and can be entered directly.
+
 ## Node Version
 
 This project requires Node **22.12+** (managed via nvm). A `.nvmrc` is present at the repo root.

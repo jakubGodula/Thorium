@@ -1,6 +1,8 @@
 # Thorium — Testnet Deployments
 
-> Record on-chain artifact IDs here as the Move package is published and as shared/objects are minted. One section per deployment; keep the most recent at the top.
+> **You are reading the on-chain artifact registry.** It records the `PackageID`, shared `Policy` object ID, and capability object IDs as they appear on Sui testnet. For deployment *procedure*, see `docs/manual/run-move-publish.md` (created when Phase 1 Week 2 lands). For the file map of `.ai/`, see `.ai/README.md`.
+>
+> One section per deployment; keep the most recent at the top. Always include the Sui Explorer link.
 
 ## Current deployment
 

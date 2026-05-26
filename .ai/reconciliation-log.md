@@ -1,6 +1,53 @@
 # Reconciliation Log
 
-> Audit trail for reconciliation passes between `.ai/context.md`, `.ai/detailed-roadmap.md`, and the actual repository state. Most recent entry first.
+> **You are reading the audit trail.** Each dated entry records what changed and why across `.ai/context.md`, `.ai/detailed-roadmap.md`, and the actual repository state. Append-only; most recent entry first. For the file map of `.ai/`, see `.ai/README.md`.
+
+## 2026-05-26 — Closure pass (naming + repo-state flags)
+
+### Resolved
+
+- **T1 / Q1 (Move package name):** Locked to **`thorium`** by human decision. `move/thorium/` is the canonical path; `Move.toml` will declare `name = "thorium"` when initialized in Phase 1 Week 2.
+- **T4 (provisioning CLI naming):** Now consistent — `thorium-provision/` alongside `move/thorium/`. No mixed naming.
+- **T11 (`agent/src-tauri/` Tauri scaffold):** Marked as legacy in place. Created `agent/src-tauri/LEGACY.md` explaining the directory is preserved for reference (some future agent may want to look at it) but contradicts the headless-Rust agent design in `context.md` §7 / §9. Not deleted.
+- **T12 (`my-app/` unused scaffold):** Verified `/my-app` is in the root `.gitignore`. The directory is intentional local-only sandbox / scratch, not tracked in git. No deletion needed — closed by documentation.
+- **T13 (three `package-lock.json` files):** Verified `.npmrc` is just `engine-strict=true` (bun-compatible, no conversion needed). Standing recommendation: when the team next does a clean install, run `bun install` to produce `bun.lock`, then `git rm --cached package-lock.json` in root/`my-app`/`agent`. Not done in this pass to avoid destructive ops without an explicit go-ahead. Closed as "low-priority cleanup, recommendation documented."
+- **T14 (stale `README.md` legacy content):** Added a short front-matter note inside `README.md` labelling the "Thorium XDR" pitch as a legacy outline scheduled for rewrite at Phase 3 Week 7. Less invasive than rewriting now; reduces ambiguity for first-time readers.
+
+### Updated docs
+
+- `.ai/context.md`:
+  - Top orientation block rewritten to point new agents at `.ai/README.md` and to state the conflict-resolution rule explicitly.
+  - §6 — package-name placeholder replaced with the locked `move/thorium/` path.
+  - §15 — companion-doc list reordered with `.ai/README.md` first; added entries for `context.md` (self) and `agent/src-tauri/LEGACY.md`.
+  - §16 — emptied (all resolved). Now a one-line stub explaining what new `Qn` entries should look like.
+  - §17 — T1, T4, T11, T12, T13, T14 removed. T10 footnote cleaned. Section preamble notes that only T7–T10 (conscious duplications) remain.
+  - Closing footer updated to 2026-05-26.
+- `.ai/detailed-roadmap.md`:
+  - Title: `Thorium / SentrySui — Detailed Roadmap` → `Thorium — Detailed Roadmap`.
+  - Top orientation block rewritten symmetrically to `context.md`.
+  - Week 1 Move-package init task: `move/sentrysui/` → `move/thorium/` (Move.toml `name = "thorium"`).
+  - File-level inventory: `move/sentrysui/` → `move/thorium/`.
+  - Closing footer updated to 2026-05-26.
+- `.ai/progress.md`:
+  - Orientation header added.
+  - Week 1 Move-package init: `move/<package>/` → `move/thorium/`.
+  - Closing line updated.
+- `.ai/deployments.md`:
+  - Orientation header added (replaces minimal preamble).
+- `README.md`:
+  - Short front-matter banner added at the very top labelling the "Thorium XDR" pitch (line 46 onward) as legacy outline, with the rewrite scheduled for Phase 3 Week 7.
+
+### New files
+
+- `.ai/README.md` — landing page / file map for the `.ai/` directory. Tells a fresh agent in what order to read what, what each file is authoritative for, and how to recover if it landed in a different file first.
+- `agent/src-tauri/LEGACY.md` — in-place marker explaining the Tauri scaffold is preserved for reference but is not part of the active design.
+
+### Open
+
+- §16: empty.
+- §17: only T7–T10 (intentional duplications between `context.md` and `detailed-roadmap.md`). No drift detected.
+
+---
 
 ## 2026-05-24 — Reconciliation pass
 

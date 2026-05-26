@@ -1,7 +1,10 @@
-# Thorium / SentrySui — Detailed Roadmap
+# Thorium — Detailed Roadmap
 
-> Companion to `.ai/context.md`. That file is the *what and why*. This file is the *when, who, and in what order*.
-> If anything here conflicts with `context.md`, `context.md` wins — update both.
+> **You are reading the operational plan for the project.** It answers *what to do this week*, *who owns it*, and *what "done" looks like for each phase*. For architectural *why* and *how the pieces fit*, see `.ai/context.md`. For a file-by-file map of `.ai/`, see `.ai/README.md`.
+
+> **Conflict resolution rule:** when this file and `context.md` disagree, **this file wins for *what* and *when*** (it is closer to today's work); **`context.md` wins for *why* and *how***. Update both when you find drift, and add an entry to `.ai/reconciliation-log.md`.
+
+> **Naming:** the project is **Thorium**. Any older reference to `SentrySui` or `sentrysui` in commit history, branches, or external notes is legacy — treat as `thorium`. The Move package is `move/thorium/`.
 
 ---
 
@@ -42,7 +45,7 @@ Healthy fleet → live attack on VM → eBPF event fires → agent submits PTB �
 ### Week 1 — Foundations
 
 **Dev A (Move + scaffolding):**
-- [ ] Initialize Move package `move/sentrysui/` with modules: `device.move`, `policy.move`, `capability.move`, `attestation.move`, `events.move`. (See `context.md` §5 for struct sketches.)
+- [ ] Initialize Move package `move/thorium/` (Move.toml: `name = "thorium"`) with modules: `device.move`, `policy.move`, `capability.move`, `attestation.move`, `events.move`. (See `context.md` §5 for struct sketches.)
 - [ ] Implement `Device` struct (`has key`, no `store` → on-chain "SBT" semantics; non-transferable by construction).
 - [ ] Implement `SentinelCap`, `AdminCap`, `IncidentResponderCap` (no `copy`, no `drop`).
 - [ ] Implement `Policy` struct with allowlist of process hashes + attestation TTL.
@@ -242,7 +245,7 @@ Thorium/
 │   ├── context.md
 │   ├── detailed-roadmap.md          (this file)
 │   └── deployments.md               (testnet object IDs)
-├── move/sentrysui/
+├── move/thorium/
 │   ├── sources/
 │   │   ├── device.move
 │   │   ├── policy.move
@@ -296,4 +299,4 @@ Thorium/
 
 ---
 
-*Last updated: 2026-05-23. Update the week marker in `context.md` §12 in lockstep with phase transitions.*
+*Last updated: 2026-05-26. Move package name locked to `thorium`. Update the active-phase marker in `context.md` §2 (and tick boxes in `.ai/progress.md`) in lockstep with phase transitions.*

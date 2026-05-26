@@ -1,13 +1,15 @@
 # Thorium — Progress Tracker
 
-> Living checklist derived from `.ai/detailed-roadmap.md`. Tick boxes as items complete. Update the `← CURRENT` marker each Monday.
+> **You are reading the living checklist.** Each item is derived from `.ai/detailed-roadmap.md`. For task context and exit criteria, open the roadmap. For architectural *why*, see `.ai/context.md`. For the file map, see `.ai/README.md`.
+>
+> **How to use:** tick boxes as items complete. Move the `← CURRENT` marker each Monday. If a task is added/removed in the roadmap, mirror it here in the same pass.
 
 ## Phase 1 — Endpoint Agent & On-chain Verdict (Weeks 1–3)
 
 ### Week 1 — Foundations ← CURRENT
 
 Dev A (Move + scaffolding):
-- [ ] Initialize Move package `move/<package>/` with modules: `device.move`, `policy.move`, `capability.move`, `attestation.move`, `events.move`
+- [ ] Initialize Move package `move/thorium/` (Move.toml: `name = "thorium"`) with modules: `device.move`, `policy.move`, `capability.move`, `attestation.move`, `events.move`
 - [ ] Implement `Device` struct (`has key`, no `store` → SBT semantics)
 - [ ] Implement `SentinelCap`, `AdminCap`, `IncidentResponderCap` (no `copy`, no `drop`)
 - [ ] Implement `Policy` struct with allowlist of process hashes + attestation TTL
@@ -153,4 +155,4 @@ Stretch (ranked, only if time remains):
 
 ---
 
-Last updated: 2026-05-24 (initial generation from roadmap by reconciliation pass).
+Last updated: 2026-05-26 (Move package name locked to `thorium`; orientation header added). Initial generation: 2026-05-24.

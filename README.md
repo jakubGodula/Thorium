@@ -1,3 +1,9 @@
+# Thorium
+
+> **Status note (2026-05-26):** this README still carries two legacy sections — the SvelteKit `sv` scaffolding preamble below, and a "Thorium XDR" pitch from line ~46 onward. **Both are stale relative to the current project design.** The current design lives in `.ai/context.md` (architecture) and `.ai/detailed-roadmap.md` (plan). A full README rewrite is scheduled for **Phase 3, Week 7** (see roadmap). Keep this note until then.
+
+---
+
 # sv
 
 Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).

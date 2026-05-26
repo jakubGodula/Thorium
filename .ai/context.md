@@ -1,8 +1,12 @@
 # Thorium — Project Context (`.ai/context.md`)
 
-> **Companion doc:** `.ai/detailed-roadmap.md` is the **authoritative source for current week-by-week plan and per-phase task lists**. This file is the stable architectural and conceptual ground truth. When they disagree, the roadmap wins for *what* and *when*; this file wins for *why* and *how the pieces fit*.
+> **You are reading the project's architectural ground truth.** It answers *why* the system is shaped this way and *how the pieces fit*. It does **not** tell you what to work on this week — for that, open `.ai/detailed-roadmap.md` after this file.
 
-> **Reading order for Claude Code:** Read this file first for orientation, then read `detailed-roadmap.md` for the active phase's tasks. **Then read §16 (Open Questions) and §17 (TBD) at the bottom of this file — they list items needing local verification or human decision.**
+> **If you just arrived in this repo:** the canonical landing page is **`.ai/README.md`**. It maps every file in `.ai/`, gives the recommended read order, and tells you what to do if you landed in a different file first. You can navigate from there.
+
+> **Conflict resolution rule:** when this file and the roadmap disagree, the **roadmap wins for *what* and *when*** (it is closer to today's work); **this file wins for *why* and *how***. Update both when you find drift, and add an entry to `.ai/reconciliation-log.md`.
+
+> **Open items live at the bottom:** §16 (Open Questions awaiting repo inspection) and §17 (TBD — known ambiguities). Both are kept short — items move to `reconciliation-log.md` once resolved. As of 2026-05-26, §16 is empty and §17 holds only the conscious duplications T7–T10.
 
 ---
 
@@ -139,7 +143,7 @@ move/<package>/
 └── Move.toml
 ```
 
-> Package name (`thorium` vs legacy `sentrysui`) is open — see §16 Q1.
+> Package directory: `move/thorium/`. The Move package name is **`thorium`** (resolved 2026-05-26). Any older reference to `sentrysui` is legacy — treat as `thorium`.
 
 ### Key types (sketch — finalize in Phase 1)
 
@@ -438,57 +442,32 @@ Phase 4 — Submission, Buffer, Stretch                 (week 8)
 
 ## 15. Companion documents in `.ai/` and `docs/`
 
+> **New agent / fresh-session entry point:** start at **`.ai/README.md`** — it's the file-by-file map of this directory and tells you in what order to read what. If you landed in any other file first, you can still recover by opening that one. Everything else here is authoritative for its own scope and cross-references the rest.
+
+- **`.ai/README.md`** — Landing page / map. Tells you what each file is for and the recommended read order.
+- **`.ai/context.md`** *(this file)* — Stable architectural ground truth: what we are building, identity model, Move design, demo scene, anti-goals, conventions. The *why* and *how the pieces fit*.
 - **`.ai/detailed-roadmap.md`** — Authoritative per-phase, per-week task lists, exit criteria, decision gates. Source of truth for *what to do this week*.
 - **`.ai/progress.md`** — Living checklist derived from the roadmap. Tick boxes as items complete.
-- **`.ai/deadlines.md`** — Hackathon submission deadline, internal milestone deadlines. (May not yet exist; see §16.)
+- **`.ai/deadlines.md`** — Hackathon submission deadline, internal milestone deadlines. *(File may not yet exist; if absent, create when the deadline calendar is finalized.)*
 - **`.ai/deployments.md`** — Testnet object IDs (Move package, default Policy object, etc.) recorded as they're published.
-- **`.ai/reconciliation-log.md`** — Audit trail for resolved §16/§17 items.
+- **`.ai/reconciliation-log.md`** — Audit trail for resolved §16/§17 items. Append-only, dated entries.
 - *(Possible future)* **`.ai/decisions.md`** — Architecture Decision Records as we lock in choices.
-- **`docs/manual/`** — Per-component run scripts and the demo-scenario walkthrough. One file per component as that component lands.
+- **`docs/manual/`** — Per-component run scripts and the demo-scenario walkthrough. One file per component as that component lands. `docs/manual/README.md` lists expected filenames.
+- **`agent/src-tauri/LEGACY.md`** — Notes on the legacy Tauri scaffold that is kept in place for reference but not used by the current plan (see §9, §17 T11 history).
 
 ---
 
 ## 16. Open Questions for local resolution
 
-When Claude Code starts a session, it should answer each of these by inspecting the actual repository, then update the relevant section of this file and remove the item.
-
-**Q1 — Move package directory name.** *(Still open as of 2026-05-24 reconciliation.)*
-`detailed-roadmap.md` references `move/sentrysui/` (legacy name). This file uses `<package>` as a placeholder. The current project name is *Thorium*. Verified:
-- No `move/` directory exists in the repo. No `Move.toml` anywhere.
-- The only `Cargo.toml` is `agent/src-tauri/Cargo.toml` (legacy Tauri scaffold — see reconciliation log).
-- Cannot resolve directory name until the Move package is initialized in Week 1.
-- See §17 T1 for the naming recommendation (`thorium`) — pending human confirmation before any rename.
+> *Empty as of 2026-05-26.* All Q1–Q8 raised in earlier reconciliation passes are resolved. New questions should be added here as `Qn` entries when discovered, then removed when answered. See `.ai/reconciliation-log.md` for history.
 
 ---
 
 ## 17. TBD — known ambiguities & duplications
 
-These are inconsistencies between `context.md` and `detailed-roadmap.md`, or between either doc and external user statements, that need a single source of truth.
+These are inconsistencies between `context.md` and `detailed-roadmap.md`, or between either doc and external user statements, that need a single source of truth. Resolved items move to `.ai/reconciliation-log.md`.
 
-**T1 — Move package name: `sentrysui` (legacy, in roadmap) vs `thorium` (current project).** *(Still open as of 2026-05-24.)*
-- `detailed-roadmap.md` Week 1 task: `move/sentrysui/`. No Move package exists yet (see Q1).
-- Recommendation: rename to `thorium` for consistency with the human-facing project name.
-- **Pending human confirmation.** Per the reconciliation-pass instructions, the roadmap path is *not* renamed until a human says so. Reconcile this file's §4/§6 and the roadmap together once decided.
-
-**T4 — `thorium-provision` CLI naming alongside legacy `sentrysui` Move package.** *(Still open; depends on T1.)*
-- Mixed naming inside the roadmap (`thorium-provision/` vs `move/sentrysui/`). Resolves automatically when T1 is decided.
-
-**T11 — `agent/src-tauri/` directory contradicts the "no Tauri" stance.** *(Open as of 2026-05-24.)*
-- `agent/` contains a Tauri 2.0 scaffold (`src-tauri/Cargo.toml`, `tauri.conf.json`, vanilla TS frontend). This directly contradicts §7 ("agent is headless, no Tauri") and §9 (Tauri listed as anti-goal).
-- Legacy artifact from the original Phase 1/2 outline. Not used by any current plan.
-- **Decision needed:** delete `agent/` once Phase 1 Dev B begins, keep on a stash branch, or repurpose. Default recommendation: delete during Phase 1 Week 1 when the real `sentinel/` workspace is created.
-
-**T12 — `my-app/` SvelteKit scaffold is unused.** *(Open as of 2026-05-24.)*
-- `my-app/` has its own `package.json` (no Sui deps) and `package-lock.json`, but no application content beyond the SvelteKit minimal template. The real Web UI is at the repo root.
-- **Decision needed:** delete, keep as a sandbox, or repurpose.
-
-**T13 — Three `package-lock.json` files coexist with the `bun`-only convention.** *(Open as of 2026-05-24.)*
-- Lockfiles exist at `./package-lock.json`, `my-app/package-lock.json`, `agent/package-lock.json`. Convention (§12) is `bun.lockb` / `bun.lock`.
-- **Decision needed:** run `bun install` to produce `bun.lock`, then `git rm` the three `package-lock.json` files in a follow-up commit. Also confirm root `.npmrc` (19 bytes, not inspected) is compatible with `bun`, or convert to `bunfig.toml`.
-
-**T14 — Root `README.md` legacy content is stale.** *(Open as of 2026-05-24, scheduled.)*
-- `README.md` from line 46 onward ("Thorium XDR" pitch) references Tauri 2.0, D3.js, VSS shadow-copy rollback, LSASS memory protection, O365/AWS CloudTrail telemetry. None of this matches the current Thorium design.
-- **Scheduled:** full rewrite at Phase 3 Week 7 (already on roadmap). Flagged here so the divergence is intentional-but-visible.
+> **As of 2026-05-26: all naming / repo-state items (T1, T4, T11, T12, T13, T14) are resolved.** Only T7–T10 remain, and those are conscious duplications that need ongoing vigilance — not open work.
 
 **T7 — Team allocation duplication.**
 - `context.md` §2 and `detailed-roadmap.md` §0 both state the team split.
@@ -506,11 +485,10 @@ These are inconsistencies between `context.md` and `detailed-roadmap.md`, or bet
 - No action unless drift emerges.
 
 **T10 — File-level inventory duplication.**
-- `detailed-roadmap.md` "File-level inventory" lists `move/sentrysui/`, `sentinel/`, etc.
+- `detailed-roadmap.md` "File-level inventory" lists `move/thorium/`, `sentinel/`, etc.
 - `context.md` §4 Components table lists the same.
 - Authoritative copy: this file (§4). Roadmap can keep its inventory as long as it matches.
-- Action: ensure both reflect the same answers once Q1 and Q2 are resolved.
 
 ---
 
-*Last updated: 2026-05-24 reconciliation pass. Q2–Q8 resolved; Q1/T1/T4 remain open pending the first Move package and human naming decision. T2/T3/T5/T6 resolved into the body. T11–T14 added to surface repo-state items the reconciliation pass flagged for human decision (Tauri scaffold, `my-app/`, npm lockfiles, stale README). See `.ai/reconciliation-log.md` for the full audit trail.*
+*Last updated: 2026-05-26. **All §16 questions and §17 T1/T4/T11/T12/T13/T14 items closed.** Move package name locked to `thorium`. `agent/src-tauri/` is marked legacy in place (see `agent/src-tauri/LEGACY.md`). `my-app/` confirmed gitignored — local-only sandbox. `package-lock.json` files left in place; standing recommendation is `bun install` then `git rm --cached` when convenient. README front-matter labels the legacy "Thorium XDR" pitch as deferred to Phase 3 Week 7. New AI agents: start at `.ai/README.md` for the file map. Full audit trail in `.ai/reconciliation-log.md`.*
