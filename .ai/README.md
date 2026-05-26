@@ -32,7 +32,8 @@ You can land in any file and still recover, but if you have free choice, read in
 **Outside `.ai/` but referenced everywhere:**
 
 - **`docs/manual/`** — Per-component run scripts (`run-move-publish.md`, `run-agent.md`, `run-web.md`, …) and the demo-scenario walkthrough. One file per component lands here as that component becomes runnable. See `docs/manual/README.md` for the expected filenames.
-- **`agent/src-tauri/LEGACY.md`** — Marker explaining a legacy Tauri scaffold preserved for reference but not part of the active design. See it before touching `agent/`.
+- **`agent/README.md`** — Entry point for the `agent/` directory. Explains what is currently there (legacy Tauri scaffold), what is *not* there (the real sentinel agent), and where the real agent will live (`sentinel/`). Read before touching anything in `agent/`.
+- **`agent/src-tauri/LEGACY.md`** — Deeper marker for the Tauri Rust backend scaffold specifically. Reached via `agent/README.md`.
 - **`README.md`** at repo root — currently carries legacy "Thorium XDR" pitch from an older outline. Scheduled for full rewrite at Phase 3 Week 7 (see roadmap). Do not treat it as authoritative.
 - **`CLAUDE.md`** at repo root — re-exports `.claude/instructions.md` and `.claude/instructions-local.md` (style/conventions for Claude Code, not project docs).
 

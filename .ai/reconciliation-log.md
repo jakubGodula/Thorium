@@ -2,6 +2,29 @@
 
 > **You are reading the audit trail.** Each dated entry records what changed and why across `.ai/context.md`, `.ai/detailed-roadmap.md`, and the actual repository state. Append-only; most recent entry first. For the file map of `.ai/`, see `.ai/README.md`.
 
+## 2026-05-26 — Precision pass (AI-agent orientation + stale references)
+
+### Fixed
+
+- **`context.md §4` Components table** — `move/<package_name>/ — see §16 Q1` replaced with `move/thorium/`. Q1 was resolved in the 2026-05-24 pass; the stale placeholder was left behind.
+- **`README.md` recreate command** — `--install npm` flag corrected to `--install bun`. Missed in the 2026-05-24 bun-conversion pass.
+- **`README.md` Thorium XDR section header** — appended `*(legacy outline — Phase 3 Week 7 rewrite)*` to make the legacy label visible inline, not just in the top status note.
+- **`.claude/instructions.md` Project Structure** — `my-app/` entry now explicitly states it is gitignored and will not exist in fresh clones. `agent/` entry now explains it is the legacy Tauri scaffold and points to `agent/README.md`.
+- **`.claude/instructions.md` "Running `my-app`" section** — removed. The directory is gitignored; the section was misleading for any agent working from a fresh clone.
+- **`agent/README.md`** — rewrote from default Tauri template boilerplate to a project-specific orientation file. Explains what the directory currently contains, what it does not contain (the real sentinel agent), where the real agent will land (`sentinel/`), and why the legacy scaffold is not deleted.
+- **`.ai/README.md`** — split `agent/src-tauri/LEGACY.md` pointer into two entries: `agent/README.md` (primary entry point) and `agent/src-tauri/LEGACY.md` (deeper Rust-specific detail). A new AI agent landing in `agent/` now has a clear first file to read.
+
+### Noted (no file change)
+
+- **T13 (three `package-lock.json` files):** Two are git-tracked (`/package-lock.json`, `agent/package-lock.json`). Recommendation from 2026-05-26 closure pass stands: `bun install` → confirm `bun.lock` produced → `git rm --cached package-lock.json agent/package-lock.json`. Minor; do in a dedicated cleanup commit when convenient.
+
+### Open
+
+- §16: empty.
+- §17: only T7–T10 (intentional duplications). No drift detected.
+
+---
+
 ## 2026-05-26 — Closure pass (naming + repo-state flags)
 
 ### Resolved

@@ -86,11 +86,11 @@ Per-phase mapping to judging criteria is in `detailed-roadmap.md` (Phase-to-judg
                                  └─────────────────────┘
 ```
 
-### Components (target layout — verify against repo, see §16)
+### Components (target layout)
 
 | Component | Path (target) | Lang | Owner |
 |---|---|---|---|
-| Move package | `move/<package_name>/` — see §16 Q1 | Move | A |
+| Move package | `move/thorium/` | Move | A |
 | Sentinel agent — binary | `sentinel/` | Rust | B |
 | Sentinel core — lib (eBPF, telemetry, PTB submission) | `sentinel-core/` | Rust | B |
 | Sentinel fingerprint — lib (TPM + fallback) | `sentinel-fingerprint/` | Rust | B |
@@ -491,4 +491,4 @@ These are inconsistencies between `context.md` and `detailed-roadmap.md`, or bet
 
 ---
 
-*Last updated: 2026-05-26. **All §16 questions and §17 T1/T4/T11/T12/T13/T14 items closed.** Move package name locked to `thorium`. `agent/src-tauri/` is marked legacy in place (see `agent/src-tauri/LEGACY.md`). `my-app/` confirmed gitignored — local-only sandbox. `package-lock.json` files left in place; standing recommendation is `bun install` then `git rm --cached` when convenient. README front-matter labels the legacy "Thorium XDR" pitch as deferred to Phase 3 Week 7. New AI agents: start at `.ai/README.md` for the file map. Full audit trail in `.ai/reconciliation-log.md`.*
+*Last updated: 2026-05-26 (precision pass). §4 Components table: `move/<package_name>` placeholder replaced with `move/thorium/`. `agent/README.md` added as orientation entry-point for the `agent/` directory. `.claude/instructions.md` updated to clarify `my-app/` is gitignored and not runnable from a fresh clone. Full audit trail in `.ai/reconciliation-log.md`.*

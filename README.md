@@ -21,7 +21,7 @@ To recreate this project with the same configuration:
 
 ```sh
 # recreate this project
-bunx sv@0.15.3 create --template minimal --types ts --add prettier eslint --install npm ./
+bunx sv@0.15.3 create --template minimal --types ts --add prettier eslint --install bun ./
 ```
 
 ## Developing
@@ -49,7 +49,7 @@ You can preview the production build with `bun run preview`.
 
 ---
 
-# 🛸 Project Target State: Thorium XDR
+# 🛸 Project Target State: Thorium XDR *(legacy outline — Phase 3 Week 7 rewrite)*
 
 Thorium is a premium, high-performance **Extended Detection and Response (XDR)** platform designed to eliminate data silos and provide autonomous security operations across endpoints, networks, identities, and cloud environments.
 

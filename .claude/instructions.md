@@ -15,8 +15,8 @@ nvm use        # picks up .nvmrc automatically
 ## Project Structure
 
 - **Root (`/`)** — main SvelteKit app (primary codebase)
-- **`my-app/`** — scaffolded SvelteKit sub-project (separate `package.json`, its own `node_modules`)
-- **`agent/`** — agent-related code
+- **`my-app/`** — **gitignored, local-only sandbox.** Will not exist in a fresh clone. Not part of the active codebase — it is scratch from initial scaffolding.
+- **`agent/`** — legacy Tauri scaffold (`agent/src-tauri/`). See `agent/src-tauri/LEGACY.md` and `agent/README.md`. The real sentinel agent will live in `sentinel/` (not yet created — Phase 1 Week 1).
 - **`src/`** — root app source
 - **`static/`** — static assets
 
@@ -31,14 +31,6 @@ bun run preview      # preview production build
 bun run check        # type-check with svelte-check
 bun run lint         # prettier + eslint
 bun run format       # auto-format
-```
-
-## Running `my-app`
-
-```sh
-cd my-app
-bun install
-bun run dev          # dev server at http://localhost:5173
 ```
 
 > **Package manager: `bun`.** Never use `npm`, `npx`, `pnpm`, or `yarn`. `npx <x>` → `bunx <x>`; `npm ci` → `bun install --frozen-lockfile`. See `.ai/context.md` §12.
