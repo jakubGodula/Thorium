@@ -1,0 +1,128 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+# ============================================================
+# 🛡️ Thorium XDR — Test VM (AlmaLinux 9 / KVM)
+# ============================================================
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "almalinux/9"
+  config.vm.hostname = "thorium-test"
+
+  # Thorium agent API — dostępne na hoście pod localhost:9091
+  config.vm.network "forwarded_port", guest: 9090, host: 9091, host_ip: "127.0.0.1"
+
+  # Sync katalogu projektu do VM (rsync)
+  # UWAGA: vsc-extension jest cyklicznym symlinkiem — wykluczony
+  config.vm.synced_folder "../../..", "/opt/mowa-src",
+    type: "rsync",
+    rsync__exclude: [".git/", "target/", "thorium/ui/node_modules/", ".vagrant/", "vsc-extension/"],
+    rsync__args: ["--verbose", "--archive", "--delete", "-z", "--links",
+                  "--no-owner", "--no-group"]
+
+  config.vm.provider "libvirt" do |libvirt|
+    libvirt.driver   = "kvm"
+    libvirt.memory   = 2048
+    libvirt.cpus     = 2
+    libvirt.storage_pool_name = "default"
+  end
+
+  # Provisioning: installs Thorium agent as systemd service
+  config.vm.provision "shell", privileged: true, env: {
+    "SUI_CONTRACT" => ENV["SUI_CONTRACT"] || "0x0cc3f972285b0486b2590b5edc9321813ec32a253a26cffa687da5a1131491af"
+  }, inline: <<-SHELL
+    set -e
+    # --- Fix systemd warning about rc.local ---
+    if [ -f /etc/rc.d/rc.local ]; then
+      chmod +x /etc/rc.d/rc.local
+    fi
+
+    echo "=================================================="
+    echo "🛡️ THORIUM XDR — Provisioning AlmaLinux 9 Test VM"
+    echo "=================================================="
+
+    # --- Zależności ---
+    dnf install -y curl openssl gcc gcc-c++ make openssl-devel 2>/dev/null
+
+    # --- Konfiguracja IPv6 na interfejsie prywatnym (eth1) ---
+    if nmcli connection show "System eth1" &>/dev/null; then
+      nmcli connection modify "System eth1" ipv6.addresses "fde4:8dba:82e1::11/64" ipv6.method manual
+      nmcli connection up "System eth1"
+      echo "✅ Skonfigurowano statyczny IPv6 fde4:8dba:82e1::11 na eth1."
+    else
+      echo "⚠️  Nie znaleziono połączenia System eth1 dla konfiguracji IPv6."
+    fi
+
+    # --- Skopiowanie binarki ---
+    systemctl stop thorium-agent || true
+    mkdir -p /opt/thorium
+    if [ -f /opt/mowa-src/Mowa_agent_bin ]; then
+      cp /opt/mowa-src/Mowa_agent_bin /opt/thorium/thorium-agent
+      chmod +x /opt/thorium/thorium-agent
+      echo "✅ Binary skopiowany z /opt/mowa-src/Mowa_agent_bin."
+    elif [ -f /opt/mowa-src/target/debug/Mowa ]; then
+      cp /opt/mowa-src/target/debug/Mowa /opt/thorium/thorium-agent
+      chmod +x /opt/thorium/thorium-agent
+      echo "✅ Binary skopiowany z host build."
+    else
+      echo "⚠️ Binary not found in synced folder. Installing Rust and compiling in VM..."
+      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      source "$HOME/.cargo/env"
+      cd /opt/mowa-src
+      cargo build --bin Mowa 2>&1 | tail -5
+      cp /opt/mowa-src/target/debug/Mowa /opt/thorium/thorium-agent
+      chmod +x /opt/thorium/thorium-agent
+      echo "✅ Binary compiled natively inside the VM."
+    fi
+
+    # --- Skopiowanie skryptu agenta ---
+    cp /opt/mowa-src/thorium/thorium_agent.mowa /opt/thorium/
+
+    # --- Systemd service ---
+    cat > /etc/systemd/system/thorium-agent.service << EOF
+[Unit]
+Description=Thorium XDR Security Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Environment="SUI_CONTRACT=${SUI_CONTRACT}"
+Environment="THORIUM_VM=thorium-test"
+Environment="IPV6_ADDRESS=fde4:8dba:82e1::11"
+ExecStart=/opt/thorium/thorium-agent uruchom /opt/thorium/thorium_agent.mowa
+WorkingDirectory=/opt/thorium
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=thorium-agent
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # --- Firewall ---
+    if command -v firewall-cmd &>/dev/null; then
+      firewall-cmd --permanent --add-port=9090/tcp 2>/dev/null || true
+      firewall-cmd --reload 2>/dev/null || true
+    fi
+
+    # --- Start ---
+    systemctl daemon-reload
+    systemctl enable thorium-agent
+    systemctl start thorium-agent
+    sleep 2
+
+    echo ""
+    echo "=================================================="
+    if systemctl is-active --quiet thorium-agent; then
+      echo "✅ Agent działa! API: http://localhost:9090"
+      echo "   Z hosta: http://localhost:9091"
+    else
+      echo "⚠️  Agent nie wystartował — sprawdź:"
+      echo "   journalctl -u thorium-agent -n 30"
+    fi
+    echo "=================================================="
+  SHELL
+end

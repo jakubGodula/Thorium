@@ -1,0 +1,280 @@
+// Thorium XDR Agent (Headless Mode) w języku Mowa 🛡️
+
+pisz("==================================================");
+pisz("🛡️ URUCHAMIANIE AGENTA THORIUM XDR (Headless) 🛡️");
+pisz("==================================================");
+
+// 1. Generowanie tożsamości i fingerprintu sprzętowego
+niech wektor_sprzetowy = "cpu:x86_64;mem:16GB;os:almalinux9";
+niech hardware_fingerprint = hash(wektor_sprzetowy, "blake3");
+pisz("Rozpoznano sprzęt. Hardware Fingerprint (Blake3):", hardware_fingerprint);
+
+niech tozsamosc_lokalna = stworz_ja(9999, "ThoriumAgent");
+niech klucz_pub = "Ed25519:A1B2C3D4E5F6...";
+pisz("Wygenerowano lokalny klucz Ed25519 dla Agenta:", klucz_pub);
+
+niech stan_agenta = "Aktywny";
+niech bufor_logow = "--- POCZĄTEK SESJI THORIUM XDR ---\n";
+
+// 2. Routing dla Headless HTTP API
+funkcja router_thorium(sciezka, zapytanie, metoda) {
+    pisz("📡 [API] Zapytanie:", metoda, sciezka);
+    
+    jeśli (sciezka == "/api/status") {
+        niech host_name = odczytaj_hostname();
+        niech is_vm = odczytaj_env("THORIUM_VM_NAME");
+        niech ip_address = odczytaj_env("IPV6_ADDRESS");
+        jeśli ip_address == "" {
+            jeśli is_vm == "" {
+                ip_address = "127.0.0.1";
+            } inaczej {
+                ip_address = "fde4:8dba:82e1::11";
+            }
+        }
+        niech owner = odczytaj_env("OWNER_NAME");
+        jeśli owner == "" {
+            owner = "Jakub";
+        }
+        niech typ_maszyny = odczytaj_env("MACHINE_TYPE");
+        jeśli typ_maszyny == "" {
+            jeśli is_vm == "" {
+                typ_maszyny = "Workstation";
+            } inaczej {
+                typ_maszyny = "Server";
+            }
+        }
+
+        niech dane = slownik();
+        dane = ustaw(dane, "status", stan_agenta);
+        dane = ustaw(dane, "fingerprint", hardware_fingerprint);
+        dane = ustaw(dane, "klucz_pub", klucz_pub);
+        dane = ustaw(dane, "hostname", host_name);
+        dane = ustaw(dane, "ip_address", ip_address);
+        dane = ustaw(dane, "owner_name", owner);
+        dane = ustaw(dane, "machine_type", typ_maszyny);
+        dane = ustaw(dane, "hardware", odczytaj_hardware());
+        
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "application/json; charset=utf-8");
+        odpowiedz = ustaw(odpowiedz, "tresc", dane);
+        zwróć odpowiedz;
+    }
+
+    jeśli (sciezka == "/api/rpc") {
+        niech odpowiedz_rpc = slownik();
+        odpowiedz_rpc = ustaw(odpowiedz_rpc, "jsonrpc", "2.0");
+        odpowiedz_rpc = ustaw(odpowiedz_rpc, "id", 1);
+        
+        jeśli zawiera(zapytanie, "get_logs") {
+            niech wynik = slownik();
+            wynik = ustaw(wynik, "logs", bufor_logow);
+            wynik = ustaw(wynik, "status", stan_agenta);
+            wynik = ustaw(wynik, "fingerprint", hardware_fingerprint);
+            odpowiedz_rpc = ustaw(odpowiedz_rpc, "result", wynik);
+        } inaczej {
+            jeśli zawiera(zapytanie, "vm_create") {
+                niech params_str = json_pobierz(zapytanie, "params");
+                niech name = json_pobierz(params_str, "name");
+                niech port = json_pobierz(params_str, "port");
+                niech owner = json_pobierz(params_str, "owner");
+                niech device_type = json_pobierz(params_str, "type");
+                
+                jeśli owner == "" {
+                    owner = "Jakub";
+                }
+                jeśli device_type == "" {
+                    device_type = "Server";
+                }
+                
+                pisz("➕ [RPC] Tworzenie VM:", name, "na porcie:", port, "właściciel:", owner, "typ:", device_type);
+                niech wynik = vm_utworz(name, port, owner, device_type);
+                
+                niech res_obj = slownik();
+                res_obj = ustaw(res_obj, "status", "created");
+                res_obj = ustaw(res_obj, "msg", wynik);
+                odpowiedz_rpc = ustaw(odpowiedz_rpc, "result", res_obj);
+            } inaczej {
+                niech blad = slownik();
+                blad = ustaw(blad, "code", -32601);
+                blad = ustaw(blad, "message", "Method not found");
+                odpowiedz_rpc = ustaw(odpowiedz_rpc, "error", blad);
+            }
+        }
+        
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "application/json; charset=utf-8");
+        odpowiedz = ustaw(odpowiedz, "tresc", odpowiedz_rpc);
+        zwróć odpowiedz;
+    }
+    
+    jeśli (sciezka == "/api/logi") {
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "text/plain; charset=utf-8");
+        odpowiedz = ustaw(odpowiedz, "tresc", bufor_logow);
+        zwróć odpowiedz;
+    }
+    
+    jeśli (sciezka == "/api/izoluj") {
+        pisz("⚠️ [API] Otrzymano żądanie izolacji hosta!");
+        stan_agenta = "Izolowany";
+        izoluj_siec();
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "text/plain");
+        odpowiedz = ustaw(odpowiedz, "tresc", "Host został odizolowany.");
+        zwróć odpowiedz;
+    }
+
+    jeśli (sciezka == "/api/przywroc") {
+        pisz("✅ [API] Otrzymano żądanie przywrócenia hosta do sieci!");
+        stan_agenta = "Aktywny";
+        przywroc_siec();
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "text/plain");
+        odpowiedz = ustaw(odpowiedz, "tresc", "Host został przywrócony.");
+        zwróć odpowiedz;
+    }
+    
+    // ── VM Management endpoints ─────────────────────────────
+    jeśli (sciezka == "/api/vm/lista") {
+        niech lista = vm_lista();
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "application/json; charset=utf-8");
+        odpowiedz = ustaw(odpowiedz, "tresc", lista);
+        zwróć odpowiedz;
+    }
+
+    jeśli (sciezka == "/api/vm/start") {
+        niech vm_name = json_pobierz(zapytanie, "name");
+        niech wynik = vm_start(vm_name);
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "application/json; charset=utf-8");
+        niech r = slownik();
+        r = ustaw(r, "ok", prawda);
+        r = ustaw(r, "msg", wynik);
+        odpowiedz = ustaw(odpowiedz, "tresc", r);
+        zwróć odpowiedz;
+    }
+
+    jeśli (sciezka == "/api/vm/stop") {
+        niech vm_name2 = json_pobierz(zapytanie, "name");
+        niech wynik2 = vm_stop(vm_name2);
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "application/json; charset=utf-8");
+        niech r2 = slownik();
+        r2 = ustaw(r2, "ok", prawda);
+        r2 = ustaw(r2, "msg", wynik2);
+        odpowiedz = ustaw(odpowiedz, "tresc", r2);
+        zwróć odpowiedz;
+    }
+
+    jeśli (sciezka == "/api/vm/usun") {
+        niech vm_name3 = json_pobierz(zapytanie, "name");
+        niech wynik3 = vm_usun(vm_name3);
+        niech odpowiedz = slownik();
+        odpowiedz = ustaw(odpowiedz, "kod", 200);
+        odpowiedz = ustaw(odpowiedz, "typ", "application/json; charset=utf-8");
+        niech r3 = slownik();
+        r3 = ustaw(r3, "ok", prawda);
+        r3 = ustaw(r3, "msg", wynik3);
+        odpowiedz = ustaw(odpowiedz, "tresc", r3);
+        zwróć odpowiedz;
+    }
+
+    niech blad = slownik();
+    blad = ustaw(blad, "kod", 404);
+    blad = ustaw(blad, "typ", "text/plain");
+    blad = ustaw(blad, "tresc", "Endpoint nie znaleziony");
+    zwróć blad;
+}
+
+// 3. Uruchomienie Serwera API (Axum-like headless na porcie 9090)
+niech host_ip = Adres("::");
+serwuj(host_ip, 9090, router_thorium);
+
+pisz("--------------------------------------------------");
+pisz("✅ Agent Thorium XDR załadowany pomyślnie i monitoruje zdarzenia.");
+pisz("🌐 Headless API nasłuchuje na http://[::]:9090");
+pisz("--------------------------------------------------");
+
+// Self-registration w C2 (Sui Move Registry)
+niech startup_host = odczytaj_hostname();
+niech is_vm_start = odczytaj_env("THORIUM_VM_NAME");
+niech startup_ip = odczytaj_env("IPV6_ADDRESS");
+jeśli startup_ip == "" {
+    jeśli is_vm_start == "" {
+        startup_ip = "127.0.0.1";
+    } inaczej {
+        startup_ip = "fde4:8dba:82e1::11";
+    }
+}
+niech startup_owner = odczytaj_env("OWNER_NAME");
+jeśli startup_owner == "" {
+    startup_owner = "Jakub";
+}
+niech startup_type = odczytaj_env("MACHINE_TYPE");
+jeśli startup_type == "" {
+    jeśli is_vm_start == "" {
+        startup_type = "Workstation";
+    } inaczej {
+        startup_type = "Server";
+    }
+}
+
+pisz("📡 Wykonuję rejestrację agenta na Sui: host =", startup_host, ", ip =", startup_ip, ", owner =", startup_owner);
+niech reg_status = rejestruj_agenta_w_c2(startup_owner, startup_host, startup_ip, startup_type, hardware_fingerprint, klucz_pub);
+jeśli reg_status {
+    pisz("✅ Rejestracja w C2 zakończona pomyślnie!");
+} w przeciwnym razie {
+    pisz("⚠️ Rejestracja w C2 pominięta lub nie powiodła się.");
+}
+
+// 4. Nasłuch na zdarzenia systemowe (Event Loop XDR)
+// Odbieranie zdarzeń systemowych w nieskończonej pętli
+jeżeli prawda {
+    niech zdarzenie = odbierz_zdarzenie_systemowe();
+    jeśli zdarzenie {
+        niech typ = pobierz(zdarzenie, "typ");
+        
+        jeśli typ == "PROCES_START" {
+            niech cmd = pobierz(zdarzenie, "cmd");
+            niech pid = pobierz(zdarzenie, "pid");
+            niech czas = pobierz(zdarzenie, "czas");
+            
+            pisz(czas, "🔍 [XDR Telemetry] Proces START (PID:", pid, ") - CMD:", cmd);
+            
+            bufor_logow = bufor_logow + czas + " ZDARZENIE_PROCESU: (PID " + pid + ") " + cmd + "\n";
+            
+            // Reguły behawioralne (Detekcja pobierania malware, np. curl | bash)
+            jeśli regex_pasuje(cmd, "(?i)curl.*\\|.*bash") lub zawiera(cmd, "miner") lub zawiera(cmd, "ransomware") {
+                pisz("🚨 [XDR Krytyczne] Wykryto złośliwy wzorzec w poleceniu procesie!");
+                pisz("⛔ Przerywanie procesu...");
+                zabij_proces(pid);
+                
+                pisz("📦 Kwarantanna pliku (mock):", cmd);
+                kwarantanna(cmd);
+                
+                pisz("🛡️ Izolowanie hosta w sieci!");
+                stan_agenta = "Izolowany";
+                izoluj_siec();
+                
+                pisz("📡 Raportowanie incydentu do C2 (via PTB Sui)...");
+                zglos_incydent_do_c2(zdarzenie, "KILLED_AND_ISOLATED");
+                
+                pisz("📦 Bezpieczne zamrażanie dowodów (agregacja) w sieci Walrus...");
+                niech dowod = "INCYDENT: " + cmd + "\nLOGI HISTORYCZNE:\n" + bufor_logow;
+                niech id_bloba = zapisz_logi_w_walrus(dowod);
+                
+                bufor_logow = "--- NOWA SESJA PO INCYDENCIE ---\n";
+            }
+        }
+    }
+    czekaj(200); // Zapobieganie zablokowaniu CPU
+}
