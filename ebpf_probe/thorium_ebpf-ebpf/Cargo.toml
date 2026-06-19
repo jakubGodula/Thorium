@@ -1,0 +1,21 @@
+[package]
+name = "thorium_ebpf-ebpf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aya-ebpf = "0.1.1"
+aya-log-ebpf = "0.1.0"
+thorium_ebpf-common = { path = "../thorium_ebpf-common", features = ["bpf"] }
+
+[build-dependencies]
+aya-ebpf-bindings = "0.1.2"
+
+[profile.release]
+debug = 2
+panic = "abort"
+lto = true
+opt-level = 3
+strip = "debuginfo"
+
+[workspace]

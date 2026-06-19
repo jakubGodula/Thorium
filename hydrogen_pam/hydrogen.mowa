@@ -1,0 +1,186 @@
+// Moduł autoryzacji Hydrogen (Zarządzanie PAM z poziomu języka Mowa)
+// Ten kod jest wywoływany przez przelotkę w Rust (bibliotekę pam_hydrogen.so),
+// kiedy użytkownik próbuje odblokować komputer (np. przez `sudo` lub ekran logowania).
+
+funkcja autoryzuj_pam(nazwa_uzytkownika) {
+    pisz("\n[🛡️ Moduł Hydrogen - Logika Mowa] Żądanie logowania dla konta OS:", nazwa_uzytkownika);
+    
+    // 1. Sprawdzanie, jaki adres Sui (lub FIDO2 ID) jest przypisany do tego lokalnego konta
+    niech config_tozsamosci = czytaj_plik("/etc/thorium/hydrogen_users.json");
+    niech zarejestrowany_klucz = json_pobierz(config_tozsamosci, nazwa_uzytkownika);
+    
+    jeśli (zarejestrowany_klucz == "") {
+        pisz("🚨 BŁĄD: Konto", nazwa_uzytkownika, "nie ma przypisanego fizycznego klucza WebAuthn/Sui!");
+        zwróć "PAM_AUTH_ERR"; // Zablokuj
+    }
+    
+    // 2. Oczekiwanie na fizyczną interakcję z kluczem sprzętowym USB (YubiKey/Portfel)
+    pisz("Oczekuję na fizyczne dotknięcie klucza sprzętowego. Użyj portfela sprzętowego Sui wpiętego w port USB...");
+    
+    // Wywołanie wbudowanej funkcji Mowa do komunikacji z portem USB (FIDO2)
+    // Czeka na podpis kryptograficzny 
+    niech podpis_sprzetowy = krypto.czekaj_na_fido2_podpis(zarejestrowany_klucz);
+    
+    jeśli (podpis_sprzetowy == "Timeout") {
+        pisz("⏳ Brak fizycznego zatwierdzenia na urządzeniu USB.");
+        zwróć "PAM_AUTH_ERR";
+    }
+    
+    // 3. Weryfikacja sygnatury Ed25519 sprzętu
+    niech czy_poprawny = krypto.weryfikuj_podpis(zarejestrowany_klucz, podpis_sprzetowy);
+    
+    jeśli (czy_poprawny == prawda) {
+        pisz("✅ Podpis sprzętowy zatwierdzony! Logowanie bezhasłowe udane.");
+        zwróć "PAM_SUCCESS"; // Pozwól na odblokowanie komputera
+    } inaczej {
+        pisz("🚨 Zły podpis kryptograficzny! Próba ataku?");
+        zwróć "PAM_AUTH_ERR";
+    }
+}
+
+// ─── ZARZĄDZANIE CYKLEM ŻYCIA KLUCZY ─────────────────────────────────────
+
+// 1. Lokalne dodanie klucza (np. uruchamiane przez administratora z CLI: `thorium-cli hydrogen --enroll`)
+funkcja zarejestruj_klucz_lokalnie(nazwa_uzytkownika) {
+    pisz("\n[🔑 Moduł Hydrogen] Rozpoczynam lokalne parowanie klucza dla:", nazwa_uzytkownika);
+    pisz("Proszę wpiąć nowy portfel sprzętowy / YubiKey i potwierdzić dotknięciem...");
+    
+    niech nowy_klucz_pub = krypto.pobierz_publiczny_z_fido2();
+    
+    jeśli (nowy_klucz_pub != "Timeout") {
+        niech config_tozsamosci = czytaj_plik("/etc/thorium/hydrogen_users.json");
+        config_tozsamosci = json_ustaw(config_tozsamosci, nazwa_uzytkownika, nowy_klucz_pub);
+        zapisz_plik("/etc/thorium/hydrogen_users.json", config_tozsamosci);
+        
+        pisz("✅ Pomyślnie powiązano konto", nazwa_uzytkownika, "z fizycznym kluczem:", nowy_klucz_pub);
+    } inaczej {
+        pisz("❌ Błąd: Nie wykryto klucza w wyznaczonym czasie.");
+    }
+}
+
+// 2. Globalna synchronizacja z Blockchainem (Przydatne dla 1000+ stacji)
+funkcja synchronizuj_klucze_z_sui() {
+    pisz("\n[🌐 Moduł Hydrogen] Pobieram globalne aktualizacje tożsamości z sieci Sui...");
+    
+    // Pobranie z blockchaina zmian dodanych przez główny SOC
+    // np. zdalne unieważnienie skradzionego klucza pracownika lub zasilenie nowego pracownika
+    niech mapa_kluczy_on_chain = sui.pobierz_wydarzenia_tozsamosci("0xORG_IDENTITY_CONTRACT");
+    
+    jeśli (mapa_kluczy_on_chain != PUSTE) {
+        zapisz_plik("/etc/thorium/hydrogen_users.json", mapa_kluczy_on_chain);
+        pisz("✅ Pomyślnie uaktualniono lokalną bazę kluczy zgodnie ze stanem na łańcuchu Sui.");
+    }
+}
+
+// ─── INTERFEJS GRAFICZNY (GUI) ───────────────────────────────────────────
+
+// Uruchamiane kiedy użytkownik otwiera menedżera z pulpitu
+funkcja uruchom_gui_hydrogen() {
+    niech okno = Okno {
+        tytul: "Thorium Hydrogen - Menedżer Kluczy Sprzętowych",
+        szerokosc: 750,
+        wysokosc: 600,
+        motyw: "ciemny",
+        tlo: "#0f172a", // Głęboki granat/czerń (odpowiednik slate-900)
+        zawartosc: Kontener {
+            kierunek: "pionowy",
+            odstep: 30,
+            wyrownanie: "srodek",
+            margines_wewnetrzny: 40,
+            elementy: [
+                
+                // --- Nagłówek z Ikoną ---
+                Kontener {
+                    kierunek: "poziomy",
+                    wyrownanie: "srodek",
+                    odstep: 15,
+                    elementy: [
+                        Ikona { nazwa: "shield-check", rozmiar: 36, kolor: "#8b5cf6" }, // Fioletowy akcent (Sui)
+                        Naglowek { 
+                            tekst: "Zarządzanie Kluczami (Zero-Password)", 
+                            rozmiar: 32,
+                            kolor: "#f8fafc",
+                            waga: "gruby"
+                        }
+                    ]
+                },
+                
+                // --- Opis Główny ---
+                Tekst { 
+                    tekst: "Zabezpiecz swoje lokalne konto przed phishingiem, parując je z fizycznym tokenem FIDO2 lub portfelem sprzętowym Sui. Hasła systemowe nie będą już wymagane.", 
+                    kolor: "#94a3b8", // Szary (slate-400)
+                    wyrownanie_tekstu: "srodek"
+                },
+                
+                // --- Szklista Karta (Glassmorphism) ---
+                Karta {
+                    tlo: "rgba(30, 41, 59, 0.7)", // Półprzezroczysty slate-800
+                    obramowanie: "1px solid rgba(139, 92, 246, 0.3)", // Delikatna fioletowa poświata
+                    zaokraglenie: 16,
+                    cien: "0 4px 30px rgba(0, 0, 0, 0.5)",
+                    margines_wewnetrzny: 25,
+                    zawartosc: Kontener {
+                        kierunek: "pionowy",
+                        odstep: 15,
+                        elementy: [
+                            Kontener {
+                                kierunek: "poziomy",
+                                wyrownanie: "rozstrzelone",
+                                elementy: [
+                                    Tekst { tekst: "Aktywne powiązania dla tego komputera:", waga: "polgruby", kolor: "#e2e8f0" },
+                                    Ikona { nazwa: "link", kolor: "#10b981" } // Zielona ikona statusu
+                                ]
+                            },
+                            TabelaKluczy { 
+                                zrodlo_danych: "/etc/thorium/hydrogen_users.json",
+                                tlo_naglowka: "#334155",
+                                kolor_tekstu: "#f1f5f9"
+                            }
+                        ]
+                    }
+                },
+                
+                // --- Dolne Przyciski Akcji ---
+                Kontener {
+                    kierunek: "poziomy",
+                    odstep: 20,
+                    wyrownanie: "srodek",
+                    elementy: [
+                        Przycisk {
+                            tekst: "Dodaj Nowy Klucz (USB)",
+                            ikona: "usb-flash-drive",
+                            styl: "glowny",
+                            tlo: "linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%)", // Gradient Mowa/Sui
+                            kolor: "#ffffff",
+                            zaokraglenie: 8,
+                            padding: "12px 24px",
+                            akcja: () => {
+                                PokazDialog("Oczekiwanie...", "Proszę wpiąć portfel sprzętowy do portu USB i go dotknąć.");
+                                zarejestruj_klucz_lokalnie("aktualny_uzytkownik");
+                                OdswiezOkno();
+                            }
+                        },
+                        Przycisk {
+                            tekst: "Synchronizuj z Sui",
+                            ikona: "cloud-sync",
+                            styl: "poboczny",
+                            tlo: "przezroczyste",
+                            kolor: "#8b5cf6",
+                            obramowanie: "2px solid #8b5cf6", // Fioletowy obrys (Guzik Outlined)
+                            zaokraglenie: 8,
+                            padding: "10px 22px",
+                            akcja: () => {
+                                synchronizuj_klucze_z_sui();
+                                PokazPowiadomienie("Zsynchronizowano pomyślnie z głównym SOC.");
+                                OdswiezOkno();
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+    
+    // Renderuje natywne okno poprzez silnik Mowa
+    wyswietl(okno);
+}

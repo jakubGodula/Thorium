@@ -1,0 +1,3 @@
+niech a = ["jeden", "dwa"];
+niech b = pobierz(a, 0);
+pisz(b);

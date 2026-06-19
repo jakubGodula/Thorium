@@ -4,17 +4,68 @@ pisz("==================================================");
 pisz("🛡️ URUCHAMIANIE AGENTA THORIUM XDR (Headless) 🛡️");
 pisz("==================================================");
 
+
 // 1. Generowanie tożsamości i fingerprintu sprzętowego
 niech wektor_sprzetowy = "cpu:x86_64;mem:16GB;os:almalinux9";
 niech hardware_fingerprint = hash(wektor_sprzetowy, "blake3");
 pisz("Rozpoznano sprzęt. Hardware Fingerprint (Blake3):", hardware_fingerprint);
 
 niech tozsamosc_lokalna = stworz_ja(9999, "ThoriumAgent");
-niech klucz_pub = "Ed25519:A1B2C3D4E5F6...";
+niech funkcja_generuj_portfel = pobierz(krypto, "generuj_portfel");
+niech portfel_agenta = funkcja_generuj_portfel();
+niech klucz_pub = pobierz(portfel_agenta, "adres");
+niech klucz_pryw = pobierz(portfel_agenta, "klucz_prywatny");
 pisz("Wygenerowano lokalny klucz Ed25519 dla Agenta:", klucz_pub);
+
+// 1.5 Integralność własnego procesu (Self-Defense)
+niech wynik_hash = uruchom_komende("sha256sum", "/proc/self/exe");
+niech hash_binarki = pobierz(wynik_hash, "stdout");
+niech czesci_hasha = rozdziel(hash_binarki, " ");
+niech bezpieczny_hash = pobierz(czesci_hasha, 0);
+pisz("🔒 Weryfikacja integralności Agenta (SHA-256 binarki):", bezpieczny_hash);
+
+// 1.6 Obsługa sygnałów (Mock Self-Defense w trybie Dev)
+// W przyszłości zostanie to zastąpione twardym hookiem eBPF LSM (odmawiającym EPERM)
+pisz("🛡️ Tryb audytu aktywowany: Próby terminacji agenta (SIGKILL) zostaną jedynie zalogowane.");
 
 niech stan_agenta = "Aktywny";
 niech bufor_logow = "--- POCZĄTEK SESJI THORIUM XDR ---\n";
+niech ZBUFOROWANY_SPRZET = "";
+// Szybki słownik w pamięci (Lokalny Cache IoC dla Segmentu 2 Edge)
+niech BEZPIECZNE_HASHE = slownik();
+niech ZABLOKOWANE_HASHE = slownik();
+niech ZABLOKOWANE_IP = slownik();
+
+// Zmienne XDR synchronizowane z Polonium
+niech XDR_PROG_RYZYKA = 85;
+niech XDR_WAGI_REGUL = slownik();
+XDR_WAGI_REGUL = ustaw(XDR_WAGI_REGUL, "BASH_SHELL", 20);
+XDR_WAGI_REGUL = ustaw(XDR_WAGI_REGUL, "NETWORK_CURL", 30);
+XDR_WAGI_REGUL = ustaw(XDR_WAGI_REGUL, "FILE_CHMOD", 25);
+XDR_WAGI_REGUL = ustaw(XDR_WAGI_REGUL, "OUTBOUND_CONN", 40);
+XDR_WAGI_REGUL = ustaw(XDR_WAGI_REGUL, "FIM_MODIFICATION", 30);
+
+// 1.8 Polonium (Segment 6.3) i Dark Mode (Offline Lockdown)
+pisz("🛡️ [Polonium] Uruchamiam proces synchronizacji polityk z łańcuchem Sui...");
+Jeżeli prawda {
+    // Symulacja odpytywania węzła C2 (Sui/Walrus)
+    niech status_c2 = "OK"; // W przyszłości odczyt z portu RPC
+    
+    jeśli status_c2 == "OK" {
+        ZABLOKOWANE_HASHE = ustaw(ZABLOKOWANE_HASHE, "malware_hash", prawda);
+        ZABLOKOWANE_IP = ustaw(ZABLOKOWANE_IP, "198.51.100.22", prawda);
+    } inaczej {
+        pisz("🚨 [CRITICAL] Utracono łączność z centralą (Sui)! Aktywacja trybu Dark Mode / Offline Lockdown.");
+        stan_agenta = "Lockdown";
+        
+        // Agresywne zaostrzenie polityki na stacji roboczej
+        XDR_PROG_RYZYKA = 20; // Zero tolerancji dla anomalii
+        pisz("🔒 Wymuszam blokadę powoływania nowych procesów powłoki (bash/sh) z poziomu nie-roota.");
+        pisz("🔒 Rozpoczynam buforowanie wszystkich logów w bezpiecznej enklawie do momentu powrotu sieci.");
+    }
+    
+    czekaj(10000); // Aktualizacja co 10 sekund
+}
 
 // 2. Routing dla Headless HTTP API
 funkcja router_thorium(sciezka, zapytanie, metoda) {
@@ -26,7 +77,7 @@ funkcja router_thorium(sciezka, zapytanie, metoda) {
         niech ip_address = odczytaj_env("IPV6_ADDRESS");
         jeśli ip_address == "" {
             jeśli is_vm == "" {
-                ip_address = "127.0.0.1";
+                ip_address = "::1";
             } inaczej {
                 ip_address = "fde4:8dba:82e1::11";
             }
@@ -52,7 +103,11 @@ funkcja router_thorium(sciezka, zapytanie, metoda) {
         dane = ustaw(dane, "ip_address", ip_address);
         dane = ustaw(dane, "owner_name", owner);
         dane = ustaw(dane, "machine_type", typ_maszyny);
-        dane = ustaw(dane, "hardware", odczytaj_hardware());
+        
+        jeśli ZBUFOROWANY_SPRZET == "" {
+            ZBUFOROWANY_SPRZET = odczytaj_hardware();
+        }
+        dane = ustaw(dane, "hardware", ZBUFOROWANY_SPRZET);
         
         niech odpowiedz = slownik();
         odpowiedz = ustaw(odpowiedz, "kod", 200);
@@ -199,9 +254,82 @@ funkcja router_thorium(sciezka, zapytanie, metoda) {
 niech host_ip = Adres("::");
 serwuj(host_ip, 9090, router_thorium);
 
+// 3.5 Uruchomienie Serwera WebSocket (na porcie 9092)
+funkcja handler_ws(wiadomosc) {
+    niech metoda = json_pobierz(wiadomosc, "method");
+    niech res = slownik();
+    
+    jeśli metoda == "get_vms" {
+        res = ustaw(res, "vms", vm_lista());
+        zwróć res;
+    } 
+    jeśli metoda == "get_status" {
+        niech host_name = odczytaj_hostname();
+        niech is_vm = odczytaj_env("THORIUM_VM_NAME");
+        niech ip_address = odczytaj_env("IPV6_ADDRESS");
+        jeśli ip_address == "" {
+            jeśli is_vm == "" {
+                ip_address = "::1";
+            } inaczej {
+                ip_address = "fde4:8dba:82e1::11";
+            }
+        }
+        niech owner = odczytaj_env("OWNER_NAME");
+        jeśli owner == "" {
+            owner = "Jakub";
+        }
+        niech typ_maszyny = odczytaj_env("MACHINE_TYPE");
+        jeśli typ_maszyny == "" {
+            jeśli is_vm == "" {
+                typ_maszyny = "Workstation";
+            } inaczej {
+                typ_maszyny = "Server";
+            }
+        }
+        
+        niech stat_dane = slownik();
+        stat_dane = ustaw(stat_dane, "status", stan_agenta);
+        stat_dane = ustaw(stat_dane, "fingerprint", hardware_fingerprint);
+        stat_dane = ustaw(stat_dane, "klucz_pub", klucz_pub);
+        stat_dane = ustaw(stat_dane, "hostname", host_name);
+        stat_dane = ustaw(stat_dane, "ip_address", ip_address);
+        stat_dane = ustaw(stat_dane, "owner_name", owner);
+        stat_dane = ustaw(stat_dane, "machine_type", typ_maszyny);
+        
+        jeśli ZBUFOROWANY_SPRZET == "" {
+            ZBUFOROWANY_SPRZET = odczytaj_hardware();
+        }
+        stat_dane = ustaw(stat_dane, "hardware", ZBUFOROWANY_SPRZET);
+        
+        res = ustaw(res, "status", stat_dane);
+        zwróć res;
+    } 
+    jeśli metoda == "start_vm" {
+        niech name1 = json_pobierz(wiadomosc, "name");
+        res = ustaw(res, "start_ok", vm_start(name1));
+        zwróć res;
+    } 
+    jeśli metoda == "stop_vm" {
+        niech name2 = json_pobierz(wiadomosc, "name");
+        res = ustaw(res, "stop_ok", vm_stop(name2));
+        zwróć res;
+    } 
+    jeśli metoda == "delete_vm" {
+        niech name3 = json_pobierz(wiadomosc, "name");
+        res = ustaw(res, "delete_ok", vm_usun(name3));
+        zwróć res;
+    }
+    
+    res = ustaw(res, "logs", bufor_logow);
+    res = ustaw(res, "status", stan_agenta);
+    zwróć res;
+}
+websocket(host_ip, 9092, handler_ws);
+
 pisz("--------------------------------------------------");
 pisz("✅ Agent Thorium XDR załadowany pomyślnie i monitoruje zdarzenia.");
 pisz("🌐 Headless API nasłuchuje na http://[::]:9090");
+pisz("🔌 WebSocket API nasłuchuje na ws://[::]:9092");
 pisz("--------------------------------------------------");
 
 // Self-registration w C2 (Sui Move Registry)
@@ -210,7 +338,7 @@ niech is_vm_start = odczytaj_env("THORIUM_VM_NAME");
 niech startup_ip = odczytaj_env("IPV6_ADDRESS");
 jeśli startup_ip == "" {
     jeśli is_vm_start == "" {
-        startup_ip = "127.0.0.1";
+        startup_ip = "::1";
     } inaczej {
         startup_ip = "fde4:8dba:82e1::11";
     }
@@ -236,7 +364,155 @@ jeśli reg_status {
     pisz("⚠️ Rejestracja w C2 pominięta lub nie powiodła się.");
 }
 
-// 4. Nasłuch na zdarzenia systemowe (Event Loop XDR)
+// Funkcja mockująca przesył danych sieciowych do systemu Magnesium
+funkcja wyslij_do_magnesium(log_sieciowy) {
+    pisz("☁️ [Magnesium] Wysłano log sieciowy do klastra. Polonium analizuje politykę przez Talus AI...");
+}
+
+funkcja zapytaj_klaster_magnesium_o_werdykt(hash, cmd) {
+    czekaj(1500); // Symulacja opóźnienia sieciowego / analizy YARA na klastrze
+    jeśli zawiera(cmd, "netcat") lub zawiera(cmd, "nc ") lub zawiera(cmd, "nmap") {
+        zwróć "ZŁOŚLIWY";
+    } inaczej {
+        zwróć "CZYSTY";
+    }
+}
+
+// Inicjalizacja eBPF
+odbierz_zdarzenie_systemowe();
+
+// Aktywacja modułu FIM (File Integrity Monitoring)
+obserwuj_pliki(["/etc/passwd", "/etc/shadow", "/etc/sudoers", "/home/jakub/.ssh"]);
+pisz("🛡️  Moduł FIM aktywowany dla kluczowych plików systemowych.");
+
+// Segment 3: Akcje SOAR (Security Orchestration, Automation, and Response)
+funkcja izoluj_siec() {
+    pisz("🛡️ [SOAR] Izolacja sieci hosta za pomocą iptables...");
+    uruchom_komende("iptables", "-A", "INPUT", "-j", "DROP");
+    uruchom_komende("iptables", "-A", "OUTPUT", "-j", "DROP");
+}
+
+funkcja przywroc_siec() {
+    pisz("🛡️ [SOAR] Przywracanie łączności sieciowej...");
+    uruchom_komende("iptables", "-D", "INPUT", "-j", "DROP");
+    uruchom_komende("iptables", "-D", "OUTPUT", "-j", "DROP");
+}
+
+funkcja kwarantanna(sciezka) {
+    pisz("🛡️ [SOAR] Przenoszenie pliku do kwarantanny:", sciezka);
+    uruchom_komende("mkdir", "-p", "/tmp/kwarantanna/");
+    uruchom_komende("mv", sciezka, "/tmp/kwarantanna/");
+    uruchom_komende("chmod", "000", "/tmp/kwarantanna/");
+}
+
+funkcja rejestruj_dowod_sui(blob_id, dowod) {
+    pisz("🔗 [Sui] Rejestracja dowodu (Walrus Blob ID:", blob_id, ") w głównym rejestrze SOC...");
+    niech tx_res = sui.wywołaj_kontrakt("0xa::thorium_evidence", "evidence", "register", [blob_id, hash(dowod, "blake3")]);
+    pisz("✅ [Sui] Zdarzenie dowodowe zapisane niezmiennie on-chain! Digest:", pobierz(tx_res, "transakcja_digest"));
+}
+
+// Silnik Playbooków SOAR
+niech PLAYBOOKI = slownik();
+
+funkcja playbook_ransomware(pid, cmd, zdarzenie, czas) {
+    pisz(czas, "🤖 [SOAR Playbook] Wykonywanie procedury: RANSOMWARE_LUB_MINER");
+    pisz("⛔ Przerywanie procesu...");
+    zabij_proces(pid);
+    bufor_logow = bufor_logow + czas + " 🚨 [XDR Krytyczne] Zablokowano proces (Playbook): " + cmd + "\n";
+    
+    pisz("🛡️ Izolowanie hosta w sieci!");
+    stan_agenta = "Izolowany";
+    izoluj_siec();
+    
+    pisz("📡 Raportowanie incydentu do C2 (via PTB Sui)...");
+    zglos_incydent_do_c2(zdarzenie, "KILLED_AND_ISOLATED");
+    
+    pisz("📦 Bezpieczne zamrażanie dowodów (agregacja) w sieci Walrus...");
+    niech dowod = "INCYDENT: " + cmd + "\nLOGI HISTORYCZNE:\n" + bufor_logow;
+    niech id_bloba = zapisz_logi_w_walrus(dowod);
+    rejestruj_dowod_sui(id_bloba, dowod);
+    
+    bufor_logow = bufor_logow + czas + " 📦 [Walrus] Zabezpieczono dowody on-chain, ID: " + id_bloba + "\n";
+}
+PLAYBOOKI = ustaw(PLAYBOOKI, "RANSOMWARE_LUB_MINER", playbook_ransomware);
+
+funkcja playbook_fim(pid, sciezka, zdarzenie, czas) {
+    pisz(czas, "🤖 [SOAR Playbook] Wykonywanie procedury: FIM_UNAUTHORIZED");
+    pisz("⛔ Cofanie modyfikacji pliku konfiguracyjnego...");
+    zabij_proces(pid);
+    bufor_logow = bufor_logow + czas + " 🚨 [XDR Krytyczne] Zablokowano modyfikację pliku i przywrócono stan: " + sciezka + "\n";
+    
+    pisz("📦 Bezpieczne zamrażanie dowodów (agregacja) w sieci Walrus...");
+    niech dowod = "INCYDENT FIM: " + sciezka + "\nLOGI HISTORYCZNE:\n" + bufor_logow;
+    niech id_bloba = zapisz_logi_w_walrus(dowod);
+    rejestruj_dowod_sui(id_bloba, dowod);
+    bufor_logow = bufor_logow + czas + " 📦 [Walrus] Zabezpieczono dowody on-chain, ID: " + id_bloba + "\n";
+}
+PLAYBOOKI = ustaw(PLAYBOOKI, "FIM_UNAUTHORIZED", playbook_fim);
+
+// 4. Korelacja Lokalna (Segment 4.1 - Single-Host XDR)
+niech KORELACJA_DRZEWA = slownik();
+
+funkcja aktualizuj_punkty_korelacji(pid, punkty, powod, czas) {
+    niech pid_str = "" + pid;
+    jeśli pobierz(KORELACJA_DRZEWA, pid_str) {
+        niech sesja = pobierz(KORELACJA_DRZEWA, pid_str);
+        niech obecne_punkty = pobierz(sesja, "punkty");
+        niech nowy_wynik = obecne_punkty + punkty;
+        sesja = ustaw(sesja, "punkty", nowy_wynik);
+        
+        niech log_korelacji = pobierz(sesja, "log");
+        log_korelacji = log_korelacji + czas + " [+ " + punkty + " pkt] " + powod + "\n";
+        sesja = ustaw(sesja, "log", log_korelacji);
+        
+        KORELACJA_DRZEWA = ustaw(KORELACJA_DRZEWA, pid_str, sesja);
+        
+        pisz("📊 [XDR Korelacja] PID", pid, "zgromadził", nowy_wynik, "punktów ryzyka.");
+        
+        jeśli nowy_wynik >= XDR_PROG_RYZYKA {
+            niech skorelowano = pobierz(sesja, "skorelowano");
+            jeśli skorelowano != prawda {
+                sesja = ustaw(sesja, "skorelowano", prawda);
+                KORELACJA_DRZEWA = ustaw(KORELACJA_DRZEWA, pid_str, sesja);
+                
+                pisz("🚨 [XDR Krytyczne] Przekroczono próg", XDR_PROG_RYZYKA, "punktów korelacji dla PID", pid, "! Wywołuję SOAR...");
+                niech procedura = pobierz(PLAYBOOKI, "RANSOMWARE_LUB_MINER");
+                niech cmd = pobierz(sesja, "cmd");
+                niech pseudo_zdarzenie = slownik();
+                pseudo_zdarzenie = ustaw(pseudo_zdarzenie, "typ", "XDR_KORELACJA");
+                pseudo_zdarzenie = ustaw(pseudo_zdarzenie, "pid", pid);
+                procedura(pid, cmd, pseudo_zdarzenie, czas);
+            }
+        }
+    }
+}
+
+// 4.2 Korelacja Rozproszona (Cross-Device XDR)
+funkcja on_sui_incident(event) {
+    niech akcja = pobierz(event, "akcja");
+    niech agent = pobierz(event, "agent_id");
+    niech ip = pobierz(event, "ip_address");
+    
+    jeśli agent != klucz_pub {
+        pisz("📡 [XDR Cross-Device] Otrzymano zdarzenie (", akcja, ") z chmury od agenta:", agent, "IP:", ip);
+        
+        // Jeśli inny agent w organizacji zablokował IP z powodu malware, my też to robimy zapobiegawczo
+        jeśli akcja == "KILLED_POLONIUM_IP" lub akcja == "KILLED_AND_ISOLATED" {
+            niech cmd = pobierz(event, "cmd");
+            jeśli cmd != "" {
+                pisz("🛡️ [XDR Cross-Device] Pobrana prewencyjna heurystyka. Dodaję IoC do bazy lokalnej: ", cmd);
+                ZABLOKOWANE_HASHE = ustaw(ZABLOKOWANE_HASHE, cmd, prawda);
+            }
+        }
+    }
+}
+
+pisz("🌐 [XDR Cross-Device] Uruchamiam nasłuch na globalne incydenty organizacji z blockchaina Sui...");
+sui.subskrybuj_zdarzenia("0xa::thorium_registry::IncidentEvent", on_sui_incident);
+
+// 5. Nasłuch na zdarzenia systemowe (Event Loop XDR)
+niech OSTATNIA_KOMENDA = "N/A";
+
 // Odbieranie zdarzeń systemowych w nieskończonej pętli
 jeżeli prawda {
     niech zdarzenie = odbierz_zdarzenie_systemowe();
@@ -246,35 +522,129 @@ jeżeli prawda {
         jeśli typ == "PROCES_START" {
             niech cmd = pobierz(zdarzenie, "cmd");
             niech pid = pobierz(zdarzenie, "pid");
+            OSTATNIA_KOMENDA = cmd;
+            niech ppid = pobierz(zdarzenie, "ppid");
+            niech czas = pobierz(zdarzenie, "czas");
+            niech mock_hash = cmd; // używamy polecenia jako mocka hasha binarnego
+            
+            // Rejestracja w drzewie korelacji
+            niech pid_str = "" + pid;
+            niech nowa_sesja = slownik();
+            nowa_sesja = ustaw(nowa_sesja, "cmd", cmd);
+            nowa_sesja = ustaw(nowa_sesja, "punkty", 0);
+            nowa_sesja = ustaw(nowa_sesja, "log", czas + " Utworzono proces " + cmd + "\n");
+            KORELACJA_DRZEWA = ustaw(KORELACJA_DRZEWA, pid_str, nowa_sesja);
+
+            jeśli zawiera(cmd, "bash") lub zawiera(cmd, "sh") {
+                aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "BASH_SHELL"), "Uruchomienie powłoki systemowej", czas);
+            }
+            jeśli zawiera(cmd, "curl") lub zawiera(cmd, "wget") {
+                aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "NETWORK_CURL"), "Pobieranie plików z sieci", czas);
+            }
+            jeśli zawiera(cmd, "chmod") {
+                aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "FILE_CHMOD"), "Manipulacja uprawnieniami pliku", czas);
+            }
+
+            // 1. Sprawdzenie szybkiego, lokalnego cache'u (EDGE)
+            jeśli pobierz(ZABLOKOWANE_HASHE, mock_hash) {
+                pisz(czas, "🚨 [Polonium Edge] Plik znajduje się na czarnej liście! Ubijam natychmiast (PID:", pid, ") - CMD:", cmd);
+                zabij_proces(pid);
+                bufor_logow = bufor_logow + czas + " 🚨 [Polonium] ZABLOKOWANO_PROCES: " + cmd + "\n";
+                zglos_incydent_do_c2(zdarzenie, "KILLED_POLONIUM_HASH");
+            } inaczej {
+                jeśli pobierz(BEZPIECZNE_HASHE, mock_hash) {
+                    pisz(czas, "✅ [Edge Cache L1] Plik znany i czysty. Puszczam (PID:", pid, ") - CMD:", cmd);
+                    bufor_logow = bufor_logow + czas + " ZDARZENIE_PROCESU: (PID " + pid + " | PPID: " + ppid + ") " + cmd + "\n";
+                } inaczej {
+                // 2. Reguły behawioralne natychmiastowe (Regex)
+                jeśli regex_pasuje(cmd, "(?i)curl.*\\|.*bash") lub zawiera(cmd, "miner") lub zawiera(cmd, "ransomware") {
+                    pisz(czas, "🚨 [XDR Krytyczne] Wykryto złośliwy wzorzec w poleceniu procesie!");
+                    
+                    // Uruchomienie predefiniowanego playbooka SOAR
+                    niech procedura = pobierz(PLAYBOOKI, "RANSOMWARE_LUB_MINER");
+                    procedura(pid, cmd, zdarzenie, czas);
+                    
+                } inaczej {
+                    // 3. OFFLOADING do Klastra Magnesium (MPC / YARA)
+                    pisz(czas, "☁️ [Magnesium] Nieznana binarka! Wstrzymuję proces PID", pid, "i offloaduję analizę...");
+                    bufor_logow = bufor_logow + czas + " ☁️ [Magnesium] Wysłano analizę nieznanego pliku do klastra MPC (PID " + pid + ")\n";
+                    
+                    uruchom_komende("kill", "-STOP", "" + pid);
+                    
+                    niech werdykt = zapytaj_klaster_magnesium_o_werdykt(mock_hash, cmd);
+                    
+                    jeśli werdykt == "ZŁOŚLIWY" {
+                        pisz("🚨 [Magnesium MPC] Otrzymano sygnaturę YARA: MALWARE! Uruchamiam playbook...");
+                        bufor_logow = bufor_logow + "🚨 [Magnesium] Werdykt ZŁOŚLIWY. Zablokowano PID: " + pid + "\n";
+                        
+                        niech procedura = pobierz(PLAYBOOKI, "RANSOMWARE_LUB_MINER");
+                        procedura(pid, cmd, zdarzenie, czas);
+                    } inaczej {
+                        pisz("✅ [Magnesium MPC] Werdykt Czysty. Wznawiam PID:", pid);
+                        BEZPIECZNE_HASHE = ustaw(BEZPIECZNE_HASHE, mock_hash, prawda);
+                        uruchom_komende("kill", "-CONT", "" + pid);
+                    }
+                }
+            }
+        }
+        }
+
+        jeśli typ == "POŁĄCZENIE" {
+            niech pid = pobierz(zdarzenie, "pid");
+            niech daddr = pobierz(zdarzenie, "daddr");
+            niech dport = pobierz(zdarzenie, "dport");
             niech czas = pobierz(zdarzenie, "czas");
             
-            pisz(czas, "🔍 [XDR Telemetry] Proces START (PID:", pid, ") - CMD:", cmd);
+            pisz(czas, "🌐 [Sieć] PID:", pid, "nawiązał połączenie do", daddr, ":", dport);
             
-            bufor_logow = bufor_logow + czas + " ZDARZENIE_PROCESU: (PID " + pid + ") " + cmd + "\n";
-            
-            // Reguły behawioralne (Detekcja pobierania malware, np. curl | bash)
-            jeśli regex_pasuje(cmd, "(?i)curl.*\\|.*bash") lub zawiera(cmd, "miner") lub zawiera(cmd, "ransomware") {
-                pisz("🚨 [XDR Krytyczne] Wykryto złośliwy wzorzec w poleceniu procesie!");
-                pisz("⛔ Przerywanie procesu...");
+            jeśli pobierz(ZABLOKOWANE_IP, daddr) {
+                pisz(czas, "🚨 [Polonium Edge] Wykryto połączenie do zakazanego IP (C2 malware):", daddr);
                 zabij_proces(pid);
+                bufor_logow = bufor_logow + czas + " 🚨 [Polonium] ZABLOKOWANO_POLACZENIE do " + daddr + "\n";
+                zglos_incydent_do_c2(zdarzenie, "KILLED_POLONIUM_IP");
+            } inaczej {
+                bufor_logow = bufor_logow + czas + " ZDARZENIE_SIECIOWE: (PID " + pid + ") do " + daddr + ":" + dport + "\n";
+                // Korelacja: punkty ryzyka za samo wyjście do sieci z nieznanym hostem
+                aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "OUTBOUND_CONN"), "Nawiązanie połączenia sieciowego z " + daddr + ":" + dport, czas);
                 
-                pisz("📦 Kwarantanna pliku (mock):", cmd);
-                kwarantanna(cmd);
+                wyslij_do_magnesium(zdarzenie);
+            }
+        }
+
+        jeśli typ == "ZMIANA_PLIKU" {
+            niech sciezka = pobierz(zdarzenie, "sciezka");
+            niech operacja = pobierz(zdarzenie, "operacja");
+            niech hash = pobierz(zdarzenie, "hash");
+            niech czas = pobierz(zdarzenie, "czas");
+            
+            pisz(czas, "📁 [FIM] Zmiana pliku:", sciezka, "(Operacja:", operacja, ") CMD:", OSTATNIA_KOMENDA, "SHA256:", hash);
+            bufor_logow = bufor_logow + czas + " 📁 [FIM] ZMIANA_PLIKU: " + sciezka + " (" + operacja + ") CMD: " + OSTATNIA_KOMENDA + " SHA256: " + hash + "\n";
+            
+            // Reguły behawioralne FIM
+            niech pid = pobierz(zdarzenie, "pid");
+            
+            jeśli (operacja == "ZAPIS" lub operacja == "CHMOD") i pid {
+                aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "FIM_MODIFICATION"), "Nietypowa operacja plikowa: " + sciezka, czas);
+            }
+
+            jeśli zawiera(sciezka, "/etc/shadow") lub zawiera(sciezka, "/etc/passwd") {
+                pisz("🚨 [XDR Krytyczne] Wykryto nieautoryzowaną modyfikację pliku krytycznego:", sciezka);
                 
-                pisz("🛡️ Izolowanie hosta w sieci!");
-                stan_agenta = "Izolowany";
-                izoluj_siec();
-                
-                pisz("📡 Raportowanie incydentu do C2 (via PTB Sui)...");
-                zglos_incydent_do_c2(zdarzenie, "KILLED_AND_ISOLATED");
-                
-                pisz("📦 Bezpieczne zamrażanie dowodów (agregacja) w sieci Walrus...");
-                niech dowod = "INCYDENT: " + cmd + "\nLOGI HISTORYCZNE:\n" + bufor_logow;
-                niech id_bloba = zapisz_logi_w_walrus(dowod);
-                
-                bufor_logow = "--- NOWA SESJA PO INCYDENCIE ---\n";
+                niech procedura = pobierz(PLAYBOOKI, "FIM_UNAUTHORIZED");
+                procedura(pid, sciezka, zdarzenie, czas);
+            }
+        } inaczej {
+            jeśli (typ != "PROCES_START") i (typ != "POŁĄCZENIE") i (typ != "ZMIANA_PLIKU") {
+                niech msg = pobierz(zdarzenie, "msg");
+                jeśli msg != "" {
+                    pisz("ℹ️ [Inne]", typ, "-", msg);
+                    bufor_logow = bufor_logow + "[Inne] " + typ + " - " + msg + "\n";
+                } inaczej {
+                    pisz("ℹ️ [Inne] Otrzymano nieznany typ logu:", typ);
+                    bufor_logow = bufor_logow + "[Inne] " + typ + "\n";
+                }
             }
         }
     }
-    czekaj(200); // Zapobieganie zablokowaniu CPU
+    czekaj(10); // Zapobieganie zablokowaniu CPU, zmniejszono z 200ms na 10ms z powodu dużej ilości zdarzeń eBPF
 }

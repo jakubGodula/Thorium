@@ -1,0 +1,1 @@
+niech w = "{\"method\":\"get_status\"}"; pisz(json_pobierz(w, "method"));

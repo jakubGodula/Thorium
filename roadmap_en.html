@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thorium XDR - Implementation Roadmap</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --status-done: #10b981;
+            --status-progress: #f59e0b;
+            --status-planned: #38bdf8;
+            --status-enterprise: #a855f7;
+            --status-rd: #f43f5e;
+            --card-bg: rgba(30, 41, 59, 0.6);
+            --card-border: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05), transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(244, 63, 94, 0.05), transparent 20%);
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            max-width: 900px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1800px;
+            width: 100%;
+            margin-bottom: 80px;
+            align-items: start;
+        }
+
+        .column {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            backdrop-filter: blur(10px);
+            animation: fadeInUp 0.8s ease-out forwards;
+            opacity: 0;
+        }
+
+        .col-done { animation-delay: 0.1s; border-top: 4px solid var(--status-done); }
+        .col-progress { animation-delay: 0.2s; border-top: 4px solid var(--status-progress); }
+        .col-planned { animation-delay: 0.3s; border-top: 4px solid var(--status-planned); }
+        .col-enterprise { animation-delay: 0.35s; border-top: 4px solid var(--status-enterprise); }
+        .col-rd { animation-delay: 0.4s; border-top: 4px solid var(--status-rd); }
+
+        .column-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .column-icon {
+            font-size: 1.5rem;
+        }
+
+        .column-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .task-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 18px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .task-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+        }
+
+        .col-done .task-card::before { background-color: var(--status-done); }
+        .col-progress .task-card::before { background-color: var(--status-progress); }
+        .col-planned .task-card::before { background-color: var(--status-planned); }
+        .col-enterprise .task-card::before { background-color: var(--status-enterprise); }
+        .col-rd .task-card::before { background-color: var(--status-rd); }
+
+        .task-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .task-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #cbd5e1;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .board { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Thorium XDR: Implementation Roadmap</h1>
+        <p class="subtitle">An interactive view of the platform's status, from stable cryptographic foundations and eBPF telemetry to a visionary future powered by R&D technologies.</p>
+    </header>
+
+    <div class="board">
+        
+        <!-- ZREALIZOWANE -->
+        <div class="column col-done">
+            <div class="column-header">
+                <div class="column-icon">✅</div>
+                <h2 class="column-title">Completed (Done)</h2>
+            </div>
+            
+            <div class="task-card">
+                <h3 class="task-title">eBPF Telemetry (Processes)</h3>
+                <p class="task-desc">Low-level interception of 'execve' in the kernel. Instant detection of executed files.</p>
+                <div class="tags"><span class="tag">Linux</span><span class="tag">Core</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">C2 Registration on Sui</h3>
+                <p class="task-desc">Native asynchronous agent registration on the blockchain. No central point of failure.</p>
+                <div class="tags"><span class="tag">Web3</span><span class="tag">C2</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">SOAR Playbook Engine</h3>
+                <p class="task-desc">Dictionary of predefined actions. Quarantine, IP blocking, and process termination are implemented.</p>
+                <div class="tags"><span class="tag">Mowa</span><span class="tag">Response</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">File Integrity Monitoring (FIM)</h3>
+                <p class="task-desc">Instant alerts on `/etc/shadow` modifications appended with the calling command info (LAST_COMMAND).</p>
+                <div class="tags"><span class="tag">eBPF</span><span class="tag">Persistence</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Active Pre-Execution (BPF LSM)</h3>
+                <p class="task-desc">Hook in `security_bprm_check_security` blocking virus startup natively bypassing SIGKILL. Intervention directly in the kernel (Ring-0).</p>
+                <div class="tags"><span class="tag">eBPF</span><span class="tag">LSM</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Offline Lockdown (Dark Mode)</h3>
+                <p class="task-desc">Aggressive emergency state cutting off processes and network traffic upon loss of communication with the C2 server (Sui RPC).</p>
+                <div class="tags"><span class="tag">Agent</span><span class="tag">Defense</span></div>
+            </div>
+
+        </div>
+
+        <!-- W TRAKCIE -->
+        <div class="column col-progress">
+            <div class="column-header">
+                <div class="column-icon">⏳</div>
+                <h2 class="column-title">In Progress / Beta</h2>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Walrus Integration (Forensics)</h3>
+                <p class="task-desc">Freezing incident logs as forensic evidence. `save_logs_to_walrus` script added, ring-buffer aggregation stabilization in progress.</p>
+                <div class="tags"><span class="tag">Sui</span><span class="tag">Storage</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Cross-Device XDR (Sui Events)</h3>
+                <p class="task-desc">`subscribe_events` deployed. Performance testing of P2P Mesh heuristic propagation across the agent cluster is ongoing.</p>
+                <div class="tags"><span class="tag">XDR</span><span class="tag">Correlation</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">SOC Dashboard (Svelte)</h3>
+                <p class="task-desc">Live state synchronization via WebSockets. Incident tree implementation in progress.</p>
+                <div class="tags"><span class="tag">UI/UX</span><span class="tag">Frontend</span></div>
+            </div>
+
+        </div>
+
+        <!-- ZAPLANOWANE -->
+        <div class="column col-planned">
+            <div class="column-header">
+                <div class="column-icon">📅</div>
+                <h2 class="column-title">Planned Deployments</h2>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">YARA Engine (Offloading)</h3>
+                <p class="task-desc">Full asynchronous sending of binaries to the Magnesium cluster for deep checksum and pattern scanning.</p>
+                <div class="tags"><span class="tag">Magnesium</span><span class="tag">Detection</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Aluminum (Email Phishing Analysis)</h3>
+                <p class="task-desc">Integration with M365 and G-Workspace. Advanced phishing detection, link verification, and sandbox testing for attachments.</p>
+                <div class="tags"><span class="tag">Email</span><span class="tag">Aluminum</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">CSPM / CVE Scanner</h3>
+                <p class="task-desc">Preventive workstation auditing and comparing installed packages (DNF/APT) against the NVD database.</p>
+                <div class="tags"><span class="tag">Vulnerability</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">DNS Telemetry & USB Control</h3>
+                <p class="task-desc">Capturing UDP 53 requests in flight (DNS Tunneling) and udev-based blocking of unknown Mass Storage media (DLP).</p>
+                <div class="tags"><span class="tag">Network</span><span class="tag">DLP</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Traditional SIEM Export</h3>
+                <p class="task-desc">Backward compatibility: natively pushing incident logs via Syslog (CEF) or Webhooks to Splunk and QRadar.</p>
+                <div class="tags"><span class="tag">Integrations</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Multi-Sig for Critical Actions</h3>
+                <p class="task-desc">Global organizational lockdown only after obtaining cryptographic signatures from 2 out of 3 admins using hardware keys (WebAuthn).</p>
+                <div class="tags"><span class="tag">Security</span><span class="tag">Polonium</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Lithium (Cloud Native K8s)</h3>
+                <p class="task-desc">Native Kubernetes protection (K8s Admission Controller) and container escape detection to the host layer.</p>
+                <div class="tags"><span class="tag">Cloud</span><span class="tag">Lithium</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Neon (Network & SSL Inspection)</h3>
+                <p class="task-desc">On-the-fly HTTPS decryption using eBPF Uprobes attached to OpenSSL/BoringSSL. In-memory C2 Beaconing analysis.</p>
+                <div class="tags"><span class="tag">Network</span><span class="tag">Neon</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Xenon (Deception & Honeypots)</h3>
+                <p class="task-desc">Setting virtual traps. Seeding fake credentials in processes and memory (0% False Positives).</p>
+                <div class="tags"><span class="tag">Deception</span><span class="tag">Xenon</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Silicon (UEBA AI Profiling)</h3>
+                <p class="task-desc">On-device Machine Learning to model routine behavioral patterns and detect session credential theft.</p>
+                <div class="tags"><span class="tag">AI / ML</span><span class="tag">Silicon</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Titanium (DLP Data Fortress)</h3>
+                <p class="task-desc">Blocking sensitive data exfiltration (clipboard, printers, clouds). RegEx pattern matching for Credit Cards and SSN.</p>
+                <div class="tags"><span class="tag">DLP</span><span class="tag">Titanium</span></div>
+            </div>
+
+        </div>
+
+        <!-- ENTERPRISE READINESS -->
+        <div class="column col-enterprise">
+            <div class="column-header">
+                <div class="column-icon">🏢</div>
+                <h2 class="column-title">Enterprise Readiness</h2>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">A/B Auto-Updater</h3>
+                <p class="task-desc">Reliable agent binary update mechanics with Ed25519 verification and a fallback partition in case of system failure.</p>
+                <div class="tags"><span class="tag">Maintenance</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Analyst Audit Trails</h3>
+                <p class="task-desc">Recording every active analyst intervention within the SOC as an immutable on-chain transaction (Insider-Threat protection).</p>
+                <div class="tags"><span class="tag">Compliance</span><span class="tag">Sui</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Dark Mode / Offline Lockdown</h3>
+                <p class="task-desc">Aggressive lockdown state isolating processes and network traffic upon loss of communication with headquarters.</p>
+                <div class="tags"><span class="tag">Agent</span><span class="tag">Defense</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">ITSM & AD Integrations</h3>
+                <p class="task-desc">Mapping 'uid' processes to actual personnel from Active Directory and exposing RestAPI to close alerts from Jira/ServiceNow.</p>
+                <div class="tags"><span class="tag">Identity</span><span class="tag">API</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Live Web Terminal</h3>
+                <p class="task-desc">A remote CLI console integrated into the SOC panel, connecting to the client's machine for DFIR investigators.</p>
+                <div class="tags"><span class="tag">DFIR</span><span class="tag">WebSockets</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Passive Network Discovery</h3>
+                <p class="task-desc">Listening to ARP/mDNS traffic to automatically discover and inventory unmanaged devices (Shadow IT, BYOD) in the local network.</p>
+                <div class="tags"><span class="tag">Discovery</span><span class="tag">LAN</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Hydrogen Module (PAM)</h3>
+                <p class="task-desc">Replacing system login passwords with hardware Web3 wallets / FIDO2 keys. Zero passwords in memory, total anti-phishing defense at the OS level.</p>
+                <div class="tags"><span class="tag">Identity</span><span class="tag">Zero-Trust</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Hydrogen GUI & Key Lifecycle</h3>
+                <p class="task-desc">Native Mowa Glassmorphism interface for local and remote (On-Chain) hardware key provisioning for employees.</p>
+                <div class="tags"><span class="tag">UI/UX</span><span class="tag">Provisioning</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Threat Intel (STIX/TAXII)</h3>
+                <p class="task-desc">Feeding the IoC database with external commercial and open-source intelligence feeds (e.g., MISP) to supplement the native Web3 network.</p>
+                <div class="tags"><span class="tag">Intelligence</span><span class="tag">MISP</span></div>
+            </div>
+
+        </div>
+
+        <!-- R&D (EKSPERYMENTALNE) -->
+        <div class="column col-rd">
+            <div class="column-header">
+                <div class="column-icon">🚀</div>
+                <h2 class="column-title">R&D (Research Phase)</h2>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">eBPF TLS/SSL Uprobes (SWG)</h3>
+                <p class="task-desc">Non-invasive HTTPS traffic inspection inside OpenSSL/GnuTLS, bypassing MITM certificates. A Thorium router can scan the entire LAN's traffic.</p>
+                <div class="tags"><span class="tag">Crypto</span><span class="tag">Network</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Mowa JIT Compiler to eBPF</h3>
+                <p class="task-desc">Translating SOAR scripts written in the Mowa language directly to BPF bytecode in Ring-0 of the Linux kernel (Zero Latency).</p>
+                <div class="tags"><span class="tag">Mowa Core</span><span class="tag">eBPF</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Spatial SOC & GLB Models</h3>
+                <p class="task-desc">Manipulating 3D object vertices directly in the Mowa core to render Kill-Chain attack vectors in three-dimensional space.</p>
+                <div class="tags"><span class="tag">3D</span><span class="tag">Mowa UI</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Active Pre-Execution (BPF LSM)</h3>
+                <p class="task-desc">Hooking into `security_bprm_check_security` to block virus execution natively, bypassing the need for SIGKILL.</p>
+                <div class="tags"><span class="tag">Kernel</span></div>
+            </div>
+            
+            <div class="task-card">
+                <h3 class="task-title">Mesh RPC in Mowa Language</h3>
+                <p class="task-desc">Native `remote_execution(agent)` expression spinning up P2P without main C2 involvement, drastically facilitating agent swarm orchestration.</p>
+                <div class="tags"><span class="tag">P2P</span><span class="tag">Mowa</span></div>
+            </div>
+
+            <div class="task-card">
+                <h3 class="task-title">Zero-Knowledge Telemetry (ZKP)</h3>
+                <p class="task-desc">Lightweight Pedersen commitments on the agent, while the Magnesium cluster generates heavy SNARK proofs with IoC verification without decrypting data.</p>
+                <div class="tags"><span class="tag">ZKP</span><span class="tag">Privacy</span></div>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -10,25 +10,34 @@ Vagrant.configure("2") do |config|
 
   # Thorium agent API — dostępne na hoście pod localhost:9091
   config.vm.network "forwarded_port", guest: 9090, host: 9091, host_ip: "127.0.0.1"
+  # Thorium agent WebSocket — dostępne na hoście pod localhost:9093
+  config.vm.network "forwarded_port", guest: 9092, host: 9093, host_ip: "127.0.0.1"
 
   # Sync katalogu projektu do VM (rsync)
   # UWAGA: vsc-extension jest cyklicznym symlinkiem — wykluczony
-  config.vm.synced_folder "../../..", "/opt/mowa-src",
+  config.vm.synced_folder "/home/jakub/Documents/Mowa", "/opt/mowa-src",
     type: "rsync",
     rsync__exclude: [".git/", "target/", "thorium/ui/node_modules/", ".vagrant/", "vsc-extension/"],
     rsync__args: ["--verbose", "--archive", "--delete", "-z", "--links",
                   "--no-owner", "--no-group"]
 
+  config.vm.synced_folder "/home/jakub/Documents/Sui/Thorium", "/opt/thorium-src",
+    type: "rsync",
+    rsync__exclude: [".git/", "ui/node_modules/", ".vagrant/"],
+    rsync__args: ["--verbose", "--archive", "--delete", "-z", "--links",
+                  "--no-owner", "--no-group"]
+
   config.vm.provider "libvirt" do |libvirt|
     libvirt.driver   = "kvm"
-    libvirt.memory   = 2048
-    libvirt.cpus     = 2
+    libvirt.memory   = 8192
+    libvirt.cpus     = 4
+    libvirt.cpu_mode = "host-passthrough"
     libvirt.storage_pool_name = "default"
   end
 
   # Provisioning: installs Thorium agent as systemd service
   config.vm.provision "shell", privileged: true, env: {
-    "SUI_CONTRACT" => ENV["SUI_CONTRACT"] || "0x0cc3f972285b0486b2590b5edc9321813ec32a253a26cffa687da5a1131491af"
+    "SUI_CONTRACT" => ENV["SUI_CONTRACT"] || "0xa"
   }, inline: <<-SHELL
     set -e
     # --- Fix systemd warning about rc.local ---
@@ -40,8 +49,17 @@ Vagrant.configure("2") do |config|
     echo "🛡️ THORIUM XDR — Provisioning AlmaLinux 9 Test VM"
     echo "=================================================="
 
+    # --- Utworzenie użytkownika tor ---
+    if ! id "tor" &>/dev/null; then
+        useradd -m tor
+        echo "tor:tor" | chpasswd
+        usermod -aG wheel tor
+        echo "tor ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/tor
+        echo "✅ Utworzono użytkownika tor:tor"
+    fi
+
     # --- Zależności ---
-    dnf install -y curl openssl gcc gcc-c++ make openssl-devel 2>/dev/null
+    dnf install -y curl openssl gcc gcc-c++ make openssl-devel rust cargo 2>/dev/null
 
     # --- Konfiguracja IPv6 na interfejsie prywatnym (eth1) ---
     if nmcli connection show "System eth1" &>/dev/null; then
@@ -55,27 +73,19 @@ Vagrant.configure("2") do |config|
     # --- Skopiowanie binarki ---
     systemctl stop thorium-agent || true
     mkdir -p /opt/thorium
-    if [ -f /opt/mowa-src/Mowa_agent_bin ]; then
-      cp /opt/mowa-src/Mowa_agent_bin /opt/thorium/thorium-agent
-      chmod +x /opt/thorium/thorium-agent
-      echo "✅ Binary skopiowany z /opt/mowa-src/Mowa_agent_bin."
-    elif [ -f /opt/mowa-src/target/debug/Mowa ]; then
-      cp /opt/mowa-src/target/debug/Mowa /opt/thorium/thorium-agent
-      chmod +x /opt/thorium/thorium-agent
-      echo "✅ Binary skopiowany z host build."
-    else
-      echo "⚠️ Binary not found in synced folder. Installing Rust and compiling in VM..."
-      curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-      source "$HOME/.cargo/env"
-      cd /opt/mowa-src
-      cargo build --bin Mowa 2>&1 | tail -5
-      cp /opt/mowa-src/target/debug/Mowa /opt/thorium/thorium-agent
-      chmod +x /opt/thorium/thorium-agent
-      echo "✅ Binary compiled natively inside the VM."
-    fi
+    
+    echo "📦 Kompilacja Mowy wewnątrz VM (aby uniknąć problemu z GLIBC)..."
+    cd /opt/mowa-src && cargo build --release
+    cp /opt/mowa-src/target/release/Mowa /opt/thorium/thorium-agent
+    chmod +x /opt/thorium/thorium-agent
+    echo "✅ Binary skopiowany po kompilacji."
 
     # --- Skopiowanie skryptu agenta ---
-    cp /opt/mowa-src/thorium/thorium_agent.mowa /opt/thorium/
+    cp /opt/thorium-src/thorium_agent.mowa /opt/thorium/
+    
+    # --- Kopiowanie binarek eBPF (Sprint 1/2) ---
+    cp -r /opt/thorium-src/ebpf_probe /opt/thorium/ebpf_probe
+    chmod +x /opt/thorium/ebpf_probe/thorium_ebpf/src/main.rs || true
 
     # --- Systemd service ---
     cat > /etc/systemd/system/thorium-agent.service << EOF

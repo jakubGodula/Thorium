@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thorium XDR - Business Models</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-1: #38bdf8;
+            --accent-2: #818cf8;
+            --accent-3: #10b981;
+            --accent-4: #f43f5e;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(56, 189, 248, 0.05), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(129, 140, 248, 0.05), transparent 25%);
+        }
+
+        header {
+            text-align: center;
+            padding: 80px 20px 40px;
+            max-width: 800px;
+            animation: fadeInDown 1s ease-out;
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, var(--text-main), var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -1px;
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            padding: 20px;
+            max-width: 1400px;
+            width: 100%;
+            margin-bottom: 80px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px 30px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .card:nth-child(1) { animation-delay: 0.1s; border-top: 4px solid var(--accent-1); }
+        .card:nth-child(2) { animation-delay: 0.2s; border-top: 4px solid var(--accent-2); }
+        .card:nth-child(3) { animation-delay: 0.3s; border-top: 4px solid var(--accent-3); }
+        .card:nth-child(4) { animation-delay: 0.4s; border-top: 4px solid var(--accent-4); }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+            transform: skewX(-20deg);
+            transition: all 0.6s ease;
+        }
+
+        .card:hover::before {
+            left: 200%;
+        }
+
+        .badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .card-desc {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .features {
+            list-style: none;
+            margin-bottom: 40px;
+        }
+
+        .features li {
+            font-size: 0.9rem;
+            color: #cbd5e1;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .features li::before {
+            content: '✓';
+            color: var(--accent-1);
+            font-weight: bold;
+        }
+
+        .card:nth-child(2) .features li::before { color: var(--accent-2); }
+        .card:nth-child(3) .features li::before { color: var(--accent-3); }
+        .card:nth-child(4) .features li::before { color: var(--accent-4); }
+
+        .btn {
+            display: inline-block;
+            width: 100%;
+            text-align: center;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-1 { background: rgba(56, 189, 248, 0.1); color: var(--accent-1); border: 1px solid rgba(56, 189, 248, 0.3); }
+        .btn-1:hover { background: var(--accent-1); color: #fff; }
+
+        .btn-2 { background: rgba(129, 140, 248, 0.1); color: var(--accent-2); border: 1px solid rgba(129, 140, 248, 0.3); }
+        .btn-2:hover { background: var(--accent-2); color: #fff; }
+
+        .btn-3 { background: rgba(16, 185, 129, 0.1); color: var(--accent-3); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .btn-3:hover { background: var(--accent-3); color: #fff; }
+
+        .btn-4 { background: rgba(244, 63, 94, 0.1); color: var(--accent-4); border: 1px solid rgba(244, 63, 94, 0.3); }
+        .btn-4:hover { background: var(--accent-4); color: #fff; }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Tech section */
+        .tech-slogans {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto 80px;
+            padding: 0 20px;
+        }
+
+        .tech-slogans h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 50px;
+            background: linear-gradient(135deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+
+        .tech-card {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 30px;
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .tech-card:hover {
+            background: rgba(30, 41, 59, 0.6);
+            border-color: rgba(56, 189, 248, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .tech-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 12px;
+        }
+
+        .tech-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.25rem;
+            color: #f8fafc;
+            margin-bottom: 10px;
+        }
+
+        .tech-desc {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+
+        /* Ecosystem section */
+        .ecosystem {
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto 80px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .ecosystem h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 20px;
+        }
+
+        .roles-grid {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .role-pill {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .role-pill:hover {
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.05);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Thorium XDR Business Models</h1>
+        <p class="subtitle">A platform built for flexibility. Choose a solution tailored to your team, resources, or hire external experts directly within the Web3 ecosystem.</p>
+    </header>
+
+    <div class="pricing-grid">
+        
+        <!-- Internal SOC -->
+        <div class="card">
+            <span class="badge" style="color: var(--accent-1);">B2B SaaS</span>
+            <div class="card-icon">🏢</div>
+            <h3 class="card-title">Internal SOC</h3>
+            <p class="card-desc">License for companies with their own team of administrators and analysts. Manage your own security while maintaining full data sovereignty (Edge Computing).</p>
+            <ul class="features">
+                <li>Endpoint protection for your workforce</li>
+                <li>Decentralized C2 on the Sui blockchain</li>
+                <li>Access to the global heuristic pool (Cross-Device XDR)</li>
+                <li>Multi-Sig authorization for critical board-level actions</li>
+            </ul>
+            <a href="#" class="btn btn-1">Select SaaS Package</a>
+        </div>
+
+        <!-- MSSP & Freelancers -->
+        <div class="card">
+            <span class="badge" style="color: var(--accent-2);">Outsourcing</span>
+            <div class="card-icon">🤝</div>
+            <h3 class="card-title">External Audit & MSSP</h3>
+            <p class="card-desc">Lacking resources for an internal SOC? Delegate security management to licensed Managed Security Service Providers (MSSP) or independent freelancers from the Thorium network.</p>
+            <ul class="features">
+                <li>Dedicated RBAC access for external operators</li>
+                <li>Automated compliance reporting for auditors</li>
+                <li>Shared fleet management for multiple clients (MSSPs)</li>
+                <li>Instant incident response by delegated experts</li>
+            </ul>
+            <a href="#" class="btn btn-2">Find an Expert</a>
+        </div>
+
+        <!-- Compliance & Forensics -->
+        <div class="card">
+            <span class="badge" style="color: var(--accent-3);">Compliance</span>
+            <div class="card-icon">⚖️</div>
+            <h3 class="card-title">Compliance as a Service</h3>
+            <p class="card-desc">Package focused strictly on NIS2 and KSC directives. Collect, encrypt, and save immutable incident evidence in the distributed Walrus network for audits and insurance.</p>
+            <ul class="features">
+                <li>Guaranteed integrity of event logs</li>
+                <li>Cryptographic proof of chain of custody</li>
+                <li>Read-only access for authorities or insurers</li>
+                <li>Pay-As-You-Go pricing for Walrus storage</li>
+            </ul>
+            <a href="#" class="btn btn-3">Implement NIS2</a>
+        </div>
+
+        <!-- Web3 Network -->
+        <div class="card">
+            <span class="badge" style="color: var(--accent-4);">Web3 / Freemium</span>
+            <div class="card-icon">🌐</div>
+            <h3 class="card-title">Decentralized Threat Intel</h3>
+            <p class="card-desc">Free agent core for developers. Participate in the decentralized network and earn token rewards for identifying new zero-day threats.</p>
+            <ul class="features">
+                <li>Free local protection based on eBPF</li>
+                <li>Earn $THOR tokens for reporting new viruses</li>
+                <li>P2P collaboration with the entire community</li>
+                <li>DAO voting on new security policy rules</li>
+            </ul>
+            <a href="#" class="btn btn-4">Join the Network</a>
+        </div>
+
+    </div>
+
+    <div class="tech-slogans">
+        <h2>Unique Technological Advantage</h2>
+        <div class="tech-grid">
+            <div class="tech-card">
+                <div class="tech-icon">⚡</div>
+                <h4 class="tech-title">eBPF Telemetry (Zero-Overhead)</h4>
+                <p class="tech-desc">Process observability directly at the OS kernel level. No noticeable CPU load (under 1%) and absolute resistance to masking (user-mode rootkits).</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🧠</div>
+                <h4 class="tech-title">Magnesium MPC & Talus AI</h4>
+                <p class="tech-desc">Zero-Day attack verification using MPC cryptography. Your network traffic is never sent in plain-text to provider servers, unlike traditional EDRs.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">⛓️</div>
+                <h4 class="tech-title">Blockchain Sui (Decentralized C2)</h4>
+                <p class="tech-desc">Replacing central C2 (Command & Control) servers with smart contracts. Total infrastructure resistance to hacker C2 takeovers and single points of failure.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🧊</div>
+                <h4 class="tech-title">Walrus Forensics Storage</h4>
+                <p class="tech-desc">Immutable, distributed evidence storage (memory dumps, FIM event logs). Guaranteed chain of custody for auditors, NIS2 requirements, and legal proceedings.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🔑</div>
+                <h4 class="tech-title">Multi-Sig Authorization</h4>
+                <p class="tech-desc">Protection against human error or admin account theft. Critical actions (e.g., global host isolation) require hardware cryptographic approval by N-of-M SOC owners.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">📡</div>
+                <h4 class="tech-title">Cross-Device XDR (Sui Events)</h4>
+                <p class="tech-desc">Local heuristics learn about threats at lightning speed in a P2P model. A Lateral Movement attack blocked on server "A" automatically immunizes the entire organization's fleet in real time.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🔐</div>
+                <h4 class="tech-title">Homomorphic Encryption (SEAL)</h4>
+                <p class="tech-desc">Absolute privacy. Incident correlation occurs on encrypted telemetry using the Microsoft SEAL library. The SOC detects anomalies, but never reads your business secrets.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-icon">🪤</div>
+                <h4 class="tech-title">eBPF Deception Technology</h4>
+                <p class="tech-desc">Active attacker misdirection. Fake credentials and files (Honeypots/Honeytokens) injected directly by the OS kernel. The slightest interaction generates a 100% certain alert (zero false-positives).</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="ecosystem">
+        <h2>One ecosystem, many roles</h2>
+        <p style="color: var(--text-muted); line-height: 1.6; max-width: 700px; margin: 0 auto;">The Thorium platform was designed to transparently and securely connect companies with independent experts via smart contracts, without the need to fully trust third parties.</p>
+        
+        <div class="roles-grid">
+            <div class="role-pill">👨‍💻 Internal Admin</div>
+            <div class="role-pill">🕵️ SOC Freelancer</div>
+            <div class="role-pill">🏢 MSSP Agency</div>
+            <div class="role-pill">📋 NIS2 Auditor</div>
+            <div class="role-pill">⚖️ Insurance Adjuster</div>
+        </div>
+    </div>
+
+    <script>
+        // Simple hover interaction enhancement
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                card.style.setProperty('--x', `${x}px`);
+                card.style.setProperty('--y', `${y}px`);
+            });
+        });
+    </script>
+</body>
+</html>

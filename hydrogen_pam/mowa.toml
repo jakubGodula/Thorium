@@ -1,0 +1,19 @@
+[projekt]
+nazwa = "Hydrogen"
+wersja = "0.1.0"
+autor = "Jakub Godula"
+opis = "Moduł logowania PAM i GUI autoryzacji sprzętowej w języku Mowa"
+
+[kompilacja]
+punkt_wejscia = "hydrogen.mowa"
+typ = "gui"  # Deklaruje, że ten moduł potrzebuje własnego okna GUI do komunikacji z użytkownikiem
+optymalizacja = "wydajnosc"
+
+[zaleznosci]
+sui = "1.0"
+krypto = "1.0"
+
+[natywne_rozszerzenia]
+# Twarde linkowanie biblioteki PAM skompilowanej w Rust
+# Zapewnia to dwukierunkową komunikację z jądrem Linuksa
+pam_hydrogen = { sciezka = "target/release/libpam_hydrogen.so" }
