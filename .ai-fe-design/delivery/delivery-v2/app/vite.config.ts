@@ -5,5 +5,7 @@ import { svelte } from '@sveltejs/vite-plugin-svelte'
 export default defineConfig({
   base: './',
   plugins: [svelte()],
-  server: { port: 5173 },
+  // allow tunnels (loca.lt / trycloudflare / ngrok) to reach dev+preview servers
+  server: { port: 5173, host: true, allowedHosts: true },
+  preview: { port: 5173, host: true, allowedHosts: true },
 })

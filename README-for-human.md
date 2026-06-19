@@ -61,15 +61,18 @@ npm run demo          # app on http://localhost:5173  (+ Prism mock on :4010)
 - **Living mocks:** the Prism mock serves the agent + Sui-event contract; the CC\*
   scenario also runs deterministically client-side.
 
-## Deploy (remote) — live URL
+## Deploy (remote)
 - **Remote (GitHub Pages, auto-deploy):** **https://jakubgodula.github.io/Thorium/**
-  (CC* deep-link: `…/Thorium/?cc=1`). Published by GitHub Actions on push (FE
-  **delivery-v2**). See [`README-deployment.md`](./README-deployment.md).
+  (CC* deep-link: `…/Thorium/?cc=1`), published by GitHub Actions (FE
+  **delivery-v2**). ⚠️ **Not live yet:** the repo is **private**, so Pages must be
+  enabled once (GitHub Pro, or publish from a public repo). The workflow +
+  `gh-pages` branch are ready and the build is verified to serve over a public URL —
+  it'll go live the moment Pages is allowed. One click, no code change.
 - **IPFS / any static host:** `npm run build` → host `dist/` (IPFS-safe: `base:'./'`,
   hash routing) or `ipfs add -r dist`.
 
-> Live-URL status (whether Pages has finished its first build/enablement) is tracked
-> in [`.ai-fe-design/ai_internal_audit_log/`](./.ai-fe-design/ai_internal_audit_log/).
+> Honest live-status + how to flip it on:
+> [`.ai-fe-design/ai_internal_audit_log/STATUS.md`](./.ai-fe-design/ai_internal_audit_log/STATUS.md).
 
 ---
 

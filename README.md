@@ -1,5 +1,10 @@
 # Thorium XDR
 
+> ### 🔴 LIVE DEMO (public, verified): **https://roller-flag-smtp-landscape.trycloudflare.com**
+> CC* alert: **https://roller-flag-smtp-landscape.trycloudflare.com/?cc=1** · scope **Alfa** ·
+> details + refresh in [`LIVE-DEMO.md`](./LIVE-DEMO.md). *(Ephemeral Cloudflare tunnel —
+> if down, `bash .ai-fe-design/delivery/delivery-v3/serve-public.sh`.)*
+
 A **Web3-native Extended Detection & Response (XDR)** platform: eBPF endpoint
 agents (written in the **Mowa** language) whose registry, incidents, telemetry, and
 policies live **on the Sui blockchain** (package
@@ -41,8 +46,13 @@ models, $THOR/DAO, compliance, MSSP, module catalog). Human guide:
 The build is static and IPFS-safe (`base:'./'`, hash routing). Deployment is
 **versioned** (`delivery-v1`, `delivery-v2`, …) — see
 [`README-deployment.md`](./README-deployment.md).
-- **Remote (auto, delivery-v2):** GitHub Actions publishes to **GitHub Pages** →
-  **https://jakubgodula.github.io/Thorium/** (`?cc=1` for the CC* alert).
+- **Remote (auto, delivery-v2):** GitHub Actions deploys to **GitHub Pages** →
+  **https://jakubgodula.github.io/Thorium/** (`?cc=1`). ⚠️ **Pending one-time
+  enablement** — the repo is private, so Pages needs Pro (or a public repo); the
+  workflow + `gh-pages` branch are in place to publish the moment it's allowed. The
+  build is verified to serve over a public URL. See
+  [`README-deployment.md`](./README-deployment.md) +
+  [`.ai-fe-design/ai_internal_audit_log/STATUS.md`](./.ai-fe-design/ai_internal_audit_log/STATUS.md).
 - **IPFS / any static host:** `npm run build` → host `dist/` or `ipfs add -r dist`.
 
 ### ⭐ The Critical Demo Case (CC*) — must be flawless
