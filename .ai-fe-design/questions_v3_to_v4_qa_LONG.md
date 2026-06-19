@@ -265,3 +265,104 @@ adapter.ts structure · per-row `decryptedText`+spinner · `$derived connectCmd`
 `onDestroy` cleanup · grey connected sparkline · Claude-Code modal (build on it) ·
 MSSP tenant cycling · ⌘K palette (autofocus + Escape) · invite token `inv_8Qm4…` ·
 NOT-OK logs panel. **(Carry this list into every future ADR's "consequences".)**
+
+---
+
+# Part N — THE FINAL ITERATION concerns (the prompt's CONTENT 1–10)
+
+## N1 🔴 Is this the single most important rule, every iteration?
+Confirm the priority order is permanent and overrides everything:
+> A) `input/answers.md` ⇒ must-have, the **first principle**, always most important in
+> the current iteration — **follow regardless.**
+> B) **CC\*** Demo requirements — in the context of A).
+> C) prior docs / **the Sui hackathon contract** / existing codebase — **optional**;
+> decide; always in the context of A) then B).
+**Answer:** _<!-- confirm / amend -->_
+
+## N2 🟡 CC* definition consistency — does the demo match the spec & answers?
+Cross-check (my analysis in `FINAL-ITERATION-STEPS/03-assessment.md`): the CC* path in
+`input/DEMO.md` vs the shipped vYY+1 build vs `input/answers.md` is broadly aligned, but
+these need confirmation (≤15):
+1. **"Observed pod"** — `DEMO.md` says generic pod; `answers.md C2` says K8s (Lithium,
+   non-functional UI). The build shows `prod-eu1/prod/edge` namespace columns. Is the K8s
+   framing correct for the demo, or revert to generic host? **A:** _<!-- -->_
+2. **Attack vector** — kernel exploit *and/or* DDoS? The build shows kernel exploit
+   (`curl|bash`). Keep kernel-only, or also show a DDoS signal? **A:** _<!-- -->_
+3. **"Healthy → Sui interacts"** — is showing `AgentRegistered`+`TelemetryReported` in
+   Chain Activity sufficient as "Sui contract interacts", or do you want a visible
+   write-tx animation? **A:** _<!-- -->_
+4. **"NOT WORTHY"** — `is_active=false` + Isolated badge. Is that the exact on-chain
+   semantic, or a distinct `worthiness` field on `AgentIdentity`? **A:** _<!-- -->_
+5. **Auto-isolation timing** — the "⚡ 2s" claim: is 2s the real target SLA, or
+   illustrative? **A:** _<!-- -->_
+6. **Alert presentation** — confirmed #1 banner→drawer (answers C3). Final for the demo? **A:** _<!-- -->_
+7. **Response actions** — all placeholders (answers I19). Confirm none are live tomorrow. **A:** _<!-- -->_
+8. **Who triggers the demo** — presenter clicks "Run CC*", or autoplay/booth, or both? **A:** _<!-- -->_
+9. **Second pod (ws-07 lateral)** — keep the background lateral-movement incident, or
+   focus solely on alma9-edge-01? **A:** _<!-- -->_
+10. **Evidence on Walrus** — should the demo show a real frozen-to-Walrus action, or is
+    the sealed-row mock enough (see G-R1-2)? **A:** _<!-- -->_
+
+## N3 🟡 Was the Alfa/Beta scope precisely clarified?
+> **Alfa** — only the critical part of the app, Defender-like, Walrus look & feel,
+> ELK/Datadog capability, blockchain domain.
+> **Beta** — Alfa **+** the two big files (`roadmap_en.html`, `presentation_en.html`).
+The shipped build is "Alfa + Beta-as-mock surfaces" (per answers Part 3). Confirm: is the
+demo's scope **Alfa-with-mock-Beta-tabs** the intended final scope, or pure Alfa, or
+fully-implemented Beta? Which surfaces (if any) cross the line to "real" for tomorrow? **A:** _<!-- -->_
+
+## N4 🔴 Is the last deployment fit for the demo tomorrow? What must improve?
+My take is in `FINAL-ITERATION-STEPS/03-assessment.md`. Top must-fix-before-demo (from
+CR-2): **J-F4-1 tree→drawer**, **J-F4-2 Alerts Ack**, **G-R1-6 Mute=reset footgun**,
+**H-N2-3 demo dwell too fast**, **G-R1-7 copy-doesn't-copy**, **J-F4-3 dead Wallet
+button**, **H-N2-1 `.cards` sparse layout**. Confirm priority / add/remove. **A:** _<!-- -->_
+
+## N5 🟡 UX & quality of UI interaction — good enough?
+Beyond the CR-2 interaction gaps (Part J): is the overall interaction model
+(left-rail + CC* drawer + ⌘K) the right one, or do you want the Part-4 alternative CC*
+presentations (war-room takeover / map beacon)? Any specific screen that feels weak? **A:** _<!-- -->_
+
+## N6 🟡 Mobile / responsive / "advanced enough" / good-looking?
+Current build is **desktop-first 1280px+** (answer I18); no mobile/responsive work; the
+232px rail + content reflows but isn't tested <1100px (CR L-B4, H-N2-1). For tomorrow:
+is desktop-only acceptable, or do you need tablet/mobile? Is the visual bar (dark SOC,
+Stripe-grade alert) sufficient, or push further (Tailwind+ECharts, ADR-0002/0003)? **A:** _<!-- -->_
+
+## N7 🟡 Mock backend — is its scope familiar & integration-ready? (≤15)
+**Important for tomorrow's real/mock backend integration.** Today the demo reads
+**client-side fixtures** (`scenario.ts`); the Prism mock (`demo-gen/gen-v1/openapi`) is
+defined but **not run** in the deployed app; the adapter (`lib/adapter.ts`) is the seam.
+Please confirm:
+1. Tomorrow: integrate **real** backend, the **Prism** OpenAPI mock, or a **new** mock? **A:** _<!-- -->_
+2. Is the **OpenAPI contract** (`thorium-xdr.openapi.yaml`) the agreed shape, or will the
+   real backend differ? (Polish wire keys — Q-6 still open.) **A:** _<!-- -->_
+3. **WS endpoint + message schema** (G-R1-1 / L-A2 / P2) — provide it. **A:** _<!-- -->_
+4. **Sui RPC URL** (L-A1) + which events the FE should `queryEvents`. **A:** _<!-- -->_
+5. **Walrus** — real gateway + real blob digests (G-R1-2), or keep sealed-mock? **A:** _<!-- -->_
+6. **Auth** — does the backend expect a wallet-signed session, an API key, or open
+   (public contracts)? **A:** _<!-- -->_
+7. Is the mock backend expected to be **secure** (authn/z, CORS, rate-limit) for a public
+   demo, or is it throwaway/local-only? **A:** _<!-- -->_
+8. Is it **configurable enough** via `config.json` (`agentApiBase/suiRpcUrl/wsUrl/
+   walrusGateway/mock`), or are more knobs needed (env, per-tenant)? **A:** _<!-- -->_
+9. Should the demo **degrade gracefully** when the backend is down (offline-lockbar +
+   stale data — see I-M3-6/J-F4-6), or hard-fail? **A:** _<!-- -->_
+10. Who owns the backend contract tomorrow (you / a teammate / me)? Where's its repo? **A:** _<!-- -->_
+
+## N8 🟢 Are the README, audit logs, and namings OK?
+My review in `03-assessment.md`. Specifically: are the version names clear (design
+v1/v2/v3 · deployments vX/vX+1/vYY/vYY+1 · delivery-v1/v2/v3 · gen-v1/gen-v2)? Is
+`.ai-fe-design/` discoverable? Anything to rename before the colleague arrives? **A:** _<!-- -->_
+
+## N9 🟢 Can a colleague locally generate the frontend? Similar to deployed history?
+The path is `delivery/ITERATION-RUNBOOK.md` + `demo-gen/gen-v2/` (skill `/fe-demo-gen`).
+A local `npm run build && npx vite preview` of `delivery-v2/app` (the tracked copy)
+reproduces the **vYY+1** build (it's the synced source). Confirm this is acceptable, or
+do you want a one-command `make demo`? **A:** _<!-- -->_
+
+## N10 🟢 Can the colleague find things in <1 minute?
+Self-assessed in `03-assessment.md` (a) deployments → `deployments.md` + `LIVE-DEMO.md`
+(yes) · (b) generate FE from design → RUNBOOK/gen-v2 (yes; reproduces vYY+1) · (c) read
+skills/procedures, AI-friendly context → `AGENTS.md`+`ITERATION-RUNBOOK.md`+`demo-gen`
+(yes) · (d) audit/logs/quality → `ai_internal_audit_log/`+ADRs (yes) · (e) alignment &
+best deployment → my answer in the assessment. **Confirm or correct each. A:** _<!-- -->_
