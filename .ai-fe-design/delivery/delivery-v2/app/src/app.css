@@ -188,3 +188,24 @@ main{display:flex;flex-direction:column;min-width:0}
 .mini{font-size:11px;font-weight:600;color:var(--accent);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);border-radius:7px;padding:4px 9px;cursor:pointer}
 .cmd{background:#05080f;border:1px solid var(--border-strong);border-radius:9px;padding:12px 14px;font-family:var(--mono);font-size:12px;color:#9be7ff;white-space:pre-wrap;margin:6px 0 0}
 .progress{left:252px}
+
+/* ── CR-1 fixes: logs · active tree node · modal ── */
+.logs{padding:10px 14px;display:flex;flex-direction:column;gap:2px}
+.log{font-size:12px;padding:3px 0 3px 8px;border-left:2px solid transparent}
+.log.l-crit{border-color:var(--crit);color:#fecaca}
+.log.l-warn{border-color:var(--warn);color:#fde68a}
+.log.l-ok{border-color:var(--ok);color:var(--text-1)}
+.p-crit{border-color:rgba(239,68,68,.4);box-shadow:0 0 16px rgba(239,68,68,.1)}
+.t-active{background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.5);display:flex;align-items:center;gap:8px}
+.t-active .pulse{width:8px;height:8px}
+.modal-bg{position:fixed;inset:0;background:rgba(5,8,15,.62);backdrop-filter:blur(3px);display:grid;place-items:center;z-index:200}
+.modal{width:min(560px,92vw);background:var(--bg-1);border:1px solid var(--border-strong);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);animation:slidein .3s ease;max-height:86vh;overflow:auto}
+.modal .head{display:flex;align-items:center;gap:10px;padding:16px;border-bottom:1px solid var(--border)}
+.modal .body{padding:16px}
+/* ⌘K palette (vYY+1 experiment) */
+.palette{width:min(560px,92vw);margin-top:12vh;align-self:start;background:var(--bg-1);border:1px solid var(--border-strong);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.6);overflow:hidden;animation:slidein .25s ease}
+.pal-in{width:100%;background:var(--bg-2);border:none;border-bottom:1px solid var(--border);color:var(--text-0);font-size:15px;padding:16px;outline:none}
+.pal-list{max-height:340px;overflow:auto;padding:6px}
+.pal-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text-1);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer}
+.pal-item:hover{background:rgba(56,189,248,.12);color:var(--text-0)}
+.pal-empty{padding:14px;color:var(--text-2);font-size:13px}

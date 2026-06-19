@@ -1,29 +1,51 @@
 <script lang="ts">
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import {
     type Phase, type AppConfig, PHASES, fleet, observedPod, podSpark, timeline,
     responseActions, loadConfig, incidentTree, personas, modules, trustBadges,
-    auditTrail, integrations, threatIntel,
+    auditTrail, integrations, threatIntel, recentLogs, inviteToken,
   } from './lib/scenario'
+  import { connectLive, fetchWalrusBlob, type LiveEvent } from './lib/adapter'
 
   let tab = $state('overview')
   let phase = $state<Phase>('idle')
   let drawerOpen = $state(false)
   let autoplay = $state(false)
   let offline = $state(false)
-  let tenant = $state('Acme Corp')
+  const TENANTS = ['Acme Corp', 'Globex MSSP', 'Initech', 'Umbrella K8s']
+  let tenantIx = $state(0)
+  const tenant = $derived(TENANTS[tenantIx])
+  let claudeModal = $state(false)
+  // EXPERIMENT (vYY+1): ⌘K command palette (answer I17)
+  let palette = $state(false)
+  let paletteQ = $state('')
   let toast = $state('')
   let cfg = $state<AppConfig>({ scope: 'alfa', network: 'testnet', packageId: '0x0cc3…91af', mock: true })
 
+  let disconnect: () => void = () => {}
   onMount(async () => {
     cfg = await loadConfig()
     const q = new URLSearchParams(location.search)
     if (q.has('cc')) { phase = 'isolated'; drawerOpen = true }
     if (q.has('demo')) { autoplay = true; runScenario() }
-    // TODO(live, answer I2): when cfg.wsUrl is set, open a WebSocket here and feed
-    // events into phase/telemetry/incident state instead of the client-side stepper.
-    // const ws = new WebSocket(cfg.wsUrl); ws.onmessage = e => applyEvent(JSON.parse(e.data))
+    // CR-1 A-2: live WS feed wired through the adapter boundary (no-op until cfg.wsUrl)
+    disconnect = connectLive(cfg, applyLiveEvent)
+    window.addEventListener('keydown', onKey)
   })
+  function onKey(e: KeyboardEvent) {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); palette = !palette; paletteQ = '' }
+    else if (e.key === 'Escape') { palette = false; claudeModal = false }
+  }
+  const paletteCmds = $derived([
+    { label: 'Run CC* scenario', run: () => runScenario() },
+    { label: 'Toggle Demo mode', run: () => toggleAutoplay() },
+    ...NAV.flatMap(g => g.items.map(it => ({ label: `Go: ${g.group} › ${it.label}`, run: () => (tab = it.id) }))),
+  ].filter(c => c.label.toLowerCase().includes(paletteQ.toLowerCase())))
+  function runCmd(run: () => void) { run(); palette = false }
+  // CR-1 A-2: concrete receiver for live events (schema = transition Q P2)
+  function applyLiveEvent(_e: LiveEvent) { /* TODO(live): drive phase/telemetry/incidents */ }
+  // CR-1 Q-4: clean up timer + WS on destroy (safe once a router is added)
+  onDestroy(() => { if (timer) clearTimeout(timer); disconnect(); window.removeEventListener('keydown', onKey) })
 
   const pod = $derived(observedPod(phase))
   const spark = $derived(podSpark(phase))
@@ -50,9 +72,18 @@
   function toggleAutoplay() { autoplay = !autoplay; if (autoplay) runScenario(); else reset() }
   function note(l: string) { toast = `${l} — mock / coming soon`; setTimeout(() => (toast = ''), 2400) }
 
-  let decrypted = $state(false)
-  const connectCmd = `curl -fsSL https://${cfg.unstoppableDomain ?? 'thorium.crypto'}/agent | sh -s -- \\
-  --register 0x0cc3…91af --invite TH-INVITE-9F2A-MOCK --owner $(whoami)`
+  // CR-1 Q-3: per-row decrypt state (not a single global flag) · A-4: real fetch
+  let decryptedText = $state<Record<string, string>>({})
+  let decrypting = $state('')
+  async function decryptRow(blobId: string) {
+    decrypting = blobId
+    decryptedText = { ...decryptedText, [blobId]: await fetchWalrusBlob(cfg, blobId) }
+    decrypting = ''
+    note('Walrus/Seal browser decrypt')
+  }
+  // CR-1 Q-2: $derived so config domain/token apply reactively after config.json loads
+  const connectCmd = $derived(`curl -fsSL https://${cfg.unstoppableDomain ?? 'thorium.crypto'}/agent | sh -s -- \\
+  --register ${cfg.packageId.slice(0, 10)}… --invite ${inviteToken} --owner $(whoami)`)
 
   const NAV: { group: string; items: { id: string; label: string; tag?: string }[] }[] = [
     { group: 'Monitor', items: [
@@ -92,7 +123,7 @@
   <main>
     <div class="topbar">
       <div class="chip"><span class="dot"></span> Sui {cfg.network} · <span class="mono">{cfg.packageId.slice(0,8)}…</span></div>
-      <button class="chip btn-chip" onclick={() => note('MSSP tenant switch')} title="MSSP multi-tenant (mock)">🏢 {tenant} ▾</button>
+      <button class="chip btn-chip" onclick={() => { tenantIx = (tenantIx + 1) % TENANTS.length }} title="MSSP multi-tenant (mock)">🏢 {tenant} ▾ <span class="tag">mock</span></button>
       <div class="grow"></div>
       <button class="ghost" class:on={offline} onclick={() => { offline = !offline; if(offline) note('Offline Lockdown engaged') }}>{offline ? '🔒 Lockdown' : '◍ Online'}</button>
       <button class="ghost">Connect Wallet</button>
@@ -147,17 +178,19 @@
             <div class="section-label">Live Web Terminal (DFIR)</div>
             <button class="term" onclick={() => note('Live Web Terminal')}><span class="mono">root@alma9-edge-01:~# _</span><span class="tag">mock</span></button>
             <div class="section-label">Response — recommended actions</div>
-            <div class="actions">{#each responseActions as a}<button class="resp" onclick={() => note(a.l)}><span class="i">{a.i}</span><span class="l">{a.l}</span><span class="soon">Coming soon</span></button>{/each}</div>
+            <div class="actions">{#each responseActions as a}<button class="resp" onclick={() => a.l.includes('Claude Code') ? (claudeModal = true) : note(a.l)}><span class="i">{a.i}</span><span class="l">{a.l}</span><span class="soon">{a.l.includes('Claude Code') ? 'preview' : 'Coming soon'}</span></button>{/each}</div>
           </div>
         </div>{/if}
       </div>
 
     {:else if tab === 'telemetry'}
-      <div class="panel"><h3>Fleet Telemetry — cpu / ram / disk (event-sourced)</h3>
+      <div class="panel"><h3>Fleet Telemetry — cpu / ram / disk (event-sourced) <span class="tag">{cfg.wsUrl ? 'WS' : 'polling'}</span></h3>
         <table><thead><tr><th>Pod</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Trend</th></tr></thead><tbody>
         {#if pod}<tr class:row-bad={compromised}><td><b>{pod.hostname}</b></td><td class="mono">{pod.cpu}%</td><td class="mono">{pod.ram}%</td><td class="mono">{pod.disk}%</td><td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points={spark.points} fill="none" stroke={spark.color} stroke-width="2"/></svg></td></tr>{/if}
         {#each others as o}<tr><td>{o.hostname}</td><td class="mono">{o.cpu}%</td><td class="mono">{o.ram}%</td><td class="mono">{o.disk}%</td><td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points="0,14 20,13 40,15 60,12 80,13 100,11 120,12" fill="none" stroke="#22c55e" stroke-width="2"/></svg></td></tr>{/each}
         </tbody></table></div>
+      <div class="panel" class:p-crit={compromised}><h3>Recent logs — alma9-edge-01 {#if compromised}<span class="badge b-bad">NOT OK</span>{/if}</h3>
+        <div class="logs">{#each recentLogs(phase) as l}<div class="log l-{l.lvl}"><span class="mono dim">{l.t}</span> <span class="mono">{l.msg}</span></div>{/each}</div></div>
 
     {:else if tab === 'chain'}
       <div class="panel"><h3>Chain Activity — on-chain events · pkg <span class="mono dim">{cfg.packageId.slice(0,8)}…</span> <span class="tag">{cfg.wsUrl ? 'WS' : 'polling'}</span></h3>
@@ -172,7 +205,8 @@
     {:else if tab === 'incidents'}
       <div class="panel"><h3>Incidents — correlation tree (kill-chain grouping)</h3>
         <div class="tree">{#each incidentTree as inc}
-          <div class="t-root"><span class="badge {sevCls[inc.sev]}">{inc.sev}</span> <b>{inc.id}</b> · {inc.title}</div>
+          {@const live = inc.id === 'INC-991' && compromised}
+          <div class="t-root" class:t-active={live}>{#if live}<span class="pulse"></span>{/if}<span class="badge {sevCls[inc.sev]}">{inc.sev}</span> <b>{inc.id}</b> · {inc.title} <span class="mono dim">({inc.children.length} correlated)</span></div>
           {#each inc.children as c}<div class="t-child"><span class="badge {sevCls[c.sev]}">{c.sev}</span> {c.title} <span class="mono acc">{c.tx}</span></div>{/each}
         {/each}</div></div>
 
@@ -192,11 +226,12 @@
         </div></div>
 
     {:else if tab === 'vulns'}
-      <div class="panel"><h3>🦭 Vulnerability Registry — Seal-encrypted (Walrus)</h3>
-        <table><thead><tr><th>Pod</th><th>CVE</th><th>Package</th><th>Severity</th><th>Evidence (browser decrypt)</th></tr></thead><tbody>
-        <tr class:row-bad={compromised}><td>alma9-edge-01</td><td class="mono">CVE-2025-{compromised ? '31337' : '0991'}</td><td class="mono">glibc</td><td><span class="badge {compromised ? 'b-bad' : 'b-pending'}">{compromised ? 'CRITICAL' : 'MEDIUM'}</span></td>
-          <td>{#if decrypted}<span class="mono acc">walrus:blob:7f3a… · decrypted</span>{:else}<button class="mini" onclick={() => { decrypted = true; note('Seal browser decrypt') }}>🔒 Decrypt (Seal)</button>{/if}</td></tr>
-        <tr><td>db-02</td><td class="mono">CVE-2025-2048</td><td class="mono">openssl</td><td><span class="badge b-pending">HIGH</span></td><td><span class="badge b-ok">🔒 Sealed</span></td></tr>
+      <div class="panel"><h3>🦭 Vulnerability Registry — Seal-encrypted (Walrus) <span class="tag">browser decrypt</span></h3>
+        <table><thead><tr><th>Pod</th><th>CVE</th><th>Package</th><th>Severity</th><th>Evidence (Seal browser fetch+decrypt)</th></tr></thead><tbody>
+        {#each [{p:'alma9-edge-01',cve:compromised?'CVE-2025-31337':'CVE-2025-0991',pkg:'glibc',sev:compromised?'CRITICAL':'MEDIUM',cls:compromised?'b-bad':'b-pending',blob:'walrus:blob:7f3a',bad:compromised},{p:'db-02',cve:'CVE-2025-2048',pkg:'openssl',sev:'HIGH',cls:'b-pending',blob:'walrus:blob:9c1d',bad:false}] as r}
+          <tr class:row-bad={r.bad}><td>{r.p}</td><td class="mono">{r.cve}</td><td class="mono">{r.pkg}</td><td><span class="badge {r.cls}">{r.sev}</span></td>
+            <td>{#if decryptedText[r.blob]}<span class="mono acc">{decryptedText[r.blob]}</span>{:else if decrypting === r.blob}<span class="mono dim">decrypting…</span>{:else}<button class="mini" onclick={() => decryptRow(r.blob)}>🔒 Decrypt (Seal)</button>{/if}</td></tr>
+        {/each}
         </tbody></table></div>
 
     {:else if tab === 'threat'}
@@ -210,7 +245,7 @@
         <div class="pad"><p class="dim">Run this on the host/pod. It registers the agent to the public contract with a (mock) invitation token, then appears in the fleet as a Soulbound identity.</p>
           <pre class="cmd">{connectCmd}</pre>
           <button class="run" onclick={() => note('Copied connect command')}>Copy command</button>
-          <p class="dim" style="margin-top:14px">Public contracts only for now → the invitation token <span class="mono">TH-INVITE-9F2A-MOCK</span> is a mock. K8s example: target a namespace via <span class="mono">--k8s prod-eu1/prod/edge</span> (UI preview; not yet functional).</p>
+          <p class="dim" style="margin-top:14px">Invite token <span class="mono">{inviteToken}</span> <span class="tag">demo</span> — real tokens are issued by the invite contract (public contracts only for now). K8s example: target a namespace via <span class="mono">--k8s prod-eu1/prod/edge</span> (UI preview; not yet functional).</p>
         </div></div>
 
     {:else if tab === 'compliance'}
@@ -269,4 +304,36 @@
     <footer class="trust">Powered by <b>Thorium XDR</b> · Sui {cfg.network} · scope {cfg.scope} · demo (mock fixtures) · deploys to {cfg.unstoppableDomain ?? 'Unstoppable Domain'} (IPFS) · CC* critical path</footer>
   </main>
 </div>
+{#if claudeModal}
+  <div class="modal-bg" onclick={() => (claudeModal = false)} role="presentation">
+    <div class="modal" role="dialog" aria-label="AI agent response" onclick={(e) => e.stopPropagation()}>
+      <div class="head"><span style="font-size:18px">🤖</span><b>AI-agent response — Execute skill / Claude Code</b><button class="ghost" style="margin-left:auto" onclick={() => (claudeModal = false)}>✕</button></div>
+      <div class="body">
+        <p class="dim">Future integration: on a CRITICAL incident, Thorium hands the on-chain evidence to an AI agent (Claude Code) or an on-call engineer to triage &amp; remediate — closing the loop from detection to response.</p>
+        <pre class="cmd">thorium respond INC-991 \
+  --skill quarantine-and-rca \
+  --agent claude-code --context sui://0x9aBc…01 \
+  --notify oncall,slack</pre>
+        <div class="section-label">Would run</div>
+        <div class="actions">
+          <div class="resp"><span class="i">🧠</span><span class="l">Pull kill-chain + Walrus evidence</span><span class="soon">preview</span></div>
+          <div class="resp"><span class="i">🛠️</span><span class="l">Draft root-cause analysis + remediation PR</span><span class="soon">preview</span></div>
+          <div class="resp"><span class="i">📟</span><span class="l">Page on-call if not acked in 5m</span><span class="soon">preview</span></div>
+        </div>
+        <p class="dim" style="margin-top:10px;font-size:11px">Mock — no agent is invoked in this demo.</p>
+      </div>
+    </div>
+  </div>
+{/if}
+{#if palette}
+  <div class="modal-bg" onclick={() => (palette = false)} role="presentation">
+    <div class="palette" role="dialog" aria-label="Command palette" onclick={(e) => e.stopPropagation()}>
+      <input class="pal-in" placeholder="Type a command…  (⌘K)" bind:value={paletteQ} autofocus />
+      <div class="pal-list">
+        {#each paletteCmds.slice(0, 8) as c}<button class="pal-item" onclick={() => runCmd(c.run)}>{c.label}</button>{/each}
+        {#if paletteCmds.length === 0}<div class="pal-empty">No commands.</div>{/if}
+      </div>
+    </div>
+  </div>
+{/if}
 {#if toast}<div class="toast">{toast}</div>{/if}

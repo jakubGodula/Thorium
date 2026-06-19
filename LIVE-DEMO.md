@@ -5,8 +5,15 @@
 > resolve Cloudflare-tunnel hostnames** (intermittent NXDOMAIN). Below are URLs that
 > need **no flaky DNS**. Serving the **v2** (improved) Alfa build.
 
-## 🌐 vX+1 (latest) — public/remote, share with your friend
-### https://4ae4-213-134-178-35.ngrok-free.app   ·   CC*: …/?cc=1
+## 🌐 vYY+1 (latest) — public/remote, share with your friend
+### https://6b3e-213-134-178-35.ngrok-free.app   ·   CC*: …/?cc=1   ·   press ⌘K
+*(CR-1 fixes: NOT-OK logs, real Walrus decrypt, adapter seam, incident-tree highlight,
+AI-agent modal + the ⌘K command palette. vYY CR-fix build on LAN :5174.)*
+
+<details><summary>older URL</summary>
+
+vX+1 was https://4ae4-213-134-178-35.ngrok-free.app   ·   CC*: …/?cc=1
+</details>
 - **ngrok** (resolves on your router 192.168.0.1 → 18.158.249.75; HTTP 200 verified).
 - One-time **"You are about to visit…" page → click "Visit Site"**, then it loads.
 - New left-rail SOC console: Monitor / Detect / Respond / Platform — incidents tree,

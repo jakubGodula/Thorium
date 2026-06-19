@@ -346,3 +346,29 @@ Walrus decrypt + K8s preview + WS markers; ADR-0008) and **deployed live** at
 `https://4ae4-213-134-178-35.ngrok-free.app`. Added `delivery/ITERATION-RUNBOOK.md`
 (repeatable vN→vN+1 steps) + `questions_v3_to_v4_qa.md` (concise) +
 `ai_internal_audit_log` updates.
+
+## Turn 16 — (CR-1 round: address code review; 2 deployments; short+long transition Q&A)
+```
+that is great. My see the output of the other code review concerns documented in:
+/Users/macbook/work/Thorium/.ai-fe-design/input/cr/cr-1.md
+please follow this code review remarks. ambiguities and things to consider output in v3 to v4 or v4 to v5 (… vXX->vYY transition … with a vXX->vYY transition questions.md file that the user will answer at the end …)
+Now, in this iteration we will do two deployments:
+a) vXX->vYY transition with all these ambiguities … to vXX->vYY transition questions.md file
+b) vXX->vYY+1 deployment as allowing you to experiment with other improvements
+but keep in this iteration the max amount of deployments 2. and document everything. and make deployments prominent
+vXX->vYY transition CORE RULES:
+A) the same as in the previous chat … A) input/answers.md => must-have, first principle … B) (CC*) Demo requirements … C) previous docs / SUI hackathon contract / existing code base - optional, decide …
+B) the new context … input/cr/cr-1.md all these ambiguities must be addressed and some … document in adr.md. some not … put into … vXX->vYY transition questions.md
+… you do not ask me anything … Any ambiguity is put ultimately in a longer vXX->vYY transition questions.md file. The shorter one may contain a particular ambiguity or not based on relevance
+Document verbatim all this conversation in init folder
+The output of this command: a) no clarifying questions b) a few deployments c) exactly one document vXX->vYY transition questions.md file in two versions: i) shorter ii) as long as needed to be precise
+I expect you to analyze it very carefully and spend 10-25 min …
+```
+**Outcome (Turn 16):** read CR-1 (Sonnet 4.6). Split remarks → **fixed now** (ADR-0009,
+vYY build): adapter seam (`lib/adapter.ts`), WS markers, NOT-OK logs panel, incident-
+tree highlight, per-row Walrus real fetch+spinner, realistic invite token, reactive
+`connectCmd`, `onDestroy` cleanup, MSSP tenant cycle, AI-agent (Claude Code) modal.
+**Experiment** (vYY+1): ⌘K command palette. **Two deployments:** vYY (CR-fix, LAN
+:5174) + vYY+1 (ngrok `https://6b3e-213-134-178-35.ngrok-free.app`). Ambiguities → two
+transition Q&A files: `questions_v3_to_v4_qa.md` (SHORT) + `_LONG.md` (exhaustive,
+P1–P6 + all CR items).

@@ -89,4 +89,29 @@ deployment success : url https://4ae4-213-134-178-35.ngrok-free.app
 | Ver | URL | State |
 |---|---|---|
 | vX (v2) | http://192.168.0.251:5173 (LAN) · ngrok history `…c0e2…`/`…survival…`/`…roller…` | archived |
-| **vX+1** | **https://4ae4-213-134-178-35.ngrok-free.app** | **live (latest)** |
+| **vX+1** | **https://4ae4-213-134-178-35.ngrok-free.app** | superseded |
+
+---
+
+## CR-1 round (2026-06-20) — vYY (CR-fix) + vYY+1 (experiment)
+
+Driven by `input/cr/cr-1.md` (ADR-0009). Two deployments (the max for this round):
+
+**vYY (CR-fix)** — adapter seam, WS markers, NOT-OK logs panel, incident-tree
+highlight, per-row Walrus decrypt + real fetch, realistic invite token, reactive
+`connectCmd`, `onDestroy` cleanup, MSSP tenant cycle, Claude-Code modal.
+- LAN: **http://192.168.0.251:5174** (`/?cc=1`) · proof `demo-gen/gen-v2/mockup/vYY-cr-fix-cc.png`.
+
+**vYY+1 (experiment)** — vYY + **⌘K command palette** (answer I17).
+
+deployment success : url https://6b3e-213-134-178-35.ngrok-free.app
+
+- CC*: https://6b3e-213-134-178-35.ngrok-free.app/?cc=1 · ngrok (resolves on the user's
+  router; HTTP 200 verified) · LAN http://192.168.0.251:5175 · proof
+  `demo-gen/gen-v2/mockup/vYY1-experiment-cc.png`.
+
+### Links (this round)
+| Ver | URL | State |
+|---|---|---|
+| **vYY (CR-fix)** | http://192.168.0.251:5174 (LAN) | live |
+| **vYY+1 (⌘K)** | **https://6b3e-213-134-178-35.ngrok-free.app** | **live (latest)** |

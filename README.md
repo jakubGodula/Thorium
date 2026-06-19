@@ -1,12 +1,11 @@
 # Thorium XDR
 
-> ### 🔴 LIVE DEMO — **vX+1** (answers-driven; left-rail SOC + CC*)
-> - **Public (ngrok):** **https://4ae4-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(click the one-time "Visit Site")*
-> - **LAN (no DNS):** **http://192.168.0.251:5174** · **Local:** **http://localhost:5174**
-> - **vX (v2, archived):** http://192.168.0.251:5173 (kept reachable on LAN)
+> ### 🔴 LIVE DEMO — **vYY+1** (CR-1 fixes + ⌘K experiment)
+> - **Public (ngrok):** **https://6b3e-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(click the one-time "Visit Site"; press ⌘K)*
+> - **vYY (CR-fix), LAN:** **http://192.168.0.251:5174** · **vYY+1 LAN:** http://192.168.0.251:5175
 >
-> ⚠️ Don't use the old `*.trycloudflare.com` links — your router DNS doesn't resolve
-> them. Detail/refresh: [`LIVE-DEMO.md`](./LIVE-DEMO.md) · log:
+> ⚠️ Don't use the old `*.trycloudflare.com` links (router DNS). Detail/refresh:
+> [`LIVE-DEMO.md`](./LIVE-DEMO.md) · log:
 > [`deployments.md`](./.ai-fe-design/ai_internal_audit_log/deployments.md) · repeatable
 > steps: [`ITERATION-RUNBOOK.md`](./.ai-fe-design/delivery/ITERATION-RUNBOOK.md).
 

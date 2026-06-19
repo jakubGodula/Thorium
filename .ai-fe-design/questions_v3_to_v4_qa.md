@@ -1,50 +1,41 @@
-# Questions: v3 → v4 (concise)
+# Questions: v3 → v4 — **SHORT** (transition Q&A)
 
-> Deliberately short (~30% of the v2→v3 round). Only the **genuinely-open** items
-> after vX+1 (answers-driven build). Each: **Assumption** · **Answer:** (fill inline,
-> then save as `questions_v3_to_v4_qa_AUDIT.md` and run the
-> [`delivery/ITERATION-RUNBOOK.md`](./delivery/ITERATION-RUNBOOK.md) for v4).
-> Legend: 🔴 blocks · 🟡 shapes · 🟢 polish.
+> Concise transition set (≈30% of the v2→v3 round). The exhaustive companion is
+> [`questions_v3_to_v4_qa_LONG.md`](./questions_v3_to_v4_qa_LONG.md). Refreshed after
+> **CR-1** (`input/cr/cr-1.md`) + the vYY (CR-fix) / vYY+1 (⌘K) deployments. Answer
+> inline → save as `questions_v3_to_v4_qa_AUDIT.md` → run
+> [`delivery/ITERATION-RUNBOOK.md`](./delivery/ITERATION-RUNBOOK.md). 🔴 blocks · 🟡 shapes · 🟢 polish.
 
 ## Critical 🔴
-- **V1 — Live endpoints (flip mock→live).** You said you'd provide the Sui RPC URL
-  later (I1) and that WebSocket already exists (I2). **Provide:** `suiRpcUrl`,
-  `wsUrl`, agent host, `walrusGateway`. (Config keys + `TODO(live)` markers are
-  already in place.) **Answer:** _<!-- … -->_
-- **V2 — Durable public URL.** ngrok is ephemeral; trycloudflare is blocked by your
-  DNS. For a permanent link, pick: (a) make the repo **public** → GitHub Pages auto-
-  deploys, or (b) give **Unstoppable Domains + IPFS** access (your stated target,
-  I9/I10). **Answer:** _<!-- … -->_
-- **V3 — Which mock surfaces become REAL in v4?** vX+1 ships Compliance, Governance,
-  Integrations, Audit, MSSP, Personas, Threat-Intel, Modules as **mock**. Rank the
-  top 2–3 to implement for real next. **Answer:** _<!-- … -->_
+- **S1 — Durable public URL (CR D-1/D-3/P6).** ngrok is ephemeral; trycloudflare is
+  DNS-blocked on your router. Pick: (a) make the repo **public** → GitHub Pages
+  auto-deploys, or (b) give **Unstoppable Domains + IPFS** access (`thorium.crypto`?).
+  **Answer:** _<!-- … -->_
+- **S2 — Live profile in scope for v4? (CR A-1/P3, answer C5).** The adapter seam +
+  `TODO(live)` markers now exist. Wire `@mysten/sui.js` + the WS now, or stay mock?
+  **Answer:** _<!-- … -->_
+- **S3 — WebSocket message schema (CR A-2/P2).** You said the WS "is already
+  implemented" — **share the message shape / endpoint** so the receiver stubs become
+  real. **Answer:** _<!-- … -->_
 
 ## Important 🟡
-- **V4 — Tailwind + ECharts pass?** vX+1 uses ported theme CSS + SVG (ADR-0002/0003
-  deferred for build reliability). Do the real charting/Tailwind pass now? *Assumption:
-  yes, in v4.* **Answer:** _<!-- … -->_
-- **V5 — Incident tree:** you wanted "my version" (I3) — is the correlation-tree shape
-  right, or change grouping (by kill-chain stage / by pod / by tactic)? **Answer:** _<!-- … -->_
-- **V6 — CC\* UX-excellence pass** (Part-4 separate thread): run it now to push the
-  alert to best-in-class? *Assumption: separate thread, on request.* **Answer:** _<!-- … -->_
-- **V7 — Onboarding/invite (I12):** keep the mock invite token until the invite
-  contract ships, or wire a real `register_agent` PTB via wallet now? *Assumption:
-  mock until contract.* **Answer:** _<!-- … -->_
-- **V8 — Incident status storage (I14):** Walrus vs on-chain for real (demo uses
-  client-side). When do we move it? **Answer:** _<!-- … -->_
+- **S4 — `thorium.crypto` real? (CR A-8/P1).** Is that the actual registered UD
+  domain (used in footer/onboarding)? If not, give the correct one. **Answer:** _<!-- … -->_
+- **S5 — Existing incident tree (CR A-3/P4).** You said it's "partly implemented" —
+  point to that code, or does vYY's version supersede it? **Answer:** _<!-- … -->_
+- **S6 — Invite token format (CR A-7/P5).** vYY uses `inv_8Qm4Zr2Tn9Kx7Wb3Yc6Hf1Ld`
+  (`demo` tag). Good, or a specific real format? **Answer:** _<!-- … -->_
+- **S7 — Tailwind + ECharts now? (ADR-0002/0003).** Do the real charting/Tailwind
+  pass in v4? *Assumption: yes.* **Answer:** _<!-- … -->_
 
 ## Polish 🟢
-- **V9 — K8s example UI depth (C2):** current is a non-functional namespace/cluster
-  preview — add a container-escape kill-chain detail, or leave as preview? **Answer:** _<!-- … -->_
-- **V10 — Personas/RBAC:** still single-role (C1). Trigger the role switcher when Beta
-  starts? **Answer:** _<!-- … -->_
+- **S8 — Personas: top-level tab or under Platform? (CR A-6).** Currently under
+  Platform. **Answer:** _<!-- … -->_
+- **S9 — Which mock surface becomes REAL first?** (Compliance / Governance /
+  Integrations / Audit / Threat-Intel). Rank top 2. **Answer:** _<!-- … -->_
 
-## ▶ Prompt for the next agent (copy-paste)
-> Read `input/answers_v4.md` (when present), `input/DEMO.md`, `fe_design_v3.md`, the
-> ADRs, and **follow `delivery/ITERATION-RUNBOOK.md` step by step** to ship v4:
-> archive vX+1 → ingest answers → ADRs → build (interactive vs mock tiers; live =
-> config+markers) → deploy local+ngrok (verify via the user's resolver `192.168.0.1`,
-> never trycloudflare) → sync tracked copy → update design/deployments/README →
-> write `questions_v4_to_v5_qa.md` (≤50% length) → archive prompts → push with the
-> remote URL prominent in the last commit. English-only, IPFS-safe, token-cautious
-> (≤1–2 improve rounds). Don't ask — decide and document.
+## ▶ Next-agent prompt
+> Read `input/answers_v4.md` (if present) + the AUDIT of this file, then **follow
+> `delivery/ITERATION-RUNBOOK.md`** to ship v4 (archive → ADRs → build → deploy
+> ngrok+LAN verified via `192.168.0.1` → sync tracked copy → docs → next Q&A
+> short+long → prompts → push with the URL prominent). Don't ask — decide & document.
