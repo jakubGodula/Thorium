@@ -1,41 +1,42 @@
-# 🔴 LIVE DEMO — Thorium XDR (Alfa)
+# 🔴 LIVE DEMO — Thorium XDR (Alfa) — REACHABLE URLs
 
-Two verified public deployments (both live, unrestricted):
+> **Fix:** the earlier `*.trycloudflare.com` URL failed for you with
+> `ERR_NAME_NOT_RESOLVED` — your router's DNS (192.168.0.1) **does not reliably
+> resolve Cloudflare-tunnel hostnames** (intermittent NXDOMAIN). Below are URLs that
+> need **no flaky DNS**. Serving the **v2** (improved) Alfa build.
 
-## ▶ v2 (latest, recommended): https://survival-montana-duration-rachel.trycloudflare.com
-CC\* alert: **https://survival-montana-duration-rachel.trycloudflare.com/?cc=1**
-*(adds Demo-mode auto-loop, Talus AI + Vulnerabilities tabs, scenario progress, trust footer)*
+## ✅ Open this — guaranteed, no DNS, no interstitial
+### http://localhost:5173   ·   CC*: http://localhost:5173/?cc=1
+(you're on this Mac — this just works)
 
-## ▶ v1 (MVP / mockup): https://roller-flag-smtp-landscape.trycloudflare.com
-CC\* alert: **https://roller-flag-smtp-landscape.trycloudflare.com/?cc=1**
+### http://192.168.0.251:5173   ·   CC*: http://192.168.0.251:5173/?cc=1
+(LAN IP — reachable from any device on your network; it's an IP, so no DNS at all)
 
-- **Verified:** both return HTTP 200 over the public internet + the CC\* alert
-  rendered in a real browser through each public URL (screenshots:
-  [`public-v2-cc-alert.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-v2-cc-alert.png) /
-  [`public-cc-alert.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-cc-alert.png)).
-- **Unrestricted:** Cloudflare Quick Tunnel — no login, no interstitial, fully public
-  and clickable. Click **“▶ Run CC* scenario”** (or open the `?cc=1` link).
-- **Scope:** Version **Alfa** (focused SOC console + CC\*); CC\* runs on client-side
-  mock fixtures, so it works with no backend.
+> Verified rendering over the LAN IP (proof:
+> [`.ai-fe-design/demo-gen/gen-v2/mockup/public-reachable-cc.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-reachable-cc.png)).
 
-> ⚠️ **Ephemeral URL.** This is a Cloudflare Quick Tunnel (FE **delivery-v3**) — it
-> stays live only while the serving process runs, and the hostname is random per run.
-> If it's down, regenerate a fresh public URL in ~30s:
-> ```bash
-> bash .ai-fe-design/delivery/delivery-v3/serve-public.sh
-> ```
-> Then update this file with the new URL.
+## 🌐 Public/remote URL (resolves on your router; one-time warning)
+### https://c0e2-213-134-178-35.ngrok-free.app   ·   CC*: …/?cc=1
+- **ngrok** (resolves via your 192.168.0.1 → 18.158.249.75, HTTP 200 verified).
+- ngrok-free shows a **one-time "You are about to visit…" page — click "Visit Site"**,
+  then the demo loads. (That interstitial is ngrok's, not the app.)
 
-## Why not a permanent github.io URL?
-The repo `jakubGodula/Thorium` is **private**, so GitHub Pages can't serve it
-(the Actions deploy run failed; `…github.io/Thorium/` returns 404). The Pages
-pipeline (`delivery-v1` gh-pages branch + `delivery-v2` Actions) is in place and will
-publish to **https://jakubgodula.github.io/Thorium/** the moment the repo is made
-public or put on a plan with Pages for private repos — one setting, no code change.
-Full detail: [`.ai-fe-design/ai_internal_audit_log/STATUS.md`](./.ai-fe-design/ai_internal_audit_log/STATUS.md).
+## What you'll see (CC* — the critical path)
+Observed pod **alma9-edge-01**: connect → healthy → **kernel exploit** → anomaly 0.91
+→ **NOT WORTHY · auto-isolated** → top **Critical Incident banner** → **Incident
+Command** drawer (kill-chain + on-chain evidence + response actions). Click
+**▶ Run CC* scenario** or **◷ Demo mode** (auto-loop), or open any `?cc=1` link.
 
-## Run locally instead
+## If a URL is down (processes stopped)
+Re-serve + re-tunnel in ~20s:
 ```bash
 cd /Users/macbook/work/Thorium/.ignored/fe-demo/demo_designV2_genV2/app
-npm run demo     # http://localhost:5173  (+ Prism mock :4010)
+npx vite preview --port 5173 --outDir dist --host 0.0.0.0 &   # local + LAN
+ngrok http 5173                                               # fresh public URL
 ```
+
+## Why no permanent github.io URL?
+The repo is **private**, so GitHub Pages can't serve it (the Actions deploy run
+failed). Making it public or enabling Pages-for-private would give a durable
+`jakubgodula.github.io/Thorium/` — pipeline is ready (delivery-v1/v2). Detail:
+[`.ai-fe-design/ai_internal_audit_log/STATUS.md`](./.ai-fe-design/ai_internal_audit_log/STATUS.md).

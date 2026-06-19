@@ -1,11 +1,13 @@
 # Thorium XDR
 
-> ### 🔴 LIVE DEMO (public, verified) — scope **Alfa**
-> - **v2 (latest):** **https://survival-montana-duration-rachel.trycloudflare.com** · CC*: `…/?cc=1`
-> - **v1 (MVP):** **https://roller-flag-smtp-landscape.trycloudflare.com** · CC*: `…/?cc=1`
+> ### 🔴 LIVE DEMO (Alfa, v2 build) — **open one of these** (no flaky DNS)
+> - **Local:** **http://localhost:5173** · CC*: `http://localhost:5173/?cc=1`
+> - **LAN IP (no DNS):** **http://192.168.0.251:5173** · CC*: `…/?cc=1`
+> - **Public (ngrok):** **https://c0e2-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(click the one-time "Visit Site")*
 >
-> Details + refresh: [`LIVE-DEMO.md`](./LIVE-DEMO.md) · log: [`deployments.md`](./.ai-fe-design/ai_internal_audit_log/deployments.md).
-> *(Ephemeral Cloudflare tunnels — if down: `bash .ai-fe-design/delivery/delivery-v3/serve-public.sh`.)*
+> ⚠️ The earlier `*.trycloudflare.com` URLs failed for you (`ERR_NAME_NOT_RESOLVED`)
+> because your router DNS doesn't reliably resolve Cloudflare-tunnel hostnames. The
+> URLs above avoid that. Full detail + refresh: [`LIVE-DEMO.md`](./LIVE-DEMO.md).
 
 A **Web3-native Extended Detection & Response (XDR)** platform: eBPF endpoint
 agents (written in the **Mowa** language) whose registry, incidents, telemetry, and

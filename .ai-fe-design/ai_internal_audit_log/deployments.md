@@ -45,3 +45,23 @@ deployment success : url https://survival-montana-duration-rachel.trycloudflare.
 |---|---|---|
 | **v1** | https://roller-flag-smtp-landscape.trycloudflare.com | MVP / mockup (frozen) |
 | **v2** | https://survival-montana-duration-rachel.trycloudflare.com | improved (latest) |
+
+---
+
+## ❗ CORRECTION (2026-06-19, later) — trycloudflare unreachable for the user
+
+**Problem:** the user got `ERR_NAME_NOT_RESOLVED` on the trycloudflare URL. Root
+cause: the user's router DNS (`192.168.0.1`) does **not reliably resolve
+`*.trycloudflare.com`** (intermittent NXDOMAIN — likely tunnel-domain filtering /
+negative caching). My earlier verification used `1.1.1.1`, masking this. My mistake.
+
+**Fix — URLs the user can actually open (serving the v2 build):**
+| Type | URL | Notes |
+|---|---|---|
+| Local | http://localhost:5173 (`/?cc=1`) | same machine, no DNS |
+| **LAN IP** | **http://192.168.0.251:5173** (`/?cc=1`) | no DNS at all (it's an IP), no interstitial — **most reliable** |
+| Public | https://c0e2-213-134-178-35.ngrok-free.app (`/?cc=1`) | **ngrok** (updated 3.39.8, authtoken present). Resolves on the user's router (192.168.0.1 → 18.158.249.75), HTTP 200. One-time ngrok "Visit Site" warning. |
+
+Verified the LAN-IP URL renders the full v2 CC* demo in a browser
+(`demo-gen/gen-v2/mockup/public-reachable-cc.png`). Lesson logged: **verify reachable
+URLs against the *user's* resolver, not a public one.**
