@@ -66,10 +66,12 @@ NOT-OK telemetry/logs are clearly visible → a **prominent alert** drives respo
 ├── README.md                      ← you are here (the guide / flow)
 ├── AGENTS.md                      ← portable entrypoint for ANY model (read first)
 ├── fe_design_v1.md                ← v1 FE spec (history; frozen)
-├── fe_design_v2.md                ← (A) CURRENT spec = v1 + decisions
+├── fe_design_v2.md                ← v2 spec (history)
+├── fe_design_v3.md                ← (A) CURRENT spec = v2 + adopted assumptions (Alfa locked)
 ├── questions_v1_to_v2_qa.md       ← v1→v2 ORIGINAL questions (clean)
 ├── questions_v1_to_v2_qa_AUDIT.md ← v1→v2 ANSWERS (user's decisions, verbatim)
-├── questions_v2_to_v3_qa.md       ← (B) NEXT round: questions + assumptions; answer INLINE
+├── questions_v2_to_v3_qa.md       ← v2→v3 questions (clean) — answer INLINE to revise v3
+├── questions_v2_to_v3_qa_AUDIT.md ← v2→v3 "answers" = adopted v2 assumptions (no explicit answers given)
 ├── assumptions_v1.md              ← (C) assumptions + CONFIRMED on-chain data model
 ├── adr/                           ← Architecture Decision Records (Tailwind, charts, realtime…)
 ├── brand/                         ← suggested Thorium logo / favicon / palette
