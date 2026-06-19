@@ -366,3 +366,55 @@ Self-assessed in `03-assessment.md` (a) deployments → `deployments.md` + `LIVE
 skills/procedures, AI-friendly context → `AGENTS.md`+`ITERATION-RUNBOOK.md`+`demo-gen`
 (yes) · (d) audit/logs/quality → `ai_internal_audit_log/`+ADRs (yes) · (e) alignment &
 best deployment → my answer in the assessment. **Confirm or correct each. A:** _<!-- -->_
+
+---
+
+# Part O — Brand, theming & look-and-feel (PREFERENCE MATRIX)
+
+> The biggest subjective call left. Today's identity: dark SOC palette, **Thorium cyan
+> `#38bdf8` → Walrus mint `#5eead4`** gradient, shield+`Th`-atom mark
+> (`brand/thorium-mark.svg`), system font + JetBrains-Mono for hashes, left-rail IA, a
+> Stripe-style CC* banner→drawer. **Is that right — or should we regenerate the brand/
+> theme?**
+
+## O1 🟡 Preference matrix — rate each aspect
+For each row mark one: **Keep** · **Tweak** · **Regenerate** (+ a note).
+
+| # | Aspect | Keep | Tweak | Regenerate | Note |
+|---|---|---|---|---|---|
+| O-a | **Brand identity** (name mark, shield+Th atom, logo) | ☐ | ☐ | ☐ | |
+| O-b | **Color theme** (cyan→mint on deep navy) | ☐ | ☐ | ☐ | |
+| O-c | **Typography** (system UI + mono) | ☐ | ☐ | ☐ | |
+| O-d | **Overall look & feel / "alikeness"** | ☐ | ☐ | ☐ | |
+| O-e | **Density & layout** (left-rail SOC console) | ☐ | ☐ | ☐ | |
+| O-f | **CC\* alert styling** (banner→drawer) | ☐ | ☐ | ☐ | |
+| O-g | **Motion** (pulse, slide-in, glow) | ☐ | ☐ | ☐ | |
+
+## O2 🔴 Is the brand satisfactory, or generate a different one?
+Overall: **(a) satisfactory as-is** · **(b) generate alternative brand/theme options to
+choose from** · **(c) I have a specific brand to apply.** If (b): how many variants, and
+any direction (more web3-neon / more enterprise-muted / more Walrus-mint / a light
+theme)? **A:** _<!-- -->_
+
+## O3 🟡 Precise look-and-feel questions
+1. **Blockchain domain & language** — does the UI *feel* on-chain enough (tx digests,
+   object IDs, "on-chain", wallet-first)? Should it lean harder into a **wallet /
+   Binance / web3-exchange** idiom (wallet-connect front-and-centre, token balances,
+   network pills, gas), or stay SOC-tool-first with chain as a layer? **A:** _<!-- -->_
+2. **ELK / Kibana alikeness** — is the data-density / dashboard feel close to ELK, and is
+   that the right reference? Too dense, too sparse, or right? **A:** _<!-- -->_
+3. **Windows / Microsoft Defender alikeness** — is the left-rail + incident console close
+   to Defender, and is that good for the audience, or does it feel too "Microsoft"? **A:** _<!-- -->_
+4. **In your own words** — free field: what feels off, what feels great, any reference
+   product you want us to match. **A:** _<!-- -->_
+5. **Stripe-grade UX bar** — does the interaction quality (clarity, hierarchy, motion,
+   empty states, micro-interactions) reach Stripe / Linear / high-end SaaS, or a notch
+   below? Where specifically? **A:** _<!-- -->_
+6. **Different direction entirely?** — would you lean elsewhere (3D Spatial SOC, a
+   terminal/hacker aesthetic, glassmorphism web3, a light theme)? **A:** _<!-- -->_
+7. **How close is the *look* to demo-ready** (1–10), and what single visual change would
+   move it up the most? **A:** _<!-- -->_
+
+> If you pick **Regenerate** anywhere, the next agent runs the gen-v2 loop as a brand/
+> theme pass (`demo-gen/gen-v2/improve-loop.md`) → 2–3 themed variants + a recommendation,
+> then re-skins the build via the design tokens (`brand/` + `app.css` theme vars).
