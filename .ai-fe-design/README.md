@@ -20,10 +20,13 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 > mocks) from these specs, with no extra context.**
 
 - **Claude Code:** run the skill `/fe-demo-gen`.
-- **Any agent / human:** open
-  [`demo-gen/gen-v1/PROMPT.md`](./demo-gen/gen-v1/PROMPT.md) and follow it verbatim
-  (it is self-contained and model-agnostic; start by reading
-  [`input/DEMO.md`](./input/DEMO.md)).
+- **Any agent / human:** follow [`demo-gen/gen-v2/STEPS.md`](./demo-gen/gen-v2/STEPS.md)
+  (**gen-v2, recommended** — adds an auto-improvement loop, screenshots, and an
+  executable demo path) or the simpler [`demo-gen/gen-v1/PROMPT.md`](./demo-gen/gen-v1/PROMPT.md).
+  Both are self-contained; start by reading [`input/DEMO.md`](./input/DEMO.md).
+- **See the target now:** a rendered CC\* alert mockup +
+  [screenshot](./demo-gen/gen-v2/mockup/cc-alert.png) lives in
+  [`demo-gen/gen-v2/mockup/`](./demo-gen/gen-v2/mockup/) (open `cc-alert.html`).
 - **Output:** a clickable + **living** (app `:5173` + Prism mock `:4010`, one
   `npm run demo`) + deployable (IPFS) demo under
   `.ignored/fe-demo/demo_designV2_genV1/`, whose own README documents the live

@@ -63,6 +63,14 @@ steps the UI through states 1→7 client-side using the contract-true fixtures i
 OpenAPI spec (a healthy pod, then the attacked-pod incident/classification/isolation
 events). The narrative is deterministic and repeatable for live demos.
 
+## Visual target (rendered)
+A standalone, rendered mockup of the v2 alert presentation lives at
+[`../demo-gen/gen-v2/mockup/cc-alert.html`](../demo-gen/gen-v2/mockup/cc-alert.html)
+(screenshot: `cc-alert.png`). It was refined by the gen-v2 auto-improvement loop and
+is the visual North Star for the generated demo. The full catalog of alternative
+presentations is the **"Final Chapter"** in
+[`../questions_v2_to_v3_qa.md`](../questions_v2_to_v3_qa.md).
+
 ## Acceptance (CC* is demo-ready when…)
 - [ ] A viewer can watch connect → healthy → attack → NOT WORTHY → alert in <60s.
 - [ ] The alert is unmissable and looks production-grade (Stripe bar).

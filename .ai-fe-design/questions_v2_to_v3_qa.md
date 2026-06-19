@@ -197,6 +197,102 @@ freeze/isolate/kill, connect to Claude Code/dev)?
 
 ---
 
+## H. Exhaustive round (depth for v3)
+
+### R20 🟡 Onboarding — how does a user "connect a new observed pod" in the UI?
+**Assumption:** a guided "Connect pod" flow (wallet-signed `register_agent`) +
+a copy-paste agent install snippet; in the demo it's the CC* step 1.
+**Answer:** _<!-- fill in -->_
+
+### R21 🟡 Empty / loading / error states for every screen?
+**Assumption:** skeleton loaders, empty states with a primary action, and a
+chain/agent-unreachable banner. Define per screen in v3.
+**Answer:** _<!-- fill in -->_
+
+### R22 🟡 Incident lifecycle & status model (open/ack/resolved/false-positive)?
+**Assumption:** Alerts view carries a status + assignee overlay on top of on-chain
+`IncidentReport` (status stored where? client-only for demo).
+**Answer:** _<!-- fill in -->_
+
+### R23 🟡 Time handling — timezones, "X ago" vs absolute, time-range picker scope?
+**Assumption:** relative + absolute on hover; UTC default; Datadog-style range picker.
+**Answer:** _<!-- fill in -->_
+
+### R24 🟢 Density & theming — compact mode, light theme, per-user prefs?
+**Assumption:** dark only in v2/v3; compact toggle later.
+**Answer:** _<!-- fill in -->_
+
+### R25 🟢 Keyboard / command palette (⌘K) scope?
+**Assumption:** ⌘K to navigate + jump to an incident/pod; nice-to-have for v3.
+**Answer:** _<!-- fill in -->_
+
+### R26 🟡 Mobile / responsive expectations for a SOC console?
+**Assumption:** desktop-first 1280px+, graceful to 1024; no mobile target in v3.
+**Answer:** _<!-- fill in -->_
+
+### R27 🟡 Real response actions — which (if any) become real in v3 vs placeholder?
+**Assumption:** all CC* response actions stay placeholders in v3 (notify on-call,
+Slack, freeze/isolate/kill, Claude Code) until backends exist.
+**Answer:** _<!-- fill in -->_
+
+### R28 🟢 Performance budget / bundle size target (when does "heavy is OK" end)?
+**Assumption:** no hard budget for v2/v3 demo; optimization pass post-demo.
+**Answer:** _<!-- fill in -->_
+
+---
+
+## ⭐ Final Chapter (OPTIONAL) — CC* presentation playbook
+
+> Optional deep-dive requested for v2→v3: **all the ways to present the CC\* alert**,
+> how each can be done differently, and where to look for the "best" answer. v2 chose
+> **#1** (R18); this catalogs the full design space so v3 can choose deliberately.
+
+### The five candidate presentations (and variants)
+1. **Top banner → Incident Command drawer** *(v2 default)*
+   - Variants: sticky vs floating banner · drawer right vs bottom-sheet · collapse to
+     a beacon vs persistent · auto-open drawer on CRITICAL vs click-to-open.
+   - Best for: keeping context while triaging; least disruptive.
+2. **Full-screen "War Room" takeover** on CRITICAL
+   - Variants: modal vs dedicated route · auto-dismiss vs require-ack · single-pod vs
+     fleet view · with/without live kill-chain replay.
+   - Best for: maximum drama in a live demo; risk: hijacks the app.
+3. **Toast / notification stack** (top-right)
+   - Variants: stacked vs single · auto-expire vs sticky-until-ack · inline expand vs
+     "open incident" · sound/no-sound.
+   - Best for: many concurrent alerts; risk: easy to miss the big one.
+4. **Command-palette / spotlight (⌘K)** surfacing the incident
+   - Variants: auto-invoked on CRITICAL · suggested actions inline · keyboard-first.
+   - Best for: power users; risk: invisible to a cold audience.
+5. **Live map / topology beacon** — pod pulses red on a fleet map
+   - Variants: geo map vs cluster/namespace topology vs 3D (R&D "Spatial SOC") ·
+     click-to-expand vs hover.
+   - Best for: spatial "where" story; pairs well with #1.
+
+### Cross-cutting levers (apply to any choice)
+Motion (entrance, pulse cadence, climax flash) · sound (subtle vs none) · the
+**before→after** device ("Healthy 40s ago" → "Auto-isolated in 2s") · severity color
++ icon (never color alone) · on-chain proof inline (tx digest, event JSON) · the
+"speed of automation" payoff (Δt detection→isolation) · reduced-motion fallback.
+
+### How to decide the best (references / methods)
+- **Comparators to study:** Stripe Radar / Dashboard alerts, Linear's notifications,
+  Datadog incident + monitor status pages, PagerDuty/Opsgenie incident timelines,
+  Vercel/Sentry issue alerts, Grafana/Kibana alerting.
+- **UX methods:** 5-second test (does the story land?), first-click test, A/B the
+  banner-vs-takeover on a small panel, severity-perception study, WCAG-AA contrast
+  audit, motion-sickness/reduced-motion check.
+- **Sources/agencies for deeper UX:** NN/g (Nielsen Norman Group) on alerts &
+  notifications, Refactoring UI (visual hierarchy), Material/Apple HIG on critical
+  alerts, IBM Carbon + Atlassian patterns for status/notifications. *(Add the exact
+  links your team prefers here.)*
+
+### R18-followup 🔴 v3 pick
+Given the catalog above, confirm the v3 CC* presentation (keep #1, or combine — e.g.
+**#1 banner+drawer paired with #5 map beacon**). Record motion/sound choices.
+**Answer:** _<!-- fill in -->_
+
+---
+
 ### After answering
 1. Save answers; copy this answered file to `questions_v2_to_v3_qa_AUDIT.md`.
 2. Generate `fe_design_v3.md` = v2 + these decisions.

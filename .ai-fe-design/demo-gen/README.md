@@ -22,11 +22,18 @@ doesn't exist yet.
 ```
 demo-gen/
 ├── README.md                 ← this file (concept + matrix + how to invoke)
-└── gen-v1/                    ← generator v1 (pinned to design v2)
-    ├── PROMPT.md              ← the procedure (model-agnostic; run verbatim)
-    ├── ASSUMPTIONS.md         ← pre-authorized demo-scope assumptions
-    ├── openapi/               ← OpenAPI 3.1 contract (mock + FE adapter source of truth)
-    └── mock/                  ← Prism mock (docker-compose) + run guide
+├── gen-v1/                    ← generator v1 (pinned to design v2) — proven, simple
+│   ├── PROMPT.md              ← the procedure (model-agnostic; run verbatim)
+│   ├── ASSUMPTIONS.md         ← pre-authorized demo-scope assumptions
+│   ├── openapi/               ← OpenAPI 3.1 contract (mock + FE adapter source of truth)
+│   └── mock/                  ← Prism mock (docker-compose) + run guide
+└── gen-v2/                    ← generator v2 (RECOMMENDED) = gen-v1 + quality engine
+    ├── PROMPT.md              ← inherits gen-v1; adds the loop/screenshots/E2E
+    ├── STEPS.md               ← copy-paste steps to generate from design v2
+    ├── improve-loop.md        ← auto-improvement loop (cheap-model critics)
+    ├── ASSUMPTIONS.md         ← gen-v2 deltas (inherits gen-v1)
+    ├── e2e/cc-star.spec.ts    ← executable "expected demo path" (Playwright)
+    └── mockup/                ← standalone CC* alert mockup + screenshot (design target)
 ```
 
 ## How to invoke
@@ -45,9 +52,13 @@ with run + deploy steps and any deviations.
 
 | Step | Generator | Design | Output | Status |
 |---|---|---|---|---|
-| 1 | **gen-v1** | **v2** | `demo_designV2_genV1` | generator authored ✅ — build pending sign-off |
-| 2 | gen-v2 (improved) | v2 | `demo_designV2_genV2` | after we learn from step 1 |
+| 1 | gen-v1 | **v2** | `demo_designV2_genV1` | authored ✅ (simple, proven) |
+| 2 | **gen-v2** (RECOMMENDED) | **v2** | `demo_designV2_genV2` | authored ✅ — adds loop/screenshots/E2E; build pending "go" |
 | 3 | gen-v2 | **v3** (in progress by another team) | `demo_designV3_genV2` | once v3 design exists |
+
+**Recommended now:** **gen-v2 ⊗ design v2** (see [`gen-v2/STEPS.md`](./gen-v2/STEPS.md)).
+gen-v2 inherits gen-v1 and adds the auto-improvement loop, screenshots, and an
+executable expected-demo-path — so the **CC\*** critical alert reaches Stripe-grade.
 
 **Rule:** when a new design needs capabilities the current generator lacks
 (stateful mock, WebSocket, multi-sig, etc.), **fork the generator** (`gen-vN+1/`)
