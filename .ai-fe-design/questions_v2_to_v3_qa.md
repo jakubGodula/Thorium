@@ -172,6 +172,31 @@ optional Walrus mock).
 
 ---
 
+## G. ⭐ Critical Demo Case (CC*) — see [`input/DEMO.md`](./input/DEMO.md)
+
+### R18 🔴 How should the CC* alert be presented? (v2 decided one; pick the v3 winner)
+**Assumption (v2):** persistent top **Critical Incident banner** → **Incident
+Command drawer** (kill-chain timeline + on-chain evidence) + pulsing "NOT WORTHY"
+badge on the pod. (ADR-0007.)
+**Question:** Keep that, or choose another of these 3–5 Stripe-grade patterns?
+1. **Top banner → Incident Command drawer** (v2 default).
+2. **Full-screen "War Room" takeover** when CRITICAL (focuses the whole app).
+3. **Toast/notification stack** (top-right) with an "Open incident" action.
+4. **Command-palette / spotlight** alert (⌘K-style) surfacing the incident.
+5. **Live map/topology beacon** — the pod pulses red on a fleet map, click to expand.
+**Answer:** _<!-- fill in -->_
+
+### R19 🔴 Confirm the CC* path itself (v2 assumed it; v3 to confirm)
+**Assumption (v2):** CC* exactly as in `input/DEMO.md` (connect → healthy w/ Sui
+interaction + OK telemetry → kernel/DDoS attack → marked NOT WORTHY → NOT-OK
+telemetry/logs visible → prominent alert → placeholder response actions).
+**Question:** Confirm this is THE demo path. Any change to the steps, the
+"not worthy" semantics, or the response-action placeholders (notify on-call, Slack,
+freeze/isolate/kill, connect to Claude Code/dev)?
+**Answer:** _<!-- fill in -->_
+
+---
+
 ### After answering
 1. Save answers; copy this answered file to `questions_v2_to_v3_qa_AUDIT.md`.
 2. Generate `fe_design_v3.md` = v2 + these decisions.

@@ -33,6 +33,14 @@ curl -X POST localhost:4010/sui/queryEvents -H 'content-type: application/json' 
   -d '{"module":"edr_registry","eventType":"IncidentReport","limit":50}'
 ```
 
+## ⭐ CC* scenario data
+The OpenAPI `queryEvents` example already includes the attacked-pod events
+(`IncidentReport` CRITICAL + `ClassificationReported` → `TRIGGER_ISOLATION`) plus a
+healthy `TelemetryReported`, so the contract-true data for the CC* path
+([`../../../input/DEMO.md`](../../../input/DEMO.md)) is present. Because Prism is
+stateless, the demo app drives the connect→healthy→attack→NOT-WORTHY sequence with
+a client-side **"Run CC\* scenario"** stepper over these fixtures.
+
 ## Notes / limitations (demo assumptions)
 - Prism is **stateless**: `vm_create` / `izoluj` return success but don't mutate
   later `lista`/`status` responses. For stateful demo behavior, the generator may

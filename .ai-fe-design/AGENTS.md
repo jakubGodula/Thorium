@@ -4,6 +4,20 @@
 > Cursor, …) working in `.ai-fe-design/`. (Claude Code users can also use the
 > `fe-demo-gen` skill.) Read this first.
 
+## 🚀 Capability #1: generate the FE demo (do this when asked to "build/run the demo")
+Any agent (Claude Code / Codex / Antigravity) can generate a runnable, deployable
+demo with living mocks from these specs:
+- Claude Code: run the `/fe-demo-gen` skill.
+- Otherwise: follow `demo-gen/gen-v1/PROMPT.md` verbatim (self-contained).
+- Read `input/DEMO.md` first (the ⭐ CC* critical demo path — top priority).
+- Output → `.ignored/fe-demo/demo_designV2_genV1/` (app `:5173` + mock `:4010`,
+  one `npm run demo`); its README lists every missing/mocked integration.
+
+## ⭐ CC* — the critical demo case (binding)
+`input/DEMO.md` defines the headline path (observed pod → healthy → attack →
+NOT WORTHY → prominent Stripe-grade alert). Every design version and demo MUST make
+it prominent and flawless. Decision: `adr/0007-cc-critical-demo-path.md`.
+
 ## What this workspace is
 The versioned **frontend design** for the **Thorium XDR** console — a Web3-native
 security/XDR SOC dashboard (Sui blockchain registry, Walrus storage, eBPF agents

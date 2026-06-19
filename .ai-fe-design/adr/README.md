@@ -11,6 +11,8 @@ Consequences. Supersede rather than rewrite.
 | [0003](./0003-charting.md) | ECharts + uPlot for charts/time-series | Accepted (v2) |
 | [0004](./0004-mock-backend.md) | Dockerized mock backend emulating agent + Sui + Walrus | Accepted (v2) |
 | [0005](./0005-sui-primary-read.md) | Sui chain is the primary read path; agent API complements | Accepted (v2) |
+| [0006](./0006-wire-keys-polish-todo.md) | Wire keys stay Polish; English at the adapter (has TODO) | Accepted (v2) |
+| [0007](./0007-cc-critical-demo-path.md) | CC* critical demo path is a binding, first-class requirement | Accepted (v2) |
 
 > These encode v2 decisions from
 > [`questions_v1_to_v2_qa_AUDIT.md`](../questions_v1_to_v2_qa_AUDIT.md). Items the

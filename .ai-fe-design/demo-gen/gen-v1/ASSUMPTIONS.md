@@ -19,6 +19,9 @@ gaps. Anything load-bearing is also tracked in `questions_v2_to_v3_qa.md`.
 | D10 | Multi-sig shown as a **read-only placeholder**. | v2 Q12 |
 | D11 | Sample fleet = ~24 agents, a handful of incidents across CRITICAL/HIGH/WARNING, 1–2 isolated hosts — enough to populate every screen. | demo realism |
 | D12 | Network label = **Sui testnet**, package `0x0cc3…91af`. | Published.toml |
+| D13 | **⭐ CC\*** (`input/DEMO.md`) is the demo's spine: observed pod = `AgentIdentity` SBT; "not worthy" = `is_active=false` / Isolated; alert = top banner → Incident Command drawer (v2 decision, ADR-0007). | input/DEMO.md, ADR-0007 |
+| D14 | CC* is driven by a client-side **"Run CC\* scenario"** stepper (Prism stateless); response actions are labeled placeholders. | D3, input/DEMO.md §7 |
+| D15 | Live demo: app on **:5173**, mock on **:4010**, one `npm run demo`. | PROMPT §3g |
 
 If a future design version invalidates one of these, fork the generator
 (`gen-v2/`) rather than editing gen-v1.

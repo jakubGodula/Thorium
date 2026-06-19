@@ -13,6 +13,41 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 
 ---
 
+## 🚀 Capability #1 (for any agent): generate the FE demo
+
+> **The headline capability of this project: any coding agent — Claude Code, Codex,
+> or Antigravity — can generate a runnable, deployable Thorium XDR demo (with living
+> mocks) from these specs, with no extra context.**
+
+- **Claude Code:** run the skill `/fe-demo-gen`.
+- **Any agent / human:** open
+  [`demo-gen/gen-v1/PROMPT.md`](./demo-gen/gen-v1/PROMPT.md) and follow it verbatim
+  (it is self-contained and model-agnostic; start by reading
+  [`input/DEMO.md`](./input/DEMO.md)).
+- **Output:** a clickable + **living** (app `:5173` + Prism mock `:4010`, one
+  `npm run demo`) + deployable (IPFS) demo under
+  `.ignored/fe-demo/demo_designV2_genV1/`, whose own README documents the live
+  link, deploy steps, and every **missing/mocked integration** (Sui, Walrus, Slack,
+  cloud-kill, …).
+- **Versioning:** generators (`gen-v1`, `gen-v2`…) are versioned independently of
+  the design (`v1`, `v2`…) — see the matrix in [`demo-gen/README.md`](./demo-gen/README.md).
+
+## ⭐ MUST-READ: the Critical Demo Case (CC*)
+
+**Every design version and every generated demo MUST make the CC\* path prominent,
+very well visible, elegant and modern (Stripe-grade).** CC* = connect an **observed
+pod** (blockchain-attested) → it runs **healthy** (Sui interaction + OK telemetry
+visible) → **simulate a kernel attack / DDoS** → Thorium marks it **NOT WORTHY** →
+NOT-OK telemetry/logs are clearly visible → a **prominent alert** drives response
+(placeholder actions OK). Canonical spec + acceptance criteria:
+[`input/DEMO.md`](./input/DEMO.md). Binding decision: [`adr/0007`](./adr/0007-cc-critical-demo-path.md).
+
+> **TODO (ADR-0006):** the mock/agent contract currently uses **Polish wire keys**
+> (`kod`/`tresc`/`klucz_pub`), mapped to English in the FE adapter (UI is English
+> only). Decide later whether to also expose an English-keyed contract variant.
+
+---
+
 ## What's in here
 
 ```

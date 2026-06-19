@@ -196,10 +196,44 @@ v2 proceeds under the v1 recommendation; details + the explicit assumption live 
 
 ---
 
+## 8.5 ⭐ CRITICAL DEMO CASE "CC*" (first-class, binding) → [ADR-0007](./adr/0007-cc-critical-demo-path.md)
+
+**This is the most important thing the frontend must do.** The headline demo is one
+narrative — full canonical version in [`input/DEMO.md`](./input/DEMO.md):
+
+> Connect an **observed pod** (blockchain-attested) → it runs **healthy** (Sui
+> interaction + OK telemetry visible in the UI) → **simulate a kernel attack / DDoS**
+> → Thorium marks it **NOT WORTHY** → the NOT-OK telemetry/logs are clearly visible
+> → a **prominent, Stripe-grade alert** drives response.
+
+**On-chain mapping:** observed pod = `AgentIdentity` SBT; connect =
+`register_agent`/`AgentRegistered`; healthy = `TelemetryReported` OK + `is_active`;
+attack = `ClassificationReported` (`score ≥ threshold` → `TRIGGER_ISOLATION`) +
+`IncidentReport` CRITICAL; not worthy = `is_active=false` / Isolated.
+
+**v2 alert presentation — DECIDED** (alternatives are a v3 question, R18):
+a persistent top **Critical Incident banner** → **Incident Command drawer** (live
+kill-chain timeline + on-chain evidence), with the affected pod flagged everywhere
+by a pulsing **"NOT WORTHY"** badge + red telemetry breach.
+
+**Response hints** = placeholders ("Coming soon"/dummy + alert): notify on-call,
+Slack ("pod compromised"), freeze ports / isolate / kill-in-cloud, execute skill /
+connect to Claude Code or a developer.
+
+**Demo driving:** Prism is stateless → the app ships a **"Run CC\* scenario"**
+client-side stepper over contract-true fixtures. The new **Alerts** + **Chain
+Activity** + **Fleet Telemetry** tabs (§3) exist primarily to serve CC*.
+
+**Bar:** the alert must be **as good as Stripe would do it** — unmissable, elegant,
+modern. If a screen doesn't serve CC*, it's secondary.
+
+---
+
 ## 9. Next steps
 1. Answer [`questions_v2_to_v3_qa.md`](./questions_v2_to_v3_qa.md) inline (same
-   flow as before; see [`README.md`](./README.md)).
-2. **Separate prompt (point 5):** build `.ignored/fe-demo` = the v3 implementation
-   (Svelte+Tailwind+ECharts app) **+** the dockerized mock backend (§4), driven by
-   this v2 spec.
-3. Then iterate v3 design from the answers.
+   flow as before; see [`README.md`](./README.md)). Includes the CC* alert-style
+   question (R18) and the CC* v3 confirmation (R19).
+2. **Generate the demo via the versioned generator** (skill `/fe-demo-gen` or
+   [`demo-gen/gen-v1/PROMPT.md`](./demo-gen/gen-v1/PROMPT.md)) → output
+   `.ignored/fe-demo/demo_designV2_genV1/`. CC* is a hard acceptance criterion.
+3. Then iterate v3 design from the answers (CC* carries forward).

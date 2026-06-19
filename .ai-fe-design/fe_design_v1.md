@@ -342,3 +342,18 @@ See [`README.md`](./README.md) §"Suggested next prompts". In short:
 All deferred decisions are enumerated in
 [`questions_v1_to_v2_qa.md`](./questions_v1_to_v2_qa.md). Answer them inline to
 generate **v2**.
+
+---
+
+## Addendum (2026-06-19) — ⭐ Critical Demo Case "CC*"
+> Added retroactively so the critical demo path spans the full version history
+> (v1 → v2 → v3). v1 records it; v2 specifies the presentation; v3 may revise it.
+
+CC* is the headline narrative — an **observed pod** is connected & blockchain-
+attested, runs healthy (Sui interaction + OK telemetry visible in the UI), is
+**attacked (kernel/DDoS)**, marked **NOT WORTHY**, and a **prominent, Stripe-grade
+alert** drives response (with placeholder actions: notify on-call, Slack, freeze/
+isolate/kill, connect to Claude Code). Full narrative + acceptance criteria:
+[`input/DEMO.md`](./input/DEMO.md). It maps onto the v1 data contract (§6) and
+screens (§5): Endpoints/Incidents/Overview must surface the pod's healthy→isolated
+lifecycle. **Every version and demo must make CC\* prominent and flawless.**
