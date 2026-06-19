@@ -26,9 +26,11 @@
 - **04 — Archive prompt verbatim + colleague hand-off prompt.** Append this turn to
   `prompts/init/conversation.md`; write the final colleague prompt. → step doc + push.
 
-## Status
+## Status — COMPLETE ✅ (each step committed + pushed)
 - [x] 00 — plan (this file)
-- [ ] 01 — CR-2 preserved into LONG Q&A
-- [ ] 02 — CONTENT items 1–10 appended
-- [ ] 03 — assessment
-- [ ] 04 — prompt archive + hand-off
+- [x] 01 — CR-2 preserved into LONG Q&A (Parts G/H/I/J/K/L2/M)
+- [x] 02 — CONTENT items 1–10 appended (Part N)
+- [x] 03 — assessment (`03-assessment.md`)
+- [x] 04 — prompt archived verbatim (`prompts/init`) + colleague hand-off (`04-colleague-prompt.md`)
+
+Final deployment (unchanged): **https://6b3e-213-134-178-35.ngrok-free.app** (`/?cc=1`).

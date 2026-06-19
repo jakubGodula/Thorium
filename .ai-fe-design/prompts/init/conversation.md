@@ -372,3 +372,18 @@ tree highlight, per-row Walrus real fetch+spinner, realistic invite token, react
 :5174) + vYY+1 (ngrok `https://6b3e-213-134-178-35.ngrok-free.app`). Ambiguities → two
 transition Q&A files: `questions_v3_to_v4_qa.md` (SHORT) + `_LONG.md` (exhaustive,
 P1–P6 + all CR items).
+
+## Turn 17 — THE FINAL ITERATION (append-only LONG Q&A; no new deploy)
+```
+Now … 1) treat last deployment as final 2) the SHORT transition Q&A as FINAL (don't care this iteration) 3) we only care about the LONG qaa document … APPEND ONLY … only append your new concerns.
+a) append CONTENT below b) push the long qaa with appended content c) document /init verbatim
+append ALL concerns from cr-2.md (verbatim summary: Part 1 CR-1 quality, Part 2 new code-quality, Part 3 missed answers.md intentions, Part 4 UI interaction gaps, Part 7 must-preserve).
+CONTENT: 1) confirm priority rule A) answers.md B) CC* C) prior docs/contract/code 2) check CC* definition matches initial input/last demo/previous answers; if not ask 5-15 Qs 3) Alfa/Beta scope precisely clarified? 4) is last deployment fit for demo tomorrow? what to improve 5) UX & UI interaction quality 6) mobile/responsive/good-looking/advanced enough 7) mock backend scope familiar to end user? secure & configurable enough for tomorrow's integration? 5-15 Qs 8) README & audit & namings ok 9) can they locally generate frontend, similar to history 10) colleague <1 min find: a) all previous remote deployments b) generate new FE from design (similar?) c) read skills/procedures <1min, AI-friendly d) audit/logs/quality enough e) alignment with vision, best deployment, explain in own words
+8) output what was achieved 9) output the prompt for the colleague: a) demo last deployment link b) short qaa c) the long qaa WITH APPENDED CONTENT (15-60min fill) d) document audit/deployments/verbatim into /init e) git push everything f) don't ask, work to finish, incremental steps so a new agent can resume
+Call this PROMPT: THE FINAL ITERATION. Output steps into .ai-fe-design/FINAL-ITERATION-STEPS/ … g) git push each completed step h) at end output the colleague prompt (9a/b/c). make sure cr-2.md remarks not lost in the long qaa.
+```
+**Outcome (Turn 17):** read `input/cr/cr-2.md` fully; appended every finding (G/H/I/J/K/
+L2/M) + the CONTENT items 1–10 (Part N) to `questions_v3_to_v4_qa_LONG.md` (append-only);
+wrote `FINAL-ITERATION-STEPS/00–04` (plan, CR-2-preserved, content, assessment, colleague
+prompt); no new deployment (vYY+1 final, `https://6b3e-213-134-178-35.ngrok-free.app`);
+pushed each step.
