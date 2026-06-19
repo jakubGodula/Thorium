@@ -143,7 +143,57 @@ export const integrations = [
   ['Splunk', 'Syslog CEF export', 'mock'], ['IBM QRadar', 'Webhook', 'mock'],
   ['Jira / ServiceNow', 'ITSM close-alert API', 'mock'], ['Slack', '#sec-incidents', 'mock'],
 ]
-export const threatIntel = [
-  { sev: 'CRITICAL', t: 'Honeytoken tripped — fake AWS key read', src: 'Xenon deception', fp: '0% FP' },
-  { sev: 'HIGH', t: 'IoC match: evil.com C2 domain', src: 'MISP / STIX-TAXII', fp: '' },
-]
+// L-A5: multiple endpoints being defended/targeted. ws-07 gets a BLOCKED lateral attempt
+// during the attack window (defended), while alma9-edge-01 is the NOT-WORTHY one.
+export function fleetAt(phase: Phase): (Pod & { threat: string })[] {
+  const attacking = phase === 'attacked' || phase === 'isolated'
+  return [
+    { id: '0x4b5c…6a7b', hostname: 'ws-07', owner: 'Ola', namespace: 'prod/web',
+      status: attacking ? 'Healthy' : 'Healthy', isActive: true,
+      cpu: attacking ? 47 : 13, ram: attacking ? 58 : 41, disk: 36, observed: false,
+      threat: attacking ? 'ELEVATED' : 'LOW' },
+    { id: '0x9f8e…7d6c', hostname: 'db-02', owner: 'Jakub', namespace: 'prod/data',
+      status: 'Healthy', isActive: true, cpu: 22, ram: 55, disk: 48, observed: false, threat: 'LOW' },
+  ]
+}
+// L-A5: ws-07's defended event (blocked lateral movement) during the attack
+export function defendedEvent(phase: Phase): { pod: string; t: string; action: string } | null {
+  return (phase === 'attacked' || phase === 'isolated')
+    ? { pod: 'ws-07', t: 'nmap -sV 10.0.0.0/24 (lateral)', action: 'BLOCKED' } : null
+}
+// L-B3: per-pod THREAT LEVEL (replaces the "Trend" column meaning)
+export function threatLevel(phase: Phase, observed: boolean): { label: string; cls: string } {
+  if (observed && (phase === 'attacked' || phase === 'isolated')) return { label: 'CRITICAL', cls: 'b-bad' }
+  if (observed && phase === 'connected') return { label: '—', cls: 'b-pending' }
+  return { label: 'LOW', cls: 'b-ok' }
+}
+
+// L-E2: Threat Intel becomes the most real surface — reacts to the scenario
+export function threatIntelRows(phase: Phase) {
+  const live = phase === 'attacked' || phase === 'isolated'
+  const rows = [
+    { sev: 'INFO', t: 'Feed sync — MISP / STIX-TAXII (1,284 IoCs)', src: 'Threat Intel', fp: 'live' },
+    { sev: 'INFO', t: 'Honeytokens armed across fleet (Xenon)', src: 'Deception', fp: '0% FP' },
+  ]
+  if (live) rows.unshift(
+    { sev: 'CRITICAL', t: 'Honeytoken TRIPPED — fake AWS key read on alma9-edge-01', src: 'Xenon deception', fp: '0% FP' },
+    { sev: 'HIGH', t: 'IoC match: evil.com C2 domain (curl|bash)', src: 'MISP / STIX-TAXII', fp: '' },
+  )
+  return rows
+}
+export const threatIntel = threatIntelRows('idle')
+
+// L-E5 / I-M3-1: incident status lifecycle (client-side now; target = Walrus via Mowa)
+export type IncStatus = 'Open' | 'Acked' | 'Resolved'
+
+// I-M3-3: audit trail builds as the analyst acts
+export function auditAt(phase: Phase, opened: boolean, status: IncStatus) {
+  const rows: string[][] = []
+  if (phase === 'attacked' || phase === 'isolated') {
+    rows.push(['14:41:05', 'system', 'INC-991 raised (CRITICAL) → KILLED_AND_ISOLATED', '0xaud…91'])
+    if (opened) rows.push(['14:41:07', 'analyst.eth', 'Opened INC-991', '0xaud…92'])
+    if (status === 'Acked' || status === 'Resolved') rows.push(['14:41:22', 'analyst.eth', 'Acknowledged CRITICAL', '0xaud…93'])
+    if (status === 'Resolved') rows.push(['14:43:10', 'admin.eth', 'Resolved INC-991', '0xaud…94'])
+  }
+  return rows
+}

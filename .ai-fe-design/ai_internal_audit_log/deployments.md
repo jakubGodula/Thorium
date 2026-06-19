@@ -115,3 +115,20 @@ deployment success : url https://6b3e-213-134-178-35.ngrok-free.app
 |---|---|---|
 | **vYY (CR-fix)** | http://192.168.0.251:5174 (LAN) | live |
 | **vYY+1 (⌘K)** | **https://6b3e-213-134-178-35.ngrok-free.app** | **live (latest)** |
+
+---
+
+## DDD (v5) — 2026-06-20 — answers-driven (branch experimental-aw-fe-v3)
+
+Built from Jakub's answers (`questions_v4_to_v5_qa_LONG.md`); ADR-0010.
+
+deployment success : url https://7021-213-134-178-35.ngrok-free.app
+
+- CC*: https://7021-213-134-178-35.ngrok-free.app/?cc=1 · LAN http://192.168.0.251:5176
+- **IPFS CID** (L-C1): `bafybeici77d4xq7mdwo7xgwyl4dfxolog3uereebcwfwuxnnaw4jiidczq`
+  (CIDv1, only-hash — pin it to resolve: `ipfs add -r .../app/dist` →
+  `https://<gateway>/ipfs/<cid>`).
+- New: multi-endpoint defense, ECharts telemetry, Threat-level column, incident
+  Acknowledge/Resolve + dynamic audit, Threat-Intel live, KPI flash, responsive,
+  Claude→toast, ⌘K+, CR-2 cheap fixes. Proof `demo-gen/gen-v2/mockup/DDD-cc.png`.
+- ngrok (resolves on the user's router; HTTP 200 verified). Live Mowa backend deferred.

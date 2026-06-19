@@ -209,3 +209,22 @@ main{display:flex;flex-direction:column;min-width:0}
 .pal-item{display:block;width:100%;text-align:left;background:transparent;border:none;color:var(--text-1);padding:10px 12px;border-radius:8px;font-size:13px;cursor:pointer}
 .pal-item:hover{background:rgba(56,189,248,.12);color:var(--text-0)}
 .pal-empty{padding:14px;color:var(--text-2);font-size:13px}
+
+/* ── DDD (v5) ── */
+.nav-badge{margin-left:auto;min-width:18px;height:18px;border-radius:999px;background:var(--crit);color:#fff;
+  font-size:11px;font-weight:800;display:inline-grid;place-items:center;padding:0 5px}
+.nav-item .nav-badge + .tag{margin-left:6px}
+.card-warn{border-color:rgba(245,158,11,.4);box-shadow:0 0 16px rgba(245,158,11,.12)}
+.banner.acked{border-left-color:var(--warn);background:rgba(30,22,12,.92)}
+/* H-N2-1: denser cards so wide screens don't look sparse */
+.cards{grid-template-columns:repeat(auto-fill,minmax(248px,1fr))}
+/* L-B4: responsive banner for <1100px monitors */
+@media (max-width:1100px){
+  .app{grid-template-columns:200px 1fr}
+  .banner{flex-wrap:wrap}
+  .banner .cta{margin-left:0;width:100%;justify-content:flex-end;flex-wrap:wrap}
+  .progress{left:212px}
+  .layout{grid-template-columns:1fr}
+  .drawer{box-shadow:none}
+}
+@media (max-width:760px){ .app{grid-template-columns:1fr} .rail{position:relative;height:auto} }

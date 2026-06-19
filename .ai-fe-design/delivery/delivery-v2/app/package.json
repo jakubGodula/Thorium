@@ -10,6 +10,9 @@
     "mock": "prism mock ../../../../.ai-fe-design/demo-gen/gen-v1/openapi/thorium-xdr.openapi.yaml -h 0.0.0.0 -p 4010",
     "demo": "concurrently -k -n app,mock -c cyan,magenta \"vite --port 5173\" \"npm:mock\""
   },
+  "dependencies": {
+    "echarts": "^5.5.0"
+  },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^4.0.0",
     "@stoplight/prism-cli": "^5.8.0",

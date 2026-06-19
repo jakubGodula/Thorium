@@ -1,11 +1,13 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import {
-    type Phase, type AppConfig, PHASES, fleet, observedPod, podSpark, timeline,
+    type Phase, type AppConfig, type IncStatus, PHASES, observedPod, podSpark, timeline,
     responseActions, loadConfig, incidentTree, personas, modules, trustBadges,
-    auditTrail, integrations, threatIntel, recentLogs, inviteToken,
+    integrations, recentLogs, inviteToken,
+    fleetAt, defendedEvent, threatLevel, threatIntelRows, auditAt,
   } from './lib/scenario'
   import { connectLive, fetchWalrusBlob, type LiveEvent } from './lib/adapter'
+  import Chart from './lib/Chart.svelte'
 
   let tab = $state('overview')
   let phase = $state<Phase>('idle')
@@ -15,7 +17,11 @@
   const TENANTS = ['Acme Corp', 'Globex MSSP', 'Initech', 'Umbrella K8s']
   let tenantIx = $state(0)
   const tenant = $derived(TENANTS[tenantIx])
-  let claudeModal = $state(false)
+  let claudeModal = $state(false) // dormant (L-B5: Claude action is a toast now)
+  // DDD (v5): banner mute (≠reset), incident status, opened tracking, KPI flash
+  let bannerVisible = $state(true)
+  let incStatus = $state<IncStatus>('Open')
+  let kpiFlash = $state(false)
   // EXPERIMENT (vYY+1): ⌘K command palette (answer I17)
   let palette = $state(false)
   let paletteQ = $state('')
@@ -39,7 +45,12 @@
   const paletteCmds = $derived([
     { label: 'Run CC* scenario', run: () => runScenario() },
     { label: 'Toggle Demo mode', run: () => toggleAutoplay() },
-    ...NAV.flatMap(g => g.items.map(it => ({ label: `Go: ${g.group} › ${it.label}`, run: () => (tab = it.id) }))),
+    ...(compromised ? [
+      { label: 'View active incident (open drawer)', run: () => { tab = 'overview'; drawerOpen = true } },
+      { label: 'Acknowledge alert INC-991', run: () => ackIncident() },
+    ] : []),
+    // H-N2-6: mark mock/soon destinations
+    ...NAV.flatMap(g => g.items.map(it => ({ label: `Go: ${g.group} › ${it.label}${it.tag ? ` (${it.tag})` : ''}`, run: () => (tab = it.id) }))),
   ].filter(c => c.label.toLowerCase().includes(paletteQ.toLowerCase())))
   function runCmd(run: () => void) { run(); palette = false }
   // CR-1 A-2: concrete receiver for live events (schema = transition Q P2)
@@ -51,24 +62,51 @@
   const spark = $derived(podSpark(phase))
   const events = $derived(timeline(phase))
   const compromised = $derived(phase === 'attacked' || phase === 'isolated')
-  const others = fleet()
+  const others = $derived(fleetAt(phase))         // L-A5 multi-endpoint
+  const defended = $derived(defendedEvent(phase)) // L-A5 ws-07 blocked
+  const auditRows = $derived(auditAt(phase, drawerOpen, incStatus)) // I-M3-3 dynamic
+  const intel = $derived(threatIntelRows(phase))  // L-E2 dynamic Threat Intel
+  // L-E1: ECharts option for Fleet Telemetry (cpu over time; observed pod spikes on attack)
+  const telemetryOption = $derived({
+    backgroundColor: 'transparent',
+    grid: { left: 36, right: 12, top: 24, bottom: 24 },
+    tooltip: { trigger: 'axis' },
+    legend: { textStyle: { color: '#94a3b8' }, top: 0, right: 0 },
+    xAxis: { type: 'category', data: ['−60s','−50s','−40s','−30s','−20s','−10s','now'],
+      axisLabel: { color: '#64748b' }, axisLine: { lineStyle: { color: '#1d2436' } } },
+    yAxis: { type: 'value', max: 100, axisLabel: { color: '#64748b', formatter: '{value}%' },
+      splitLine: { lineStyle: { color: '#161c2e' } } },
+    series: [
+      { name: 'alma9-edge-01', type: 'line', smooth: true, symbol: 'none',
+        lineStyle: { width: 2, color: compromised ? '#ef4444' : '#38bdf8' },
+        areaStyle: { color: compromised ? 'rgba(239,68,68,.15)' : 'rgba(56,189,248,.12)' },
+        data: compromised ? [12,13,12,14,40,88,96] : [12,13,12,14,11,13,12] },
+      { name: 'ws-07', type: 'line', smooth: true, symbol: 'none',
+        lineStyle: { width: 2, color: '#5eead4' }, data: compromised ? [13,12,14,13,28,46,47] : [13,12,14,13,12,13,13] },
+    ],
+  })
   const PHASE_LABEL: Record<Phase, string> = { idle: 'Idle', connected: 'Connecting pod', healthy: 'Healthy', attacked: 'Under attack', isolated: 'Isolated' }
   const step = $derived(PHASES.indexOf(phase))
 
   let timer: ReturnType<typeof setTimeout> | null = null
   function runScenario() {
     if (timer) clearTimeout(timer)
-    drawerOpen = false
+    drawerOpen = false; bannerVisible = true; incStatus = 'Open'
     const seq: Phase[] = ['connected', 'healthy', 'attacked', 'isolated']
     let k = 0; phase = 'idle'
     const advance = () => {
-      phase = seq[k]; if (phase === 'isolated') drawerOpen = true; k++
+      phase = seq[k]
+      if (phase === 'healthy') { kpiFlash = true; setTimeout(() => (kpiFlash = false), 900) } // L-B2
+      if (phase === 'isolated') drawerOpen = true
+      k++
       if (k < seq.length) timer = setTimeout(advance, k <= 1 ? 1100 : 1600)
-      else if (autoplay) timer = setTimeout(runScenario, 4500)
+      else if (autoplay) timer = setTimeout(runScenario, 8000) // H-N2-3 dwell at peak
     }
     timer = setTimeout(advance, 400)
   }
-  function reset() { if (timer) clearTimeout(timer); autoplay = false; phase = 'idle'; drawerOpen = false }
+  function reset() { if (timer) clearTimeout(timer); autoplay = false; phase = 'idle'; drawerOpen = false; bannerVisible = true; incStatus = 'Open' }
+  function muteBanner() { bannerVisible = false } // G-R1-6: hide banner, keep incident
+  function ackIncident() { incStatus = 'Acked'; note('Acknowledged INC-991 (→ Walrus audit)') } // L-E5/J-F4-2
   function toggleAutoplay() { autoplay = !autoplay; if (autoplay) runScenario(); else reset() }
   function note(l: string) { toast = `${l} — mock / coming soon`; setTimeout(() => (toast = ''), 2400) }
 
@@ -112,7 +150,9 @@
       <div class="nav-group">{g.group}</div>
       {#each g.items as it}
         <button class="nav-item" class:active={tab === it.id} onclick={() => (tab = it.id)}>
-          {it.label}{#if it.tag}<span class="tag">{it.tag}</span>{/if}
+          {it.label}
+          {#if compromised && incStatus === 'Open' && (it.id === 'incidents' || it.id === 'alerts')}<span class="nav-badge">1</span>{/if}
+          {#if it.tag}<span class="tag">{it.tag}</span>{/if}
         </button>
       {/each}
     {/each}
@@ -126,7 +166,7 @@
       <button class="chip btn-chip" onclick={() => { tenantIx = (tenantIx + 1) % TENANTS.length }} title="MSSP multi-tenant (mock)">🏢 {tenant} ▾ <span class="tag">mock</span></button>
       <div class="grow"></div>
       <button class="ghost" class:on={offline} onclick={() => { offline = !offline; if(offline) note('Offline Lockdown engaged') }}>{offline ? '🔒 Lockdown' : '◍ Online'}</button>
-      <button class="ghost">Connect Wallet</button>
+      <button class="ghost" onclick={() => note('Wallet connect — coming soon (gates write actions)')}>Connect Wallet</button>
       <button class="ghost" class:on={autoplay} onclick={toggleAutoplay}>{autoplay ? '⏸ Demo mode' : '◷ Demo mode'}</button>
       {#if phase === 'idle'}<button class="run" onclick={runScenario}>▶ Run CC* scenario</button>
       {:else}<button class="ghost" onclick={reset}>↻ Reset</button>{/if}
@@ -134,13 +174,14 @@
 
     {#if offline}<div class="lockbar">🔒 Offline Lockdown — lost comms with Sui RPC / C2; agents cut network &amp; freeze processes (Dark Mode).</div>{/if}
 
-    {#if compromised}
-      <div class="banner" role="alert">
+    {#if compromised && bannerVisible}
+      <div class="banner" class:acked={incStatus !== 'Open'} role="alert">
         <span class="pulse"></span>
-        <div><div class="sev">CRITICAL · ON-CHAIN INCIDENT <span class="was">✓ Healthy 40s ago</span></div>
+        <div><div class="sev">{incStatus === 'Open' ? 'CRITICAL' : incStatus === 'Acked' ? 'ACKNOWLEDGED' : 'RESOLVED'} · ON-CHAIN INCIDENT <span class="was">✓ Healthy 40s ago</span></div>
           <div class="msg"><b>Kernel exploit</b> on observed pod <b>alma9-edge-01</b> · anomaly <b>0.91</b> · marked <b>NOT WORTHY</b> &amp; auto-isolated on Sui</div></div>
         <div class="cta"><span class="speed">⚡ Auto-isolated in 2s</span>
-          <button class="btn btn-quiet" onclick={reset}>Mute</button>
+          {#if incStatus === 'Open'}<button class="btn btn-quiet" onclick={ackIncident}>Acknowledge</button>{/if}
+          <button class="btn btn-quiet" onclick={muteBanner}>Mute</button>
           <button class="btn btn-crit" onclick={() => (drawerOpen = true)}>View incident →</button></div>
       </div>
     {/if}
@@ -178,16 +219,18 @@
             <div class="section-label">Live Web Terminal (DFIR)</div>
             <button class="term" onclick={() => note('Live Web Terminal')}><span class="mono">root@alma9-edge-01:~# _</span><span class="tag">mock</span></button>
             <div class="section-label">Response — recommended actions</div>
-            <div class="actions">{#each responseActions as a}<button class="resp" onclick={() => a.l.includes('Claude Code') ? (claudeModal = true) : note(a.l)}><span class="i">{a.i}</span><span class="l">{a.l}</span><span class="soon">{a.l.includes('Claude Code') ? 'preview' : 'Coming soon'}</span></button>{/each}</div>
+            <div class="actions">{#each responseActions as a}<button class="resp" onclick={() => note(a.l)}><span class="i">{a.i}</span><span class="l">{a.l}</span><span class="soon">Coming soon</span></button>{/each}</div>
           </div>
         </div>{/if}
       </div>
 
     {:else if tab === 'telemetry'}
-      <div class="panel"><h3>Fleet Telemetry — cpu / ram / disk (event-sourced) <span class="tag">{cfg.wsUrl ? 'WS' : 'polling'}</span></h3>
-        <table><thead><tr><th>Pod</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Trend</th></tr></thead><tbody>
-        {#if pod}<tr class:row-bad={compromised}><td><b>{pod.hostname}</b></td><td class="mono">{pod.cpu}%</td><td class="mono">{pod.ram}%</td><td class="mono">{pod.disk}%</td><td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points={spark.points} fill="none" stroke={spark.color} stroke-width="2"/></svg></td></tr>{/if}
-        {#each others as o}<tr><td>{o.hostname}</td><td class="mono">{o.cpu}%</td><td class="mono">{o.ram}%</td><td class="mono">{o.disk}%</td><td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points="0,14 20,13 40,15 60,12 80,13 100,11 120,12" fill="none" stroke="#22c55e" stroke-width="2"/></svg></td></tr>{/each}
+      <div class="panel"><h3>Fleet Telemetry — CPU over time <span class="tag">{cfg.wsUrl ? 'WS' : 'polling'}</span> <span class="tag">ECharts</span></h3>
+        <div style="padding:8px 12px"><Chart option={telemetryOption} /></div></div>
+      <div class="panel"><h3>Fleet — CPU / RAM / disk / threat level</h3>
+        <table><thead><tr><th>Pod</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Threat level</th></tr></thead><tbody>
+        {#if pod}{@const tl = threatLevel(phase, true)}<tr class:row-bad={compromised}><td><b>{pod.hostname}</b></td><td class="mono">{pod.cpu}%</td><td class="mono">{pod.ram}%</td><td class="mono">{pod.disk}%</td><td><span class="badge {tl.cls}">{tl.label}</span></td></tr>{/if}
+        {#each others as o}<tr><td>{o.hostname}</td><td class="mono">{o.cpu}%</td><td class="mono">{o.ram}%</td><td class="mono">{o.disk}%</td><td><span class="badge {o.threat === 'ELEVATED' ? 'b-pending' : 'b-ok'}">{o.threat}</span></td></tr>{/each}
         </tbody></table></div>
       <div class="panel" class:p-crit={compromised}><h3>Recent logs — alma9-edge-01 {#if compromised}<span class="badge b-bad">NOT OK</span>{/if}</h3>
         <div class="logs">{#each recentLogs(phase) as l}<div class="log l-{l.lvl}"><span class="mono dim">{l.t}</span> <span class="mono">{l.msg}</span></div>{/each}</div></div>
@@ -206,15 +249,18 @@
       <div class="panel"><h3>Incidents — correlation tree (kill-chain grouping)</h3>
         <div class="tree">{#each incidentTree as inc}
           {@const live = inc.id === 'INC-991' && compromised}
-          <div class="t-root" class:t-active={live}>{#if live}<span class="pulse"></span>{/if}<span class="badge {sevCls[inc.sev]}">{inc.sev}</span> <b>{inc.id}</b> · {inc.title} <span class="mono dim">({inc.children.length} correlated)</span></div>
+          <div class="t-root" class:t-active={live} style={live ? 'cursor:pointer' : ''} role={live ? 'button' : undefined} onclick={live ? () => { tab = 'overview'; drawerOpen = true } : undefined}>{#if live}<span class="pulse"></span>{/if}<span class="badge {sevCls[inc.sev]}">{inc.sev}</span> <b>{inc.id}</b> · {inc.title} <span class="mono dim">({inc.children.length} correlated)</span>{#if live}<span class="acc" style="margin-left:auto;font-size:11px">open →</span>{/if}</div>
           {#each inc.children as c}<div class="t-child"><span class="badge {sevCls[c.sev]}">{c.sev}</span> {c.title} <span class="mono acc">{c.tx}</span></div>{/each}
         {/each}</div></div>
 
     {:else if tab === 'alerts'}
-      <div class="panel"><h3>Alerts</h3>{#if compromised}
-        <table><thead><tr><th>Severity</th><th>Detection</th><th>Action</th><th>Status</th></tr></thead><tbody>
-        <tr class="row-bad"><td><span class="badge b-bad">CRITICAL</span></td><td>alma9-edge-01 · kernel exploit (eBPF)</td><td class="mono">KILLED_AND_ISOLATED</td><td><span class="badge b-pending">Open</span></td></tr>
-        <tr><td><span class="badge b-pending">HIGH</span></td><td>alma9-edge-01 · Talus anomaly 0.91</td><td class="mono">TRIGGER_ISOLATION</td><td><span class="badge b-pending">Open</span></td></tr>
+      <div class="panel"><h3>Alerts {#if compromised && incStatus === 'Open'}<span class="badge b-bad">1 open</span>{/if}</h3>{#if compromised}
+        <table><thead><tr><th>Severity</th><th>Detection</th><th>Action</th><th>Status</th><th></th></tr></thead><tbody>
+        <tr class="row-bad"><td><span class="badge b-bad">CRITICAL</span></td><td>alma9-edge-01 · kernel exploit (eBPF)</td><td class="mono">KILLED_AND_ISOLATED</td>
+          <td><span class="badge {incStatus === 'Open' ? 'b-pending' : incStatus === 'Acked' ? 'b-ok' : 'b-ok'}">{incStatus}</span></td>
+          <td>{#if incStatus === 'Open'}<button class="mini" onclick={ackIncident}>Ack</button>{:else if incStatus === 'Acked'}<button class="mini" onclick={() => { incStatus = 'Resolved'; note('Resolved INC-991') }}>Resolve</button>{:else}<span class="dim">✓</span>{/if}</td></tr>
+        <tr><td><span class="badge b-pending">HIGH</span></td><td>alma9-edge-01 · Talus anomaly 0.91</td><td class="mono">TRIGGER_ISOLATION</td><td><span class="badge b-pending">Open</span></td><td></td></tr>
+        <tr><td><span class="badge b-ok">DEFENDED</span></td><td>ws-07 · lateral movement (nmap)</td><td class="mono">BLOCKED</td><td><span class="badge b-ok">Auto-resolved</span></td><td></td></tr>
         </tbody></table>{:else}<div class="stub"><h2>No active alerts.</h2><p>Run the CC* scenario to generate one.</p></div>{/if}</div>
 
     {:else if tab === 'talus'}
@@ -222,8 +268,10 @@
         <div class="cards">
           <div class="card {compromised ? 'card-bad' : ''}"><div class="card-h">{compromised ? 'Credential dumping / kernel exploit' : 'Baseline — nominal'}</div><div class="card-s">alma9-edge-01 · score <b>{compromised ? '0.91' : '0.06'}</b> {compromised ? '≥ 0.85 → isolate' : 'within baseline'}</div><div class="card-meta">ClassificationReported · Ed25519-verified</div></div>
           <div class="card"><div class="card-h">Correlation: exec → FIM → C2</div><div class="card-s">3 events linked into one kill-chain</div><div class="card-meta">how Talus could drive detections (demo)</div></div>
-          <div class="card"><div class="card-h">Lateral-movement watch</div><div class="card-s">fleet · 0.04 · nominal</div><div class="card-meta">Cross-Device XDR heuristic</div></div>
-        </div></div>
+          <div class="card {compromised ? 'card-bad' : ''}"><div class="card-h">alma9-edge-01 — defended pod</div><div class="card-s">{compromised ? 'NOT WORTHY · isolated (score 0.91)' : 'healthy · score 0.06'}</div><div class="card-meta">endpoint under protection</div></div>
+          <div class="card" class:card-warn={compromised}><div class="card-h">ws-07 — second targeted pod</div><div class="card-s">{compromised ? 'lateral movement BLOCKED (nmap) · score 0.42' : 'healthy · score 0.04'}</div><div class="card-meta">multi-endpoint defense</div></div>
+        </div>
+        <p class="dim pad" style="padding-top:0">First two cards are fixed model status; the rest react live to the scenario across <b>multiple endpoints</b> being defended/targeted.</p></div>
 
     {:else if tab === 'vulns'}
       <div class="panel"><h3>🦭 Vulnerability Registry — Seal-encrypted (Walrus) <span class="tag">browser decrypt</span></h3>
@@ -235,16 +283,16 @@
         </tbody></table></div>
 
     {:else if tab === 'threat'}
-      <div class="panel"><h3>Threat Intel &amp; Deception (STIX/TAXII · MISP · honeytokens)</h3>
+      <div class="panel"><h3>Threat Intel &amp; Deception (STIX/TAXII · MISP · honeytokens) <span class="tag">live feed</span></h3>
         <table><thead><tr><th>Severity</th><th>Signal</th><th>Source</th><th></th></tr></thead><tbody>
-        {#each threatIntel as r}<tr><td><span class="badge {sevCls[r.sev]}">{r.sev}</span></td><td>{r.t}</td><td class="dim">{r.src}</td><td>{#if r.fp}<span class="badge b-ok">{r.fp}</span>{/if}</td></tr>{/each}
+        {#each intel as r}<tr class:row-bad={r.sev === 'CRITICAL'}><td><span class="badge {sevCls[r.sev]}">{r.sev}</span></td><td>{r.t}</td><td class="dim">{r.src}</td><td>{#if r.fp}<span class="badge b-ok">{r.fp}</span>{/if}</td></tr>{/each}
         </tbody></table></div>
 
     {:else if tab === 'onboarding'}
       <div class="panel"><h3>Connect a pod — register an observed agent on-chain</h3>
         <div class="pad"><p class="dim">Run this on the host/pod. It registers the agent to the public contract with a (mock) invitation token, then appears in the fleet as a Soulbound identity.</p>
           <pre class="cmd">{connectCmd}</pre>
-          <button class="run" onclick={() => note('Copied connect command')}>Copy command</button>
+          <button class="run" onclick={() => { navigator.clipboard?.writeText(connectCmd).catch(() => {}); note('Copied connect command') }}>Copy command</button>
           <p class="dim" style="margin-top:14px">Invite token <span class="mono">{inviteToken}</span> <span class="tag">demo</span> — real tokens are issued by the invite contract (public contracts only for now). K8s example: target a namespace via <span class="mono">--k8s prod-eu1/prod/edge</span> (UI preview; not yet functional).</p>
         </div></div>
 
@@ -280,9 +328,10 @@
         </tbody></table></div>
 
     {:else if tab === 'audit'}
-      <div class="panel"><h3>Analyst Audit Trail — every action as an immutable tx <span class="tag">mock</span></h3>
+      <div class="panel"><h3>Analyst Audit Trail — every action as an immutable tx <span class="tag">Walrus (mock)</span></h3>
         <table><thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>tx</th></tr></thead><tbody>
-        {#each auditTrail as r}<tr><td class="mono dim">{r[0]}</td><td class="mono">{r[1]}</td><td>{r[2]}</td><td class="mono acc">{r[3]}</td></tr>{/each}
+        {#each auditRows as r}<tr><td class="mono dim">{r[0]}</td><td class="mono">{r[1]}</td><td>{r[2]}</td><td class="mono acc">{r[3]}</td></tr>{/each}
+        {#if auditRows.length === 0}<tr><td colspan="4" class="dim" style="padding:18px">No analyst actions yet — run the CC* scenario &amp; open the incident.</td></tr>{/if}
         </tbody></table></div>
 
     {:else if tab === 'roadmap'}
@@ -330,7 +379,8 @@
     <div class="palette" role="dialog" aria-label="Command palette" onclick={(e) => e.stopPropagation()}>
       <input class="pal-in" placeholder="Type a command…  (⌘K)" bind:value={paletteQ} autofocus />
       <div class="pal-list">
-        {#each paletteCmds.slice(0, 8) as c}<button class="pal-item" onclick={() => runCmd(c.run)}>{c.label}</button>{/each}
+        {#each paletteCmds.slice(0, 9) as c}<button class="pal-item" onclick={() => runCmd(c.run)}>{c.label}</button>{/each}
+        {#if paletteCmds.length > 9}<div class="pal-empty">+{paletteCmds.length - 9} more — keep typing to filter…</div>{/if}
         {#if paletteCmds.length === 0}<div class="pal-empty">No commands.</div>{/if}
       </div>
     </div>

@@ -1,8 +1,9 @@
 # Thorium XDR
 
-> ### 🔴 LIVE DEMO — **vYY+1** (CR-1 fixes + ⌘K experiment)
-> - **Public (ngrok):** **https://6b3e-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(click the one-time "Visit Site"; press ⌘K)*
-> - **vYY (CR-fix), LAN:** **http://192.168.0.251:5174** · **vYY+1 LAN:** http://192.168.0.251:5175
+> ### 🔴 LIVE DEMO — **DDD (v5)** · branch `experimental-aw-fe-v3` (answers-driven)
+> - **Public (ngrok):** **https://7021-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(one-time "Visit Site"; press ⌘K)*
+> - **LAN:** http://192.168.0.251:5176 · **IPFS CID:** `bafybeici77d4xq7mdwo7xgwyl4dfxolog3uereebcwfwuxnnaw4jiidczq`
+> - New: multi-endpoint defense · ECharts telemetry · incident Ack/Resolve · Threat-Intel live · responsive
 >
 > ⚠️ Don't use the old `*.trycloudflare.com` links (router DNS). Detail/refresh:
 > [`LIVE-DEMO.md`](./LIVE-DEMO.md) · log:
