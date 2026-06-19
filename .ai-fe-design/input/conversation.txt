@@ -1,0 +1,13 @@
+Defender/Sentinel zScaler
+
+I would like the Thorium UI to have UI similar to:
+- Defender
+- Sentinel zScaler
+
+- use json contract as in Thorium project
+- use similar UI to SUI / Walrus
+- but when it comes to functionality it should be similar to ELK stack / datadog / Defender / Sentinel
+
+- when it comes to UX and perfection of simlicity focus on Bolt.com, Stripe, datadog
+
+Please do v1 of these requirements - see adjacent images
