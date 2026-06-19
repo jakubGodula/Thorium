@@ -15,44 +15,43 @@ vYY added `src/lib/adapter.ts` (the live/mock seam) with `connectLive`,
 `querySuiEvents`, `fetchWalrusBlob` + `TODO(live)` markers. Still no `@mysten/sui.js`
 dependency or call. **Q:** Is the live profile in scope for v4? If yes: confirm we add
 `@mysten/sui.js`, wire `querySuiEvents` to `cfg.suiRpcUrl`/`packageId`, and flip
-`mock:false` as a profile. **Answer:** _<!-- … -->_
+`mock:false` as a profile. **Answer:** You would have to check the https://github.com/jakubGodula/Mowa for the instructions on the language that the backend is written in and then connect the backend from https://github.com/jakubGodula/Thorium/tree/experimental by compiling it with that language, please keep in mid that this requires sui-cli and cargo.
 
 ### L-A2 🔴 WebSocket schema + source (CR A-2, P2)
 vYY marks receivers (Fleet Telemetry, Chain Activity badges; `applyLiveEvent` stub).
 You said the WS "is already implemented." **Q:** Where (agent/backend)? **Provide the
 WS URL + message schema** (event types → fields) so `applyLiveEvent` maps to
-phase/telemetry/incident state precisely. **Answer:** _<!-- … -->_
+phase/telemetry/incident state precisely. Same as above. 
 
 ### L-A3 🟡 Incident tree — existing vs vYY (CR A-3, P4)
 vYY highlights the active CC* incident (INC-991 pulses when compromised) + shows
 correlated-count. **Q:** You said a tree is "partly implemented" — point to that code;
 should vYY align/supersede? Do you want expand/collapse + drill-down, or is the
-2-level kill-chain grouping enough for the demo? **Answer:** _<!-- … -->_
+2-level kill-chain grouping enough for the demo? Same as above. you can find it there and most likely make iut much nicer. 
 
 ### L-A4 🟡 Walrus/Seal decrypt fidelity (CR A-4)
 vYY now does a **real `fetch(walrusGateway/blobId)`** per row (with spinner +
 graceful demo fallback). No `@mysten/walrus` SDK yet. **Q:** For the demo, is the
-real-fetch-with-fallback enough, or wire the actual Seal SDK + a real test blob?
-**Answer:** _<!-- … -->_
+real-fetch-with-fallback enough, or wire the actual Seal SDK + a real test blob? You can include the new context of the backend and use it.
 
 ### L-A5 🟢 Talus correlation liveliness (CR A-5)
 Card 1 reacts to the scenario; cards 2–3 are static. **Q:** Make cards 2–3 react to
-the CC* phase (glow when kill-chain active), or leave static? **Answer:** _<!-- … -->_
+the CC* phase (glow when kill-chain active), or leave static? **Answer:** let's make first 2 cards static and then the rest dynamic, so that the demo can include more than one endpoint that is being defended/targeted.
 
 ### L-A6 🟡 Personas placement (CR A-6)
 "Roles & Models" sits under the **Platform** rail group. **Q:** Keep it there, or
-promote to a top-level nav item for the demo flow? **Answer:** _<!-- … -->_
+promote to a top-level nav item for the demo flow? **Answer:** Keep it there.
 
 ### L-A7 🟢 Invite token format (CR A-7, P5)
 vYY uses `inv_8Qm4Zr2Tn9Kx7Wb3Yc6Hf1Ld` + a `demo` tag (replaced `…-MOCK`). **Q:**
-Is this format fine, or match a specific real token format/length? **Answer:** _<!-- … -->_
+Is this format fine, or match a specific real token format/length? **Answer:** Whaterev will do for now. Just mark it as to be improved or something.
 
 ### L-A8 🟡 UD domain + routing (CR A-8, P1)
 `config.json` `unstoppableDomain: "thorium.crypto"`; footer/onboarding use it.
 `vite.config` `base:'./'` is IPFS-safe; the app is single-page (no router) — ADR-0008
 mentioned hash routing but none is configured. **Q1:** Is `thorium.crypto` the real
 registered domain? **Q2:** Single-page (no router) OK for the demo, or add hash
-routing now (deep-links beyond `?cc=1`)? **Answer:** _<!-- … -->_
+routing now (deep-links beyond `?cc=1`)? **Answer:** thorium.her
 
 ---
 
@@ -61,26 +60,26 @@ routing now (deep-links beyond `?cc=1`)? **Answer:** _<!-- … -->_
 ### L-B1 🟡 "Connect" phase clarity (CR B-1)
 vYY: connect phase now shows a **grey/pending sparkline** (was misleading green). The
 drawer doesn't auto-open until `isolated`. **Q:** Auto-open the drawer briefly at
-`connected` to show "attested", or keep it closed until the alert? **Answer:** _<!-- … -->_
+`connected` to show "attested", or keep it closed until the alert? **Answer:** I believe that you will find your answer in the experimental brunch.
 
 ### L-B2 🟢 Healthy-phase "Sui interacts" moment (CR B-2)
 Chain Activity shows `AgentRegistered`/`TelemetryReported` in healthy phase, but the
 Overview KPIs don't change. **Q:** Add a subtle "new agent connected" flash/KPI tick
-at `healthy` to make the on-chain interaction pop? **Answer:** _<!-- … -->_
+at `healthy` to make the on-chain interaction pop? **Answer:** You can, thank you.
 
 ### L-B3 🟡 NOT-OK logs (CR B-3) — DONE, confirm
 vYY added a **Recent logs** panel (eBPF/FIM/syslog, red when compromised) on Fleet
 Telemetry, satisfying "NOT-OK log visible". **Q:** Good placement, or also surface a
-log strip on Overview/Alerts? **Answer:** _<!-- … -->_
+log strip on Overview/Alerts? **Answer:** Change the "TREND" column in this page to "THREAT LEVEL"
 
 ### L-B4 🟢 Banner at 1024px (CR B-4)
 Banner may wrap awkwardly at the 1024 lower breakpoint (I18). **Q:** Add a compact
-banner variant <1100px, or is 1280px-first acceptable for the demo? **Answer:** _<!-- … -->_
+banner variant <1100px, or is 1280px-first acceptable for the demo? **Answer:** It's acceptable, but add it please,other people might want to run it on smaller resolution monitors.
 
 ### L-B5 🟢 AI-agent response (CR B-5) — DONE, confirm
 vYY: "Execute skill / connect Claude Code" now opens a **richer modal** (preview of
 the AI-agent remediation flow) instead of a toast. **Q:** Lean further into this
-(the hackathon AI/Sui differentiator), or keep as a preview modal? **Answer:** _<!-- … -->_
+(the hackathon AI/Sui differentiator), or keep as a preview modal? **Answer:** toast
 
 ---
 
@@ -90,12 +89,12 @@ the AI-agent remediation flow) instead of a toast. **Q:** Lean further into this
 Both deployments are **ephemeral ngrok / LAN**; GitHub Pages is blocked (private
 repo). **Q (most impactful for the hackathon):** make the repo **public** (Pages auto-
 deploys), pay for private Pages, or deploy to **Unstoppable + IPFS** now? Give access
-if (b)/(c). **Answer:** _<!-- … -->_
+if (b)/(c). **Answer:** Give me a hash to the site IPFS.
 
 ### L-C2 🟢 Tracked-copy sync (CR D-2)
 `delivery/delivery-v2/app` is rsynced from `.ignored/…` each round (now = vYY+1).
 **Q:** Keep the dual-copy (gitignored dev + tracked CI), or move the canonical app
-into a tracked path to remove sync risk? **Answer:** _<!-- … -->_
+into a tracked path to remove sync risk? **Answer:** tracked path pls.
 
 ### L-C3 🟢 vX archive recoverability (CR D-4)
 Archived builds (`dist-vX`, `dist-vYY`) live under gitignored `.ignored/` — lost if
@@ -106,27 +105,27 @@ commit a built artifact / tag per version? **Answer:** _<!-- … -->_
 
 ## Part D — Code quality (CR Part 4) — mostly DONE, confirm
 - **L-D1 🟡 Adapter (Q-1)** — `src/lib/adapter.ts` created. Confirm the shape (Polish→
-  English mapping home) is what you want. **Answer:** _<!-- … -->_
+  English mapping home) is what you want. **Answer:** Yes.
 - **L-D2 🟢 `connectCmd` (Q-2)** — now `$derived` (reactive). ✅ confirm.
 - **L-D3 🟢 Per-row decrypt (Q-3)** — `decryptedText` map + spinner. ✅ confirm.
 - **L-D4 🟢 Timer/WS cleanup (Q-4)** — `onDestroy` clears timer + WS + keydown. ✅ confirm.
 - **L-D5 🟢 MSSP tenant (Q-5)** — switcher now cycles tenants + `mock` tag. ✅ confirm.
 - **L-D6 🟡 Polish wire keys (Q-6 / ADR-0006 TODO)** — adapter is the translation
   home; OpenAPI still Polish. **Q:** expose an English-keyed contract variant, or keep
-  the adapter as the only boundary? **Answer:** _<!-- … -->_
+  the adapter as the only boundary? **Answer:** We don;t need anything else than the English language in the UI for the demo.
 
 ---
 
 ## Part E — Forward (beyond CR)
 - **L-E1 🟡 Charting/Tailwind (ADR-0002/0003)** — adopt ECharts/uPlot + Tailwind in
-  v4? *Assumption: yes.* **Answer:** _<!-- … -->_
+  v4? *Assumption: yes.* **Answer:** Yes.
 - **L-E2 🟡 Which Beta surface becomes REAL first?** rank: Compliance · Governance ·
-  Integrations · Audit · Threat-Intel · MSSP. **Answer:** _<!-- … -->_
+  Integrations · Audit · Threat-Intel · MSSP. **Answer:** Threat Intel
 - **L-E3 🟢 CC\* UX-excellence pass** (separate thread, gen-v2 loop): run it for v4?
-  **Answer:** _<!-- … -->_
+  **Answer:** Yes.
 - **L-E4 🟢 ⌘K palette (vYY+1 experiment)** — keep/extend (actions, recent, search
-  data), or drop? **Answer:** _<!-- … -->_
-- **L-E5 🟢 Incident status storage (I14)** — Walrus vs on-chain for real; when? **Answer:** _<!-- … -->_
+  data), or drop? **Answer:** Keep.
+- **L-E5 🟢 Incident status storage (I14)** — Walrus vs on-chain for real; when? **Answer:** Let's do Walrus now. Try to ensure to do it properly with Mowa languyage from the context that I provided above.
 
 ---
 
