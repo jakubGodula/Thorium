@@ -46,13 +46,14 @@ broader **module catalog** (Lithium/K8s, Neon, Xenon, Silicon, Titanium, …).
 
 ## Run the demo locally
 The generated demo lives under `.ignored/fe-demo/demo_designV2_genV2/` (gitignored —
-it's a build artifact). It is **Version Alfa by default**.
+it's a build artifact). It is **Version Alfa by default**. **Use the absolute path**
+(the `app/` is one level deeper):
 
 ```bash
-cd .ignored/fe-demo/demo_designV2_genV2
+cd /Users/macbook/work/Thorium/.ignored/fe-demo/demo_designV2_genV2/app
 npm install
 npm run demo          # app on http://localhost:5173  (+ Prism mock on :4010)
-# open http://localhost:5173  →  click "▶ Run CC* scenario"
+# open http://localhost:5173  →  click "▶ Run CC* scenario"   (or /?cc=1)
 ```
 
 - **Clickable** SOC console; **CC\*** is a guided, manual walk-through (the
@@ -60,12 +61,15 @@ npm run demo          # app on http://localhost:5173  (+ Prism mock on :4010)
 - **Living mocks:** the Prism mock serves the agent + Sui-event contract; the CC\*
   scenario also runs deterministically client-side.
 
-## Deploy to a remote server / IPFS (later)
-```bash
-npm run build         # static dist/ (base:'./', hash routing — IPFS-safe)
-# then host dist/ on any static server, or: ipfs add -r dist
-```
-*(Capability is wired; actual remote deploy is intentionally left for you to run.)*
+## Deploy (remote) — live URL
+- **Remote (GitHub Pages, auto-deploy):** **https://jakubgodula.github.io/Thorium/**
+  (CC* deep-link: `…/Thorium/?cc=1`). Published by GitHub Actions on push (FE
+  **delivery-v2**). See [`README-deployment.md`](./README-deployment.md).
+- **IPFS / any static host:** `npm run build` → host `dist/` (IPFS-safe: `base:'./'`,
+  hash routing) or `ipfs add -r dist`.
+
+> Live-URL status (whether Pages has finished its first build/enablement) is tracked
+> in [`.ai-fe-design/ai_internal_audit_log/`](./.ai-fe-design/ai_internal_audit_log/).
 
 ---
 

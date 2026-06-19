@@ -1,0 +1,56 @@
+name: Deploy Thorium XDR demo (Alfa) to GitHub Pages
+
+# FE delivery v2 — fully autonomous remote deploy.
+# Unlike delivery-v1 (push gh-pages branch, needs a manual Settings toggle), this
+# uses actions/configure-pages with enablement:true to enable Pages via the
+# workflow's GITHUB_TOKEN — no manual step.
+
+on:
+  push:
+    branches: [experimental-aw-fe-v2]
+    paths:
+      - '.ai-fe-design/delivery/delivery-v2/app/**'
+      - '.github/workflows/deploy-pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: .ai-fe-design/delivery/delivery-v2/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable + configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Install & build (Alfa, base:'./')
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .ai-fe-design/delivery/delivery-v2/app/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

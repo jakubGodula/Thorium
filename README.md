@@ -38,9 +38,12 @@ models, $THOR/DAO, compliance, MSSP, module catalog). Human guide:
 [`README-for-human.md`](./README-for-human.md).
 
 ## Capability #2 — deploy the demo (remote / IPFS)
-The build is static and IPFS-safe (`base:'./'`, hash routing): `npm run build` →
-host `dist/` on any static server, or `ipfs add -r dist`. Wired but intentionally
-**not auto-deployed** — run it when you're ready.
+The build is static and IPFS-safe (`base:'./'`, hash routing). Deployment is
+**versioned** (`delivery-v1`, `delivery-v2`, …) — see
+[`README-deployment.md`](./README-deployment.md).
+- **Remote (auto, delivery-v2):** GitHub Actions publishes to **GitHub Pages** →
+  **https://jakubgodula.github.io/Thorium/** (`?cc=1` for the CC* alert).
+- **IPFS / any static host:** `npm run build` → host `dist/` or `ipfs add -r dist`.
 
 ### ⭐ The Critical Demo Case (CC*) — must be flawless
 The demo's spine: connect an **observed pod** (blockchain-attested) → it runs
