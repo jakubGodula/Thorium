@@ -1,9 +1,11 @@
 # Thorium XDR
 
-> ### 🔴 LIVE DEMO (public, verified): **https://roller-flag-smtp-landscape.trycloudflare.com**
-> CC* alert: **https://roller-flag-smtp-landscape.trycloudflare.com/?cc=1** · scope **Alfa** ·
-> details + refresh in [`LIVE-DEMO.md`](./LIVE-DEMO.md). *(Ephemeral Cloudflare tunnel —
-> if down, `bash .ai-fe-design/delivery/delivery-v3/serve-public.sh`.)*
+> ### 🔴 LIVE DEMO (public, verified) — scope **Alfa**
+> - **v2 (latest):** **https://survival-montana-duration-rachel.trycloudflare.com** · CC*: `…/?cc=1`
+> - **v1 (MVP):** **https://roller-flag-smtp-landscape.trycloudflare.com** · CC*: `…/?cc=1`
+>
+> Details + refresh: [`LIVE-DEMO.md`](./LIVE-DEMO.md) · log: [`deployments.md`](./.ai-fe-design/ai_internal_audit_log/deployments.md).
+> *(Ephemeral Cloudflare tunnels — if down: `bash .ai-fe-design/delivery/delivery-v3/serve-public.sh`.)*
 
 A **Web3-native Extended Detection & Response (XDR)** platform: eBPF endpoint
 agents (written in the **Mowa** language) whose registry, incidents, telemetry, and

@@ -5,17 +5,19 @@
     responseActions, loadConfig,
   } from './lib/scenario'
 
-  type Tab = 'overview' | 'telemetry' | 'incidents' | 'alerts' | 'chain' | 'endpoints' | 'vms' | 'more'
+  type Tab = 'overview' | 'telemetry' | 'incidents' | 'alerts' | 'chain' | 'endpoints' | 'talus' | 'vulns' | 'more'
   let tab = $state<Tab>('overview')
   let phase = $state<Phase>('idle')
   let drawerOpen = $state(false)
+  let autoplay = $state(false)
   let toast = $state('')
   let cfg = $state<AppConfig>({ scope: 'alfa', network: 'testnet', packageId: '0x0cc3…91af', mock: true })
 
   onMount(async () => {
     cfg = await loadConfig()
-    // deep-link to the CC* alert state: /?cc=1  (handy for demos & screenshots)
-    if (new URLSearchParams(location.search).has('cc')) { phase = 'isolated'; drawerOpen = true }
+    const q = new URLSearchParams(location.search)
+    if (q.has('cc')) { phase = 'isolated'; drawerOpen = true }
+    if (q.has('demo')) { autoplay = true; runScenario() }
   })
 
   const pod = $derived(observedPod(phase))
@@ -23,6 +25,8 @@
   const events = $derived(timeline(phase))
   const compromised = $derived(phase === 'attacked' || phase === 'isolated')
   const others = fleet()
+  const PHASE_LABEL: Record<Phase, string> = { idle: 'Idle', connected: 'Connecting pod', healthy: 'Healthy', attacked: 'Under attack', isolated: 'Isolated' }
+  const step = $derived(PHASES.indexOf(phase))
 
   let timer: ReturnType<typeof setTimeout> | null = null
   function runScenario() {
@@ -31,15 +35,17 @@
     const seq: Phase[] = ['connected', 'healthy', 'attacked', 'isolated']
     let k = 0
     phase = 'idle'
-    const step = () => {
+    const advance = () => {
       phase = seq[k]
-      if (phase === 'isolated') { drawerOpen = true }
+      if (phase === 'isolated') drawerOpen = true
       k++
-      if (k < seq.length) timer = setTimeout(step, k <= 1 ? 1100 : 1600)
+      if (k < seq.length) timer = setTimeout(advance, k <= 1 ? 1100 : 1600)
+      else if (autoplay) timer = setTimeout(runScenario, 4500) // loop for unattended booth
     }
-    timer = setTimeout(step, 400)
+    timer = setTimeout(advance, 400)
   }
-  function reset() { if (timer) clearTimeout(timer); phase = 'idle'; drawerOpen = false }
+  function reset() { if (timer) clearTimeout(timer); autoplay = false; phase = 'idle'; drawerOpen = false }
+  function toggleAutoplay() { autoplay = !autoplay; if (autoplay) runScenario(); else reset() }
   function fireAction(l: string) { toast = `${l} — placeholder (coming soon)`; setTimeout(() => (toast = ''), 2600) }
 
   const tabs: { id: Tab; label: string; soon?: boolean }[] = [
@@ -49,9 +55,20 @@
     { id: 'alerts', label: 'Alerts' },
     { id: 'chain', label: 'Chain Activity' },
     { id: 'endpoints', label: 'Endpoints' },
-    { id: 'vms', label: 'VMs', soon: true },
-    { id: 'more', label: 'Talus · Vulns · Polonium', soon: true },
+    { id: 'talus', label: 'Talus AI' },
+    { id: 'vulns', label: 'Vulnerabilities' },
+    { id: 'more', label: 'VMs · Polonium', soon: true },
   ]
+
+  const chainRows = $derived([
+    ...(compromised ? [
+      { sev: 'CRITICAL', cls: 'b-bad', ev: 'alma9-edge-01 · IncidentReport (kernel exploit)', act: 'KILLED_AND_ISOLATED', tx: '0x9aBc…01' },
+      { sev: 'HIGH', cls: 'b-pending', ev: 'alma9-edge-01 · ClassificationReported 0.91', act: 'TRIGGER_ISOLATION', tx: '0x7xYz…' },
+    ] : []),
+    ...(step >= 2 ? [{ sev: 'INFO', cls: 'b-ok', ev: 'alma9-edge-01 · TelemetryReported cpu 12%', act: '—', tx: '0x5tuv…' }] : []),
+    ...(step >= 1 ? [{ sev: 'INFO', cls: 'b-ok', ev: 'alma9-edge-01 · AgentRegistered', act: '—', tx: '0x12aB…' }] : []),
+    { sev: 'INFO', cls: 'b-ok', ev: 'ws-07 · TelemetryReported cpu 13%', act: '—', tx: '0x88cd…' },
+  ])
 </script>
 
 <div class="topbar">
@@ -61,6 +78,7 @@
   <div class="grow"></div>
   <button class="ghost">⌘K Search</button>
   <button class="ghost">Connect Wallet</button>
+  <button class="ghost" class:on={autoplay} onclick={toggleAutoplay} title="Auto-loop the CC* scenario">{autoplay ? '⏸ Demo mode' : '◷ Demo mode'}</button>
   {#if phase === 'idle'}
     <button class="run" onclick={runScenario}>▶ Run CC* scenario</button>
   {:else}
@@ -76,7 +94,6 @@
   {/each}
 </nav>
 
-<!-- CC* critical banner -->
 {#if compromised}
   <div class="banner" role="alert">
     <span class="pulse"></span>
@@ -141,6 +158,10 @@
           <button class="ghost" style="margin-left:auto" onclick={() => (drawerOpen = false)}>✕</button>
         </div>
         <div class="body">
+          <div class="callouts">
+            <div class="callout"><div class="cl-l">Isolation method</div><div class="cl-v">KILLED_AND_ISOLATED</div></div>
+            <div class="callout"><div class="cl-l">Blast radius</div><div class="cl-v">1 pod · 0 lateral</div></div>
+          </div>
           <div class="section-label">Kill-chain timeline</div>
           <div class="tl">
             {#each events as e}
@@ -165,28 +186,61 @@
 {:else if tab === 'telemetry'}
   <div class="layout solo"><div class="panel"><h3>Fleet Telemetry — cpu / ram / disk</h3>
     <table><thead><tr><th>Pod</th><th>CPU</th><th>RAM</th><th>Disk</th><th>Trend</th></tr></thead><tbody>
-      {#if pod}<tr class:row-bad={compromised}><td><b>{pod.hostname}</b></td><td class:mono={true}>{pod.cpu}%</td><td class="mono">{pod.ram}%</td><td class="mono">{pod.disk}%</td>
+      {#if pod}<tr class:row-bad={compromised}><td><b>{pod.hostname}</b></td><td class="mono">{pod.cpu}%</td><td class="mono">{pod.ram}%</td><td class="mono">{pod.disk}%</td>
         <td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points={spark.points} fill="none" stroke={spark.color} stroke-width="2"/></svg></td></tr>{/if}
       {#each others as o}<tr><td>{o.hostname}</td><td class="mono">{o.cpu}%</td><td class="mono">{o.ram}%</td><td class="mono">{o.disk}%</td>
         <td><svg class="spark" viewBox="0 0 120 22" preserveAspectRatio="none"><polyline points="0,14 20,13 40,15 60,12 80,13 100,11 120,12" fill="none" stroke="#22c55e" stroke-width="2"/></svg></td></tr>{/each}
     </tbody></table></div></div>
 
-{:else if tab === 'incidents' || tab === 'alerts' || tab === 'chain'}
-  <div class="layout solo"><div class="panel"><h3>{tab === 'chain' ? 'Chain Activity (on-chain events)' : tab === 'alerts' ? 'Alerts' : 'Incidents'}</h3>
+{:else if tab === 'chain'}
+  <div class="layout solo"><div class="panel"><h3>Chain Activity — on-chain events · pkg <span class="mono" style="font-size:12px">{cfg.packageId.slice(0,8)}…</span></h3>
+    <table><thead><tr><th>Severity</th><th>Event</th><th>Action</th><th>tx digest</th></tr></thead><tbody>
+      {#each chainRows as r}<tr class:row-bad={r.cls==='b-bad'}><td><span class="badge {r.cls}">{r.sev}</span></td><td>{r.ev}</td><td class="mono">{r.act}</td><td class="mono" style="color:var(--accent)">{r.tx}</td></tr>{/each}
+    </tbody></table></div></div>
+
+{:else if tab === 'incidents' || tab === 'alerts'}
+  <div class="layout solo"><div class="panel"><h3>{tab === 'alerts' ? 'Alerts' : 'Incidents'}</h3>
     {#if compromised}
-      <table><thead><tr><th>Severity</th><th>Pod / Event</th><th>Action</th><th>tx</th></tr></thead><tbody>
-        <tr class="row-bad"><td><span class="badge b-bad">CRITICAL</span></td><td>alma9-edge-01 · IncidentReport (kernel exploit)</td><td class="mono">KILLED_AND_ISOLATED</td><td class="mono" style="color:var(--accent)">0x9aBc…01</td></tr>
-        <tr><td><span class="badge b-pending">HIGH</span></td><td>alma9-edge-01 · ClassificationReported 0.91</td><td class="mono">TRIGGER_ISOLATION</td><td class="mono" style="color:var(--accent)">0x7xYz…</td></tr>
-        <tr><td><span class="badge b-ok">INFO</span></td><td>alma9-edge-01 · AgentRegistered</td><td class="mono">—</td><td class="mono" style="color:var(--accent)">0x12aB…</td></tr>
+      <table><thead><tr><th>Severity</th><th>Pod / Detection</th><th>Action</th><th>Status</th><th>tx</th></tr></thead><tbody>
+        <tr class="row-bad"><td><span class="badge b-bad">CRITICAL</span></td><td>alma9-edge-01 · kernel exploit (eBPF)</td><td class="mono">KILLED_AND_ISOLATED</td><td><span class="badge b-pending">Open</span></td><td class="mono" style="color:var(--accent)">0x9aBc…01</td></tr>
+        <tr><td><span class="badge b-pending">HIGH</span></td><td>alma9-edge-01 · Talus anomaly 0.91</td><td class="mono">TRIGGER_ISOLATION</td><td><span class="badge b-pending">Open</span></td><td class="mono" style="color:var(--accent)">0x7xYz…</td></tr>
       </tbody></table>
-    {:else}<div class="stub"><h2>No active {tab}.</h2><p>Click <b>▶ Run CC* scenario</b> to generate the critical incident.</p></div>{/if}
+    {:else}<div class="stub"><h2>No active {tab}.</h2><p>Click <b>▶ Run CC* scenario</b> (or <b>◷ Demo mode</b>) to generate the critical incident.</p></div>{/if}
   </div></div>
+
+{:else if tab === 'talus'}
+  <div class="layout solo"><div class="panel"><h3>🤖 Talus AI — detections (anomaly threshold 0.85)</h3>
+    <div class="cards">
+      <div class="card {compromised ? 'card-bad' : ''}">
+        <div class="card-h">{compromised ? 'Credential dumping / kernel exploit' : 'Baseline — nominal'}</div>
+        <div class="card-s">alma9-edge-01 · score <b>{compromised ? '0.91' : '0.06'}</b> {compromised ? '≥ 0.85 → TRIGGER_ISOLATION' : '· within baseline'}</div>
+        <div class="card-meta">ClassificationReported · Ed25519-verified AI agent</div>
+      </div>
+      <div class="card"><div class="card-h">Lateral movement watch</div><div class="card-s">fleet · score 0.04 · no anomalies</div><div class="card-meta">Cross-Device XDR heuristic</div></div>
+    </div></div></div>
+
+{:else if tab === 'vulns'}
+  <div class="layout solo"><div class="panel"><h3>🦭 Vulnerability Registry — Seal-encrypted (Walrus)</h3>
+    <table><thead><tr><th>Pod</th><th>CVE</th><th>Package</th><th>Severity</th><th>Evidence</th></tr></thead><tbody>
+      <tr class:row-bad={compromised}><td>alma9-edge-01</td><td class="mono">CVE-2025-{compromised ? '31337' : '0991'}</td><td class="mono">glibc</td><td><span class="badge {compromised ? 'b-bad' : 'b-pending'}">{compromised ? 'CRITICAL' : 'MEDIUM'}</span></td><td><span class="badge b-ok">🔒 Sealed</span></td></tr>
+      <tr><td>db-02</td><td class="mono">CVE-2025-2048</td><td class="mono">openssl</td><td><span class="badge b-pending">HIGH</span></td><td><span class="badge b-ok">🔒 Sealed</span></td></tr>
+    </tbody></table></div></div>
 
 {:else}
   <div class="layout solo"><div class="panel"><div class="stub">
-    <h2>Coming soon</h2>
-    <p>This Alfa slice focuses on the <b>CC*</b> critical path (Overview · Fleet Telemetry · Incidents · Alerts · Chain Activity). VMs / Talus / Vulnerabilities / Polonium are stubs here; full Alfa breadth + Beta surfaces are the next build.</p>
+    <h2>VMs · Polonium — coming soon</h2>
+    <p>This Alfa slice focuses on the <b>CC*</b> critical path. VM lifecycle &amp; Polonium policy console are next; full Alfa breadth + Beta surfaces (personas, compliance, $THOR/DAO) follow.</p>
   </div></div></div>
 {/if}
+
+{#if phase !== 'idle'}
+  <div class="progress">
+    <span class="p-step">Step {Math.min(step, 4)}/4</span>
+    <div class="p-bar"><div class="p-fill" style="width:{(Math.min(step,4)/4)*100}%"></div></div>
+    <span class="p-lbl">{PHASE_LABEL[phase]}{autoplay ? ' · ⟳ looping' : ''}</span>
+  </div>
+{/if}
+
+<footer class="trust">Powered by <b>Thorium XDR</b> · Sui {cfg.network} · scope {cfg.scope} · demo mode (stateless, contract fixtures) · CC* critical path</footer>
 
 {#if toast}<div class="toast">{toast}</div>{/if}

@@ -1,15 +1,18 @@
 # 🔴 LIVE DEMO — Thorium XDR (Alfa)
 
-## ▶ Public URL (verified live, unrestricted)
+Two verified public deployments (both live, unrestricted):
 
-# https://roller-flag-smtp-landscape.trycloudflare.com
+## ▶ v2 (latest, recommended): https://survival-montana-duration-rachel.trycloudflare.com
+CC\* alert: **https://survival-montana-duration-rachel.trycloudflare.com/?cc=1**
+*(adds Demo-mode auto-loop, Talus AI + Vulnerabilities tabs, scenario progress, trust footer)*
 
-**CC\* critical alert (deep-link):**
-## https://roller-flag-smtp-landscape.trycloudflare.com/?cc=1
+## ▶ v1 (MVP / mockup): https://roller-flag-smtp-landscape.trycloudflare.com
+CC\* alert: **https://roller-flag-smtp-landscape.trycloudflare.com/?cc=1**
 
-- **Verified:** HTTP 200 over the public internet + the CC\* alert rendered in a real
-  browser through the public URL (screenshot:
-  [`.ai-fe-design/demo-gen/gen-v2/mockup/public-cc-alert.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-cc-alert.png)).
+- **Verified:** both return HTTP 200 over the public internet + the CC\* alert
+  rendered in a real browser through each public URL (screenshots:
+  [`public-v2-cc-alert.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-v2-cc-alert.png) /
+  [`public-cc-alert.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-cc-alert.png)).
 - **Unrestricted:** Cloudflare Quick Tunnel — no login, no interstitial, fully public
   and clickable. Click **“▶ Run CC* scenario”** (or open the `?cc=1` link).
 - **Scope:** Version **Alfa** (focused SOC console + CC\*); CC\* runs on client-side
