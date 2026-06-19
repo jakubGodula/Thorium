@@ -30,6 +30,18 @@ in [`.ai-fe-design/`](./.ai-fe-design/), with no extra context.**
   link, deploy steps, and every **missing/mocked integration** (live Sui, Walrus,
   Slack, cloud-kill, …).
 
+### Scope: Alfa (default) vs Beta
+The demo is parameterized `--scope=alfa|beta` (**alfa default**): **Alfa** = focused
+SOC console + CC\* (Defender IA · Walrus look · ELK/Datadog capability · blockchain
+domain); **Beta** = Alfa + the roadmap/presentation breadth (personas, business
+models, $THOR/DAO, compliance, MSSP, module catalog). Human guide:
+[`README-for-human.md`](./README-for-human.md).
+
+## Capability #2 — deploy the demo (remote / IPFS)
+The build is static and IPFS-safe (`base:'./'`, hash routing): `npm run build` →
+host `dist/` on any static server, or `ipfs add -r dist`. Wired but intentionally
+**not auto-deployed** — run it when you're ready.
+
 ### ⭐ The Critical Demo Case (CC*) — must be flawless
 The demo's spine: connect an **observed pod** (blockchain-attested) → it runs
 **healthy** (Sui interaction + OK telemetry visible) → **simulate a kernel attack /

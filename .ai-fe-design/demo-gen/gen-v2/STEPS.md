@@ -4,7 +4,13 @@ The exact, copy-pasteable path to produce the runnable Thorium XDR demo. gen-v2 
 the **recommended** generator (gen-v1 is the simpler, proven fallback — same output,
 without the auto-improvement loop / screenshots / E2E).
 
-> Output goes to `.ignored/fe-demo/demo_designV2_genV2/` (gitignored).
+> **Scope: `--scope=alfa` (DEFAULT).** Alfa = focused SOC console + CC* (see
+> [`../README.md`](../README.md#scope-parameter--alfa-default-vs-beta) and
+> [`../../../README-for-human.md`](../../../README-for-human.md)). Pass
+> `--scope=beta` only to also build the personas/business/compliance/module breadth.
+>
+> Output goes to `.ignored/fe-demo/demo_designV2_genV2/` (gitignored). The generated
+> README records the scope.
 
 ## 0. Trigger
 - **Claude Code:** run `/fe-demo-gen` and pick generator `gen-v2`, design `v2`.

@@ -36,6 +36,18 @@ demo-gen/
     └── mockup/                ← standalone CC* alert mockup + screenshot (design target)
 ```
 
+## Scope parameter — Alfa (default) vs Beta
+Every generator takes a **scope** (`--scope=alfa|beta`, **alfa is the default**):
+- **🅰️ alfa** — the focused SOC console + the **CC\*** path (Overview, Endpoints,
+  Incidents, Alerts, Fleet Telemetry, Chain Activity, VMs; Talus/Vulns/Polonium
+  light). Defender IA · Walrus look · ELK/Datadog capability · blockchain domain.
+- **🅱️ beta** — alfa **plus** everything from `input/roadmap_en.html` +
+  `input/presentation_en.html`: 5 personas/RBAC, business models, $THOR/DAO,
+  compliance/NIS2, MSSP multi-tenant, full module catalog (the Part-3 diff).
+
+Human-facing explanation: [`../../README-for-human.md`](../../README-for-human.md).
+Generated demos record their scope in the demo README (default **alfa**).
+
 ## How to invoke
 - **Claude Code:** run the skill — `/fe-demo-gen` (see
   `.claude/skills/fe-demo-gen/`). It reads the latest design + the chosen

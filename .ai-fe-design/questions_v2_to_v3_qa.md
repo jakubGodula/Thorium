@@ -170,9 +170,23 @@ banner (ties to "Offline Lockdown / Dark Mode").
 **Assumption:** no hard budget for the demo; optimization pass later.
 **Answer:** _<!-- fill in -->_
 
+### I21 🟢 Alfa vs Beta scope boundary (low priority — already decided, confirm)
+**Context:** the demo is parameterized `--scope=alfa|beta` (**alfa default**). Alfa =
+focused SOC console + CC* (Defender IA / Walrus look / ELK-Datadog capability /
+blockchain domain). Beta = Alfa + the roadmap/presentation breadth (all of Part 3:
+personas, business models, $THOR/DAO, compliance, MSSP, module catalog). See
+[`../README-for-human.md`](../README-for-human.md).
+**Assumption (v2):** Alfa is the line above; demo ships Alfa by default.
+**Question:** Confirm the Alfa/Beta split (and any item you'd move across the line).
+**Answer:** _<!-- fill in -->_
+
 ---
 
 # PART 3 — DIFF: roadmap/presentation vs the actual demo (as questions) 🟡
+
+> **These items collectively define Version Beta.** Version **Alfa** (the demo's
+> default scope) deliberately excludes them; answering them here decides what a Beta
+> build would add. See [`../README-for-human.md`](../README-for-human.md).
 
 > Gap analysis. These concepts appear in `roadmap_en.html` /
 > `presentation_en.html` but are **absent from the v2 design/demo**. Each: should v3
@@ -247,6 +261,10 @@ Assumed **not** in the frontend. Confirm these stay agent/infra-only.
 > The demo (esp. **CC\***) must be best-in-class. That deserves its own focused
 > thread. This part = (a) the CC* presentation playbook, (b) UX references, (c) a
 > ready-to-paste **prompt for another AI agent** to run the excellence pass.
+>
+> **Scope note:** the UX excellence pass targets **Version Alfa** (the focused SOC
+> console + CC*) by default — that is where the demo's quality bar lives. Beta-only
+> surfaces (personas, compliance, governance) get their own UX pass once scoped.
 
 ## 4a. CC* presentation playbook (catalog of options)
 1. **Top banner → Incident Command drawer** *(v2 default; rendered in `demo-gen/gen-v2/mockup/`)* — sticky/floating · drawer right/bottom · auto-open vs click.

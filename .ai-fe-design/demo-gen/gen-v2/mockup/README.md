@@ -10,7 +10,10 @@ open .ai-fe-design/demo-gen/gen-v2/mockup/cc-alert.html      # macOS
 - [`cc-alert.html`](./cc-alert.html) — the mockup (top Critical Incident banner +
   NOT-WORTHY pod row + Incident Command drawer with kill-chain timeline, on-chain
   evidence, and placeholder response actions).
-- `cc-alert.png` — headless-Chrome screenshot (regenerate below).
+- `cc-alert.png` — headless-Chrome screenshot of the mockup (regenerate below).
+- `app-cc-alert.png` — **proof:** the same state rendered by the **real generated
+  Svelte app** (gen-v2 ⊗ design v2, scope=alfa) under
+  `.ignored/fe-demo/demo_designV2_genV2/`. The app reproduces this target 1:1.
 
 ## Regenerate the screenshot
 ```bash
