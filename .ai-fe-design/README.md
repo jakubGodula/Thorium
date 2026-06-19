@@ -27,6 +27,14 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 - **See the target now:** a rendered CC\* alert mockup +
   [screenshot](./demo-gen/gen-v2/mockup/cc-alert.png) lives in
   [`demo-gen/gen-v2/mockup/`](./demo-gen/gen-v2/mockup/) (open `cc-alert.html`).
+
+### Capability #1b: autonomous, token-capped improvement loop
+gen-v2 can **iterate the demo autonomously** — render → screenshot → critique with
+**cheaper models** (Haiku / Sonnet 4.6, in parallel) → synthesize → apply → repeat —
+see [`demo-gen/gen-v2/improve-loop.md`](./demo-gen/gen-v2/improve-loop.md). It runs
+**without pausing for per-round approval**, but is **token-cautious by default**:
+**1–2 iterations per round** unless told otherwise, with a logged stop criterion (no
+P1 / max rounds / cosmetic-only). Ask for "deep polish" to lift the cap.
 - **Output:** a clickable + **living** (app `:5173` + Prism mock `:4010`, one
   `npm run demo`) + deployable (IPFS) demo under
   `.ignored/fe-demo/demo_designV2_genV1/`, whose own README documents the live
@@ -69,11 +77,28 @@ NOT-OK telemetry/logs are clearly visible → a **prominent alert** drives respo
 │   └── gen-v1/                    ← gen-v1 (pinned to design v2): PROMPT + OpenAPI + Prism mock
 ├── prompt_verbatim.md             ← the original prompt(s), verbatim
 └── input/                         ← raw context used for the analysis
+    ├── DEMO.md                    ← ⭐ the CC* critical demo case (canonical)
+    ├── roadmap_en.html            ← full Thorium XDR implementation roadmap (source of truth for scope)
+    ├── presentation_en.html       ← business models + 5 personas + tech advantages
     ├── prompt.txt                 ← original short prompt
     ├── conversation.txt           ← requirements (Defender / Sentinel / SUI / Stripe…)
-    ├── WhatsApp Image …21.47.04.jpeg  ← Thorium XDR roadmap reference
+    ├── WhatsApp Image …21.47.04.jpeg  ← Thorium XDR roadmap reference (image of roadmap_en)
     └── WhatsApp Image …22.17.11.jpeg  ← Microsoft 365 Defender UI reference
 ```
+
+### Source material (read for scope & personas)
+- [`input/roadmap_en.html`](./input/roadmap_en.html) — the **full product roadmap**
+  (Done / In-Progress / Planned / Enterprise / R&D). Names the modules behind the
+  scope decisions: e.g. **Lithium (Cloud-Native K8s)** — the home of the CC*
+  "observed pod"; "SOC Dashboard (Svelte): WebSockets + incident tree" — that's this
+  frontend; plus Neon, Xenon, Silicon, Titanium, Aluminum, YARA, etc.
+- [`input/presentation_en.html`](./input/presentation_en.html) — the **business
+  models** (Internal SOC · MSSP/Outsourcing · Compliance-as-a-Service · Web3/Freemium)
+  and **5 personas** (Internal Admin · SOC Freelancer · MSSP Agency · NIS2 Auditor ·
+  Insurance Adjuster) + the unique tech advantages (eBPF, MPC/Talus, Sui C2, Walrus,
+  Multi-Sig, SEAL, Deception). The **gap between these and the current demo** is
+  catalogued as questions in [`questions_v2_to_v3_qa.md`](./questions_v2_to_v3_qa.md)
+  **Part 3 (Diff)**.
 (Claude Code also has a `/fe-demo-gen` skill at `.claude/skills/fe-demo-gen/`.)
 
 `fe_design_v1.md` was produced **from a real analysis of this repository** (the

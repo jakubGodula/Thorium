@@ -211,6 +211,15 @@ narrative — full canonical version in [`input/DEMO.md`](./input/DEMO.md):
 attack = `ClassificationReported` (`score ≥ threshold` → `TRIGGER_ISOLATION`) +
 `IncidentReport` CRITICAL; not worthy = `is_active=false` / Isolated.
 
+**Roadmap/business context** (from [`input/roadmap_en.html`](./input/roadmap_en.html)
++ [`input/presentation_en.html`](./input/presentation_en.html)): the "observed pod"
+likely belongs to **Lithium (Cloud-Native K8s)** — so CC* may show cluster/namespace
++ a container-escape vector (confirm v3 **C2**). The product also targets **5
+personas** (Internal Admin · SOC Freelancer · MSSP · NIS2 Auditor · Insurance
+Adjuster) and four business models — v2 keeps a single SOC surface; persona/RBAC and
+the broader module/compliance/token surfaces are catalogued as the **Part 3 (Diff)**
+questions in [`questions_v2_to_v3_qa.md`](./questions_v2_to_v3_qa.md).
+
 **v2 alert presentation — DECIDED** (alternatives are a v3 question, R18):
 a persistent top **Critical Incident banner** → **Incident Command drawer** (live
 kill-chain timeline + on-chain evidence), with the affected pod flagged everywhere

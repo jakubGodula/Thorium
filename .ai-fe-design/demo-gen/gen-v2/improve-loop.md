@@ -32,8 +32,15 @@ Each critic returns a **numbered list of ≤5 concrete changes** (CSS/markup del
 
 ## Stop criteria
 - No critic raises a **P1** (story-breaking or "looks unfinished"), OR
-- 3 rounds elapsed, OR
+- max rounds elapsed, OR
 - remaining suggestions are cosmetic / subjective.
+
+### Token-cautious default (important)
+Default cadence is **autonomous but frugal: 1–2 iterations** per invocation (one
+critic batch each), then stop and report — do **not** keep looping. Only lift the cap
+when the user explicitly asks for "deep polish" / more rounds. Always log tokens spent
+and the stop reason. (Rationale: the loop is valuable but cheap-model rounds still
+cost; the user set a low default budget.)
 
 ## Cost control
 - Critics on **Haiku** by default (escalate one lens to Sonnet 4.6 if it stalls).

@@ -1,301 +1,301 @@
-# Questions: v2 → v3 (+ assumptions)
+# Questions: v2 → v3 (organized: Critical · Important · Diff · UX)
 
-> Next round of open decisions, for going from [`fe_design_v2.md`](./fe_design_v2.md)
-> to **v3** (the first *implemented* demo). Same flow as before:
+> Round to take [`fe_design_v2.md`](./fe_design_v2.md) → **v3** (first implemented
+> demo). Each item: **Assumption (v2)** (what we proceed under so nothing blocks) ·
+> **Question** (confirm/override) · **Answer:** (fill inline).
 >
-> - **Assumption (v2):** what v2 already proceeds under (so work isn't blocked).
-> - **Question:** what still needs your confirmation/override.
-> - **Answer:** — fill inline. When done, save the answered copy as
->   `questions_v2_to_v3_qa_AUDIT.md` (mirroring the v1→v2 convention) and generate
->   `fe_design_v3.md`.
+> Flow: answer inline → save answered copy as `questions_v2_to_v3_qa_AUDIT.md` →
+> generate `fe_design_v3.md`. Grounding: confirmed on-chain model
+> [`assumptions_v1.md`](./assumptions_v1.md); v1→v2 decisions
+> [`questions_v1_to_v2_qa_AUDIT.md`](./questions_v1_to_v2_qa_AUDIT.md); ADRs
+> [`adr/`](./adr/); ⭐ critical demo [`input/DEMO.md`](./input/DEMO.md); **source
+> material** [`input/roadmap_en.html`](./input/roadmap_en.html) (full roadmap) +
+> [`input/presentation_en.html`](./input/presentation_en.html) (business models +
+> personas + tech advantages).
 >
-> Context: confirmed on-chain model in [`assumptions_v1.md`](./assumptions_v1.md);
-> v1→v2 decisions in [`questions_v1_to_v2_qa_AUDIT.md`](./questions_v1_to_v2_qa_AUDIT.md);
-> rationale for the big calls in [`adr/`](./adr/).
->
-> Legend: 🔴 blocks implementation · 🟡 shapes scope · 🟢 polish.
+> **Structure:** Part 1 Critical (≤5) · Part 2 Important (~20) · Part 3 Diff vs
+> roadmap/presentation (as questions) · Part 4 Optional UX track (+ agent prompt).
+> Legend: 🔴 blocks v3 · 🟡 shapes scope · 🟢 polish.
 
 ---
 
-## A. Scope & milestones
+# PART 1 — CRITICAL (answer these first) 🔴
 
-### R1 🔴 First implemented milestone (was Q6)
-**Assumption (v2):** Milestone 1 = **Overview · Endpoints · Incidents · VMs**, plus
-an **Alerts** view and an overall **Datadog-style interface** (monitors, faceted
-filters, time-range picker, saved views). Milestone 2 = Talus · Vulnerabilities ·
-Polonium · the new Chain Activity / Fleet Telemetry tabs. Helium last.
-**Question:** Confirm this split and the "Datadog-style" interface as the v3 target.
-Any tab to promote/demote?
+### C1 🔴 Personas / RBAC — does v3 model the 5 roles?
+**Why:** `presentation_en.html` defines five roles — **Internal Admin · SOC
+Freelancer · MSSP Agency (multi-tenant) · NIS2 Auditor (read-only) · Insurance
+Adjuster (read-only)** — each implying a different surface (capabilities, tenancy,
+read-only). This is the single biggest IA decision.
+**Assumption (v2):** single "analyst/admin" surface gated by wallet-connect; no role
+switching.
+**Question:** For v3, do we add a **role switcher + role-scoped views** (at least
+Admin vs Auditor read-only vs MSSP multi-tenant), or stay single-role for the demo?
 **Answer:** _<!-- fill in -->_
 
-### R2 🟡 Helium tab — what is it? (was Q5)
-**Assumption (v2):** Hidden/experimental; cross-links to Polonium; no defined
-domain found in code.
-**Question:** What is Helium's purpose (a Sui-gas/coin view? a key-management
-console? something else)? Until answered it stays hidden behind a feature flag.
+### C2 🔴 CC* observed pod = a Kubernetes pod (ties to "Lithium / Cloud-Native K8s")?
+**Why:** the roadmap lists **Lithium — Native K8s protection (Admission Controller)
++ container-escape detection**. CC* says "connect a new **pod**." If the observed
+pod is a K8s pod, CC* should show namespace/cluster context and a container-escape
+attack, not just a generic host.
+**Assumption (v2):** observed pod = generic monitored endpoint (`AgentIdentity`
+SBT); attack = kernel exploit/DDoS.
+**Question:** Confirm pod = K8s pod (show cluster/namespace + container-escape), or
+keep it a generic host for v3?
 **Answer:** _<!-- fill in -->_
 
----
-
-## B. Telemetry & observability model (was Q10c) 🟡
-
-**Assumption (v2):** Per-endpoint gauges + sparkline/time-series from
-`TelemetryReported` (`cpu_load`, `ram_usage_pct`, `disk_usage_pct`, u8 %); a fleet
-heatmap; no long-range historical store beyond an event scan (no indexer in v2).
-
-### Capability comparison — **Datadog vs ELK (Kibana) vs Walrus** (requested)
-
-| Capability | **Datadog** | **ELK / Kibana** | **Walrus (this stack)** |
-|---|---|---|---|
-| Primary role | SaaS metrics/APM/logs | Self-hosted search + log analytics | Decentralized **blob storage** (not an analytics engine) |
-| Time-series store | Native TSDB, long retention, rollups | Metricbeat → ES indices, ILM rollover | **None** — only `TelemetryReported` events on Sui + sealed blobs on Walrus |
-| Query model | Tag-faceted metrics + monitors | Lucene/KQL + aggregations | Sui `queryEvents` (paged) + fetch blob by ID |
-| Live dashboards | Host map, heatmaps, SLOs, anomaly | Lens/TSVB viz, dashboards | Build client-side from events; **no server aggregation** |
-| Alerting | Monitors, composite, forecast | Watcher/Kibana alerting | On-chain rule: Talus `anomaly_score ≥ threshold` ⇒ isolate |
-| Retention/scale | Managed, expensive | Self-managed, ops-heavy | Cheap durable blobs; **analytics must be done in the client/indexer** |
-
-**Recommended assumption (for v3):** Aim for a **Datadog-grade *presentation***
-(host map, gauges, faceted alerts, time-range picker) but accept an **ELK-style
-"query the raw events" backing** — because **Walrus is storage, not an analytics
-engine**, so v3 reads Sui events directly (client-side aggregation) and treats any
-real indexer/TSDB as a later add-on. In short: **Datadog UX, event-sourced data,
-Walrus for durable evidence blobs only.**
-
-### R3 🔴 Confirm the observability target
-**Question:** Accept "Datadog-grade UX + event-sourced (no TSDB) backing for v3"?
-If long-range history matters now, we must add an indexer (and which one?).
+### C3 🔴 CC* alert presentation — final pick (see Part 4 playbook)
+**Assumption (v2):** #1 **top banner → Incident Command drawer** + pulsing
+"NOT WORTHY" badge (rendered mockup in `demo-gen/gen-v2/mockup/`).
+**Question:** Keep #1, or combine (e.g. #1 + #5 fleet-map beacon; or #2 War-Room
+takeover for the live demo)? Record motion/sound choices. (Full catalog: Part 4.)
 **Answer:** _<!-- fill in -->_
 
-### R4 🟡 Do we need a client-side aggregation/indexer layer in v3?
-**Assumption (v2):** No — scan recent events on demand, aggregate in the browser.
-**Question:** Acceptable for the demo, or stand up a light indexer (e.g. a Postgres
-+ Sui event poller in the mock backend)?
+### C4 🔴 v3 implemented scope
+**Assumption (v2):** Milestone 1 = Overview · Endpoints · Incidents · VMs · **Alerts**
++ the CC* path + Chain Activity + Fleet Telemetry, in a Datadog-style shell;
+everything else (the long roadmap tail) = "coming soon" tiles.
+**Question:** Confirm the v3 build scope and what is explicitly out (Part 3 lists the
+candidates).
+**Answer:** _<!-- fill in -->_
+
+### C5 🔴 Demo data source for v3
+**Assumption (v2):** mock-by-default (Prism on :4010); `config.json` flag switches to
+a live agent + Sui testnet RPC.
+**Question:** Confirm mock-by-default; if you want a live profile too, give the
+testnet RPC URL + a reachable agent host.
 **Answer:** _<!-- fill in -->_
 
 ---
 
-## C. Data sources & realtime
+# PART 2 — IMPORTANT 🟡
 
-### R5 🔴 Mock-vs-live default for the v3 demo (was Q7)
-**Assumption (v2):** v3 demo runs against the **dockerized mock backend**
-(ADR-0004); a `config.json` flag switches to a live agent + Sui testnet.
-**Question:** Confirm mock-by-default for the demo. Provide a live testnet RPC URL
-+ a reachable agent host if you also want a live profile.
+### I1 🟡 Sui read endpoint
+**Assumption:** fullnode JSON-RPC `queryEvents` + `multiGetObjects`; no indexer.
+**Question:** RPC URL (default `https://fullnode.testnet.sui.io`)? GraphQL? limits?
 **Answer:** _<!-- fill in -->_
 
-### R6 🔴 Sui read endpoint (was Q9b)
-**Assumption (v2):** Fullnode JSON-RPC `queryEvents` + `multiGetObjects` against a
-public testnet RPC; no indexer/GraphQL.
-**Question:** Which RPC URL (default `https://fullnode.testnet.sui.io`)? Any
-GraphQL endpoint? Rate limits to design around?
+### I2 🟡 Realtime upgrade (roadmap explicitly says "WebSockets" for the SOC Dashboard)
+**Assumption:** polling now (agent 5s / Sui 10s); WS later.
+**Question:** The roadmap item "SOC Dashboard (Svelte): live state sync via
+WebSockets, incident tree" — does a WS endpoint exist to target in v3?
 **Answer:** _<!-- fill in -->_
 
-### R7 🟡 Realtime upgrade (was Q8 / ADR-0001)
-**Assumption (v2):** Polling now; WS/SSE later.
-**Question:** Will the Mowa agent expose a WebSocket/SSE endpoint we can target in
-v3, or stay request/response?
+### I3 🟡 Incidents as a **tree** (roadmap: "Incident tree implementation")?
+**Assumption:** flat incident list/table.
+**Question:** Should Incidents be a **correlation tree** (kill-chain / cross-device
+grouping) rather than a flat list?
 **Answer:** _<!-- fill in -->_
 
-### R8 🟡 Walrus / Seal access (was Q10)
-**Assumption (v2):** Sealed rows shown locked; decrypt on demand via agent/wallet;
-no browser Seal SDK in v2/v3.
-**Question:** Should the browser fetch+decrypt Walrus blobs directly (needs
-`@mysten/walrus` + Seal capability), or proxy through the agent?
+### I4 🟡 Walrus / Seal (SEAL homomorphic) access
+**Assumption:** sealed rows locked; decrypt via agent/wallet on demand; no browser SDK.
+**Question:** Direct browser fetch+decrypt, or proxy via agent? (Presentation stresses
+SEAL/MPC privacy — surface it as a trust signal?)
 **Answer:** _<!-- fill in -->_
 
----
-
-## D. Identity, policy & actions
-
-### R9 🔴 Auth / RBAC (was Q11)
-**Assumption (v2):** Wallet-connect gates write actions; Move enforces `admin`
-on-chain; no app-level RBAC/SSO.
-**Question:** Do v3 demos need roles (analyst/admin/auditor) in the UI, or is
-wallet-only fine?
+### I5 🟡 Talus admin controls
+**Assumption:** read-only `anomaly_threshold` + recent classifications.
+**Question:** Expose admin `update_threshold` / `authorize_ai_agent` in v3?
 **Answer:** _<!-- fill in -->_
 
-### R10 🟡 Talus admin controls (was Q10b)
-**Assumption (v2):** Read-only `anomaly_threshold` + recent classifications in v3.
-**Question:** Expose admin `update_threshold` / `authorize_ai_agent` (wallet-signed)
-in v3, or keep read-only?
+### I6 🟢 Telemetry depth (Datadog vs ELK vs Walrus → "Datadog UX, event-sourced")
+**Assumption:** gauges + sparkline from recent events; no TSDB/indexer.
+**Question:** Accept event-sourced (no long history) for v3?
 **Answer:** _<!-- fill in -->_
 
-### R11 🟡 Multi-sig (was Q12)
-**Assumption (v2):** **Placeholder only** (read-only indicator); no signing flow —
-contract not shipped.
-**Question:** Confirm placeholder for v3. (When the 2-of-3 / WebAuthn contract
-lands, we design the flow.)
+### I7 🟡 Multi-Sig (roadmap: 2-of-3 hardware/WebAuthn)
+**Assumption:** placeholder only.
+**Question:** Confirm placeholder for v3.
 **Answer:** _<!-- fill in -->_
 
----
-
-## E. Deployment & ops
-
-### R12 🔴 IPFS runtime config (was Q15)
-**Assumption (v2):** Boot-time `config.json` (one immutable CID → many backends).
-**Question:** Confirm. What keys? (proposed: `agentApiBase`, `suiRpcUrl`,
-`packageId`, `network`, `walrusGateway`, `mock:boolean`).
+### I8 🟡 Auth model
+**Assumption:** wallet-connect gates writes; on-chain `admin` enforced; no app RBAC.
+**Question:** (See C1.) If roles are needed, where is the role source of truth?
 **Answer:** _<!-- fill in -->_
 
-### R13 🟡 IPFS provider / naming (was Q16)
-**Assumption (v2):** A licensed pinning provider (unnamed) + DNSLink/ENS for a
-stable name; CID shown in footer.
-**Question:** Which provider/license? Is there an ENS name or DNSLink domain?
+### I9 🔴 IPFS runtime config
+**Assumption:** boot-time `config.json` (`agentApiBase`, `suiRpcUrl`, `packageId`,
+`network`, `walrusGateway`, `mock`).
+**Question:** Confirm keys/approach.
 **Answer:** _<!-- fill in -->_
 
-### R14 🟢 Error/telemetry reporting (was Q17)
-**Assumption (v2):** None (privacy + decentralization).
-**Question:** Keep none, or add self-hosted error capture later?
+### I10 🟡 IPFS provider / ENS / DNSLink
+**Assumption:** licensed pinning provider + DNSLink/ENS; CID in footer.
+**Question:** Which provider? ENS/DNSLink name?
 **Answer:** _<!-- fill in -->_
 
----
-
-## F. Build & demo (feeds the separate `.ignored/fe-demo` prompt)
-
-### R15 🟡 Mock backend tech (ADR-0004)
-**Assumption (v2):** Tiny Node (Express/Fastify) or `json-server` + a fixture
-generator, in Docker Compose; serves the Mowa contract + a Sui event mock (+
-optional Walrus mock).
-**Question:** Any preference (language/framework), or pick the lightest?
+### I11 🟢 Error/telemetry reporting
+**Assumption:** none (privacy + decentralization).
+**Question:** Keep none?
 **Answer:** _<!-- fill in -->_
 
-### R16 🟢 Charting engine confirm (ADR-0003)
-**Assumption (v2):** **ECharts** (rich) + **uPlot** (dense time-series), lazy-loaded.
-**Question:** OK, or prefer LayerChart/Observable Plot/Recharts-equivalent?
+### I12 🟡 Onboarding — "connect a new observed pod" flow
+**Assumption:** guided flow (wallet-signed `register_agent`) + agent install snippet;
+in the demo it's CC* step 1.
+**Question:** Confirm the onboarding UX.
 **Answer:** _<!-- fill in -->_
 
-### R17 🟢 Brand assets (was Q14)
-**Assumption (v2):** Suggested shield+Th-atom mark in [`brand/`](./brand/); cyan
-`#38bdf8` primary + mint `#5eead4` secondary.
-**Question:** Approve the suggested mark/colors, or supply official brand assets?
+### I13 🟡 Empty / loading / error states (per screen)
+**Assumption:** skeletons, empty states with a primary action, chain/agent-unreachable
+banner (ties to "Offline Lockdown / Dark Mode").
+**Question:** Confirm; define per screen.
 **Answer:** _<!-- fill in -->_
 
----
-
-## G. ⭐ Critical Demo Case (CC*) — see [`input/DEMO.md`](./input/DEMO.md)
-
-### R18 🔴 How should the CC* alert be presented? (v2 decided one; pick the v3 winner)
-**Assumption (v2):** persistent top **Critical Incident banner** → **Incident
-Command drawer** (kill-chain timeline + on-chain evidence) + pulsing "NOT WORTHY"
-badge on the pod. (ADR-0007.)
-**Question:** Keep that, or choose another of these 3–5 Stripe-grade patterns?
-1. **Top banner → Incident Command drawer** (v2 default).
-2. **Full-screen "War Room" takeover** when CRITICAL (focuses the whole app).
-3. **Toast/notification stack** (top-right) with an "Open incident" action.
-4. **Command-palette / spotlight** alert (⌘K-style) surfacing the incident.
-5. **Live map/topology beacon** — the pod pulses red on a fleet map, click to expand.
+### I14 🟡 Incident lifecycle / status (open/ack/resolved/false-positive) + assignee
+**Assumption:** status+assignee overlay on on-chain `IncidentReport`; client-only in demo.
+**Question:** Where is status stored (client/agent/chain)?
 **Answer:** _<!-- fill in -->_
 
-### R19 🔴 Confirm the CC* path itself (v2 assumed it; v3 to confirm)
-**Assumption (v2):** CC* exactly as in `input/DEMO.md` (connect → healthy w/ Sui
-interaction + OK telemetry → kernel/DDoS attack → marked NOT WORTHY → NOT-OK
-telemetry/logs visible → prominent alert → placeholder response actions).
-**Question:** Confirm this is THE demo path. Any change to the steps, the
-"not worthy" semantics, or the response-action placeholders (notify on-call, Slack,
-freeze/isolate/kill, connect to Claude Code/dev)?
-**Answer:** _<!-- fill in -->_
-
----
-
-## H. Exhaustive round (depth for v3)
-
-### R20 🟡 Onboarding — how does a user "connect a new observed pod" in the UI?
-**Assumption:** a guided "Connect pod" flow (wallet-signed `register_agent`) +
-a copy-paste agent install snippet; in the demo it's the CC* step 1.
-**Answer:** _<!-- fill in -->_
-
-### R21 🟡 Empty / loading / error states for every screen?
-**Assumption:** skeleton loaders, empty states with a primary action, and a
-chain/agent-unreachable banner. Define per screen in v3.
-**Answer:** _<!-- fill in -->_
-
-### R22 🟡 Incident lifecycle & status model (open/ack/resolved/false-positive)?
-**Assumption:** Alerts view carries a status + assignee overlay on top of on-chain
-`IncidentReport` (status stored where? client-only for demo).
-**Answer:** _<!-- fill in -->_
-
-### R23 🟡 Time handling — timezones, "X ago" vs absolute, time-range picker scope?
+### I15 🟢 Time handling (tz, relative vs absolute, range picker)
 **Assumption:** relative + absolute on hover; UTC default; Datadog-style range picker.
 **Answer:** _<!-- fill in -->_
 
-### R24 🟢 Density & theming — compact mode, light theme, per-user prefs?
-**Assumption:** dark only in v2/v3; compact toggle later.
+### I16 🟢 Density / theming (compact, light, prefs)
+**Assumption:** dark only; compact later.
 **Answer:** _<!-- fill in -->_
 
-### R25 🟢 Keyboard / command palette (⌘K) scope?
-**Assumption:** ⌘K to navigate + jump to an incident/pod; nice-to-have for v3.
+### I17 🟢 Command palette (⌘K)
+**Assumption:** ⌘K navigate + jump to incident/pod; nice-to-have.
 **Answer:** _<!-- fill in -->_
 
-### R26 🟡 Mobile / responsive expectations for a SOC console?
-**Assumption:** desktop-first 1280px+, graceful to 1024; no mobile target in v3.
+### I18 🟡 Responsive / mobile
+**Assumption:** desktop-first 1280px+, graceful to 1024; no mobile.
 **Answer:** _<!-- fill in -->_
 
-### R27 🟡 Real response actions — which (if any) become real in v3 vs placeholder?
-**Assumption:** all CC* response actions stay placeholders in v3 (notify on-call,
-Slack, freeze/isolate/kill, Claude Code) until backends exist.
+### I19 🟡 Real response actions vs placeholder
+**Assumption:** all CC* response actions stay placeholders in v3.
+**Question:** Any made real (which backend)?
 **Answer:** _<!-- fill in -->_
 
-### R28 🟢 Performance budget / bundle size target (when does "heavy is OK" end)?
-**Assumption:** no hard budget for v2/v3 demo; optimization pass post-demo.
+### I20 🟢 Performance / bundle budget
+**Assumption:** no hard budget for the demo; optimization pass later.
 **Answer:** _<!-- fill in -->_
 
 ---
 
-## ⭐ Final Chapter (OPTIONAL) — CC* presentation playbook
+# PART 3 — DIFF: roadmap/presentation vs the actual demo (as questions) 🟡
 
-> Optional deep-dive requested for v2→v3: **all the ways to present the CC\* alert**,
-> how each can be done differently, and where to look for the "best" answer. v2 chose
-> **#1** (R18); this catalogs the full design space so v3 can choose deliberately.
+> Gap analysis. These concepts appear in `roadmap_en.html` /
+> `presentation_en.html` but are **absent from the v2 design/demo**. Each: should v3
+> surface it (even as a "coming soon" placeholder)? Default assumption unless noted:
+> **roadmap/coming-soon tile only** (keep the demo focused on the SOC loop + CC*).
 
-### The five candidate presentations (and variants)
-1. **Top banner → Incident Command drawer** *(v2 default)*
-   - Variants: sticky vs floating banner · drawer right vs bottom-sheet · collapse to
-     a beacon vs persistent · auto-open drawer on CRITICAL vs click-to-open.
-   - Best for: keeping context while triaging; least disruptive.
-2. **Full-screen "War Room" takeover** on CRITICAL
-   - Variants: modal vs dedicated route · auto-dismiss vs require-ack · single-pod vs
-     fleet view · with/without live kill-chain replay.
-   - Best for: maximum drama in a live demo; risk: hijacks the app.
-3. **Toast / notification stack** (top-right)
-   - Variants: stacked vs single · auto-expire vs sticky-until-ack · inline expand vs
-     "open incident" · sound/no-sound.
-   - Best for: many concurrent alerts; risk: easy to miss the big one.
-4. **Command-palette / spotlight (⌘K)** surfacing the incident
-   - Variants: auto-invoked on CRITICAL · suggested actions inline · keyboard-first.
-   - Best for: power users; risk: invisible to a cold audience.
-5. **Live map / topology beacon** — pod pulses red on a fleet map
-   - Variants: geo map vs cluster/namespace topology vs 3D (R&D "Spatial SOC") ·
-     click-to-expand vs hover.
-   - Best for: spatial "where" story; pairs well with #1.
-
-### Cross-cutting levers (apply to any choice)
-Motion (entrance, pulse cadence, climax flash) · sound (subtle vs none) · the
-**before→after** device ("Healthy 40s ago" → "Auto-isolated in 2s") · severity color
-+ icon (never color alone) · on-chain proof inline (tx digest, event JSON) · the
-"speed of automation" payoff (Δt detection→isolation) · reduced-motion fallback.
-
-### How to decide the best (references / methods)
-- **Comparators to study:** Stripe Radar / Dashboard alerts, Linear's notifications,
-  Datadog incident + monitor status pages, PagerDuty/Opsgenie incident timelines,
-  Vercel/Sentry issue alerts, Grafana/Kibana alerting.
-- **UX methods:** 5-second test (does the story land?), first-click test, A/B the
-  banner-vs-takeover on a small panel, severity-perception study, WCAG-AA contrast
-  audit, motion-sickness/reduced-motion check.
-- **Sources/agencies for deeper UX:** NN/g (Nielsen Norman Group) on alerts &
-  notifications, Refactoring UI (visual hierarchy), Material/Apple HIG on critical
-  alerts, IBM Carbon + Atlassian patterns for status/notifications. *(Add the exact
-  links your team prefers here.)*
-
-### R18-followup 🔴 v3 pick
-Given the catalog above, confirm the v3 CC* presentation (keep #1, or combine — e.g.
-**#1 banner+drawer paired with #5 map beacon**). Record motion/sound choices.
+### G1 🔴 Business-model / persona framing (the presentation's core)
+Internal SOC · MSSP/Outsourcing · Compliance-as-a-Service · Web3/Freemium. Surface as
+a persona/role lens in the UI, or keep out of the SOC demo? (See C1.)
 **Answer:** _<!-- fill in -->_
+
+### G2 🟡 $THOR token economy + DAO policy voting (Web3/Freemium)
+Earn $THOR for reporting zero-days; DAO voting on policy rules. Add a
+"Network / Governance" screen, or omit?
+**Answer:** _<!-- fill in -->_
+
+### G3 🟡 Compliance-as-a-Service (NIS2 / KSC)
+Chain-of-custody, immutable Walrus evidence, read-only access for authorities/insurers,
+Pay-As-You-Go Walrus. Add a **Compliance** screen + read-only auditor view?
+**Answer:** _<!-- fill in -->_
+
+### G4 🟡 MSSP multi-tenant fleet
+Shared fleet management across multiple clients; RBAC for external operators. Add a
+**tenant switcher** + cross-tenant fleet view?
+**Answer:** _<!-- fill in -->_
+
+### G5 🟡 Module breadth as roadmap tiles
+Lithium(K8s) · Neon(SSL inspection) · Xenon(Deception/Honeypots) · Silicon(UEBA) ·
+Titanium(DLP) · Aluminum(Email) · DNS/USB DLP · YARA(Magnesium). Show as a
+roadmap/"coming soon" catalog in-app, or omit?
+**Answer:** _<!-- fill in -->_
+
+### G6 🟡 Live Web Terminal (DFIR)
+Remote CLI console in the incident view. Add as a placeholder panel in Incident
+Command (great CC* response affordance)?
+**Answer:** _<!-- fill in -->_
+
+### G7 🟡 Analyst Audit Trails (every analyst action as an immutable on-chain tx)
+Surface an **audit log** of analyst actions (insider-threat protection)?
+**Answer:** _<!-- fill in -->_
+
+### G8 🟡 SIEM export + Webhooks (Splunk / QRadar / Syslog CEF)
+Add an **Integrations** screen (export targets, webhooks, ITSM Jira/ServiceNow)?
+**Answer:** _<!-- fill in -->_
+
+### G9 🟢 Privacy/trust messaging (SEAL homomorphic, Magnesium MPC, eBPF zero-overhead)
+The presentation leans hard on "we never read your plaintext." Surface these as trust
+badges / an explainer in the UI?
+**Answer:** _<!-- fill in -->_
+
+### G10 🟢 Spatial SOC (3D Kill-Chain, R&D) → influences CC* alert option #5?
+Does the future 3D/topology view change how we design the CC* fleet-map beacon now?
+**Answer:** _<!-- fill in -->_
+
+### G11 🟢 Offline Lockdown / Dark Mode (agent loses C2 / Sui RPC)
+Visualize a fleet/agent "lockdown" state (lost-comms emergency)?
+**Answer:** _<!-- fill in -->_
+
+### G12 🟢 Threat Intel (STIX/TAXII, MISP) + Deception alerts (zero-FP honeytokens)
+Surface IoC feeds and honeytoken-trip alerts (the latter are "100% certain" — great
+for the Alerts view)?
+**Answer:** _<!-- fill in -->_
+
+### G13 🟢 Out-of-FE-scope confirm (Hydrogen PAM/FIDO2, A/B Auto-Updater, Mowa JIT)
+Assumed **not** in the frontend. Confirm these stay agent/infra-only.
+**Answer:** _<!-- fill in -->_
+
+---
+
+# PART 4 — OPTIONAL: dedicated UX/UI excellence track (separate thread) 🟢
+
+> The demo (esp. **CC\***) must be best-in-class. That deserves its own focused
+> thread. This part = (a) the CC* presentation playbook, (b) UX references, (c) a
+> ready-to-paste **prompt for another AI agent** to run the excellence pass.
+
+## 4a. CC* presentation playbook (catalog of options)
+1. **Top banner → Incident Command drawer** *(v2 default; rendered in `demo-gen/gen-v2/mockup/`)* — sticky/floating · drawer right/bottom · auto-open vs click.
+2. **Full-screen "War Room" takeover** on CRITICAL — max drama; risk: hijacks app.
+3. **Toast / notification stack** — many alerts; risk: miss the big one.
+4. **Command-palette / spotlight (⌘K)** — power users; risk: invisible to a cold audience.
+5. **Live map / topology beacon** (→ R&D Spatial SOC 3D) — spatial "where"; pairs with #1.
+
+**Cross-cutting levers:** motion (entrance/pulse/climax) · subtle sound vs none ·
+the before→after device ("Healthy 40s ago" → "Auto-isolated in 2s") · severity color
++ icon (never color alone) · inline on-chain proof (tx digest, event JSON) · the
+automation-speed payoff (Δt detection→isolation) · reduced-motion fallback.
+
+## 4b. UX references / methods
+- **Comparators:** Stripe Radar/Dashboard alerts · Linear notifications · Datadog
+  monitors/incidents · PagerDuty/Opsgenie timelines · Sentry/Vercel issue alerts ·
+  Grafana/Kibana alerting.
+- **Methods:** 5-second test · first-click test · banner-vs-takeover A/B ·
+  severity-perception study · WCAG-AA contrast audit · reduced-motion check.
+- **Sources:** NN/g (alerts & notifications), Refactoring UI (hierarchy), Apple HIG /
+  Material on critical alerts, IBM Carbon + Atlassian status/notification patterns.
+  *(Add your team's preferred links here.)*
+
+## 4c. Open UX questions
+- **U1 🟢** Final CC* presentation (mirror of C3) + motion/sound spec.
+- **U2 🟢** A "demo mode" toggle that auto-plays CC* for unattended booths?
+- **U3 🟢** Should healthy→compromised use an animated transition (morph) or hard cut?
+- **U4 🟢** Sound on CRITICAL — yes/no, and which (subtle vs alarm)?
+
+## 4d. ▶ Prompt for a separate AI-agent thread (copy-paste)
+> **Role:** Senior product designer + Svelte/Tailwind engineer. **Goal:** take the
+> Thorium XDR demo (gen-v2 ⊗ design v2) and elevate the **CC\*** critical alert to
+> best-in-class (Stripe/Linear/Datadog bar).
+> **Inputs:** `.ai-fe-design/input/DEMO.md`, `fe_design_v2.md` §8.5,
+> `adr/0007`, `demo-gen/gen-v2/mockup/cc-alert.html` (current target),
+> `demo-gen/gen-v2/improve-loop.md`, and Part 4 above.
+> **Do:** (1) implement 2–3 of the Part-4a presentations as switchable variants;
+> (2) run the gen-v2 auto-improvement loop with cheap-model critics across the 5
+> UX lenses for ≤3 rounds; (3) produce before/after screenshots + an
+> `improvement-log.md`; (4) WCAG-AA + reduced-motion pass; (5) recommend one winner
+> with rationale. **Constraints:** English only, dependency-light, IPFS-safe, do not
+> break the OpenAPI/mock contract. **Output:** updated components + screenshots +
+> a short decision memo. Spend tokens generously here — this thread is *about*
+> quality.
 
 ---
 
 ### After answering
 1. Save answers; copy this answered file to `questions_v2_to_v3_qa_AUDIT.md`.
-2. Generate `fe_design_v3.md` = v2 + these decisions.
-3. Open `questions_v3_to_v4_qa.md` if anything remains open.
-4. (Separately) build `.ignored/fe-demo` per the v3 spec.
-5. `git add .ai-fe-design/ && git commit && git push origin HEAD:experimental-aw-fe-v2`.
+2. Generate `fe_design_v3.md` = v2 + Part 1–3 decisions (Part 4 → separate UX thread).
+3. Open `questions_v3_to_v4_qa.md` for anything still open.
+4. `git add .ai-fe-design/ && git commit && git push origin HEAD:experimental-aw-fe-v2`.
