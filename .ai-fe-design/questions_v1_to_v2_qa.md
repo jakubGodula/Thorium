@@ -11,6 +11,10 @@
 > [`README.md`](./README.md) §B3 to produce `fe_design_v2.md` +
 > `questions_v2_to_v3_qa.md`.
 >
+> See [`assumptions_v1.md`](./assumptions_v1.md) for the reasoned defaults behind
+> each recommendation and the **confirmed on-chain data model** (Sui testnet
+> package `0x0cc3…91af`: `edr_registry`, `talus_xdr_detector`, `polonium_policy`).
+>
 > Legend: 🔴 blocks implementation · 🟡 shapes scope · 🟢 polish/nice-to-have.
 
 ---
@@ -87,12 +91,29 @@ v2 target once the agent exposes a socket. Confirm whether a WS endpoint exists.
 **Answer:** _<!-- fill in -->_
 
 ### Q9 🔴 How much goes through Sui directly vs the agent HTTP API?
-**Analysis:** Registry/incidents/policies are described as "on-chain"
-(`0xa::edr_registry`), but reads currently come via the agent. Wallet libs are
-present for signing.
-**Recommendation:** v1 reads via agent HTTP; **writes** (isolate, policy changes)
-that are on-chain go through wallet-signed Sui txns. Confirm the Move package IDs
-+ which actions are on-chain vs agent-local. (See `move/` in repo.)
+**Analysis (now grounded in the Move contracts):** The package is **published on
+Sui testnet** at `0x0cc3f972285b0486b2590b5edc9321813ec32a253a26cffa687da5a1131491af`
+(chain-id `4c78adac`). Every domain object has an on-chain home:
+`edr_registry` (AgentIdentity SBTs + `AgentRegistered`/`IncidentReport`/
+`TelemetryReported` events), `talus_xdr_detector` (`DetectionPolicy` +
+`ClassificationReported`), `polonium_policy` (`PoloniumConfig`). So the chain is
+the real source of truth; the agent HTTP API adds live logs + isolate/restore +
+VM ops for a directly reachable agent. The current `App.svelte` uses dummy data
+and isn't wired to either yet.
+**Recommendation:** v2 makes **Sui the primary read path** (query events by
+package/module + read shared objects); the agent API is the live/local
+complement. On-chain **writes** (register, report, `update_policy`,
+`command_isolate_host`) = wallet-signed PTBs; agent-local writes (`/api/izoluj`,
+VM lifecycle) = agent HTTP. Confirm this split. (See `assumptions_v1.md` §A1–A3.)
+**Answer:** _<!-- fill in -->_
+
+### Q9b 🔴 Which Sui read endpoint — JSON-RPC `queryEvents`, GraphQL, or an indexer?
+**Analysis:** No indexer is present in the repo. `@mysten/sui.js@0.54` can
+`queryEvents`/`getObject` against a fullnode, but deep incident history may need
+an indexer/GraphQL.
+**Recommendation:** v1/v2 use fullnode JSON-RPC `queryEvents` (paged, newest-first)
++ `multiGetObjects` for shared objects; flag an indexer as a scaling follow-up.
+Provide the preferred testnet RPC URL (and any GraphQL endpoint).
 **Answer:** _<!-- fill in -->_
 
 ### Q10 🟡 Walrus/Seal ("Foka") — does FE fetch & decrypt directly?
@@ -100,6 +121,23 @@ that are on-chain go through wallet-signed Sui txns. Confirm the Move package ID
 Unclear if the browser holds decrypt capability or the agent proxies it.
 **Recommendation:** v1 shows sealed rows as **locked**, decrypt via agent/wallet
 on demand; direct browser Seal SDK is a v2 question.
+**Answer:** _<!-- fill in -->_
+
+### Q10b 🟡 Talus — does the FE let an admin edit the on-chain `anomaly_threshold`?
+**Analysis:** `talus_xdr_detector` exposes admin-only `update_threshold` and
+`authorize_ai_agent`; default threshold = 85; `submit_classification` is called by
+the off-chain AI (Ed25519-verified). The Talus screen could surface a read-only
+view, or an admin control to retune the threshold / manage authorized AI keys.
+**Recommendation:** v1 = read-only (threshold + recent `ClassificationReported`);
+v2 = admin can `update_threshold` / `authorize_ai_agent` via wallet. Confirm.
+**Answer:** _<!-- fill in -->_
+
+### Q10c 🟢 Telemetry visualization depth (cpu/ram/disk)?
+**Analysis:** `TelemetryReported` carries only `cpu_load`, `ram_usage_pct`,
+`disk_usage_pct` (u8 %) + `timestamp_ms`. Enough for gauges + short sparklines
+from a recent event scan, not rich long-range time-series (no historical store).
+**Recommendation:** v1 = per-endpoint gauges + sparkline from last N events; defer
+long-range charts (and any indexer) to v2. Confirm acceptable.
 **Answer:** _<!-- fill in -->_
 
 ---

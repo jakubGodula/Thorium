@@ -20,6 +20,7 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 ├── README.md                      ← you are here (the guide / flow)
 ├── fe_design_v1.md                ← (A) the precise v1 FE spec to implement
 ├── questions_v1_to_v2_qa.md       ← (B) open questions; answer them INLINE to unlock v2
+├── assumptions_v1.md              ← (C) assumptions behind v1 + CONFIRMED on-chain data model
 ├── prompt_verbatim.md             ← the original prompt that generated v1 (verbatim)
 └── input/                         ← raw context used for the analysis
     ├── prompt.txt                 ← original short prompt
@@ -37,16 +38,21 @@ endpoints and tabs that already exist.
 
 ## The flow (for the next human or agent)
 
-### B1. Open the project on a fresh branch
+### Branch model
+
+- `experimental-aw-fe` — holds the **v1** design. **Frozen** — do not push here.
+- `experimental-aw-fe-v2` — derivative of the above; holds the v1→v2 questions +
+  assumptions (this iteration), and is where the **v2** design will be committed
+  once the questions below are answered.
+- Each later iteration continues on this v2 branch (or a fresh derivative).
+
+### B1. Open the project on the working branch
 
 ```bash
 cd /Users/macbook/work/Thorium
 git fetch origin
-git checkout experimental-aw-fe          # the branch this design lives on
+git checkout experimental-aw-fe-v2       # the active design branch
 git pull --ff-only
-
-# start your own working branch off it
-git checkout -b fe-design-v2
 ```
 
 ### B2. Orient yourself
@@ -55,8 +61,11 @@ Open `.ai-fe-design/` and read, in order:
 
 1. `README.md` (this file) — the flow.
 2. `fe_design_v1.md` — the current design you're improving.
-3. `input/` — the raw source material (requirements + reference screenshots).
-4. `prompt_verbatim.md` — the exact instruction that produced v1.
+3. `assumptions_v1.md` — the assumptions v1 rests on + the **confirmed on-chain
+   data model** (Sui testnet package, event schemas). Each assumption maps to a
+   question below.
+4. `input/` — the raw source material (requirements + reference screenshots).
+5. `prompt_verbatim.md` — the exact instruction that produced v1.
 
 ### B3. Drive the loop with an AI agent (or by hand)
 
@@ -85,8 +94,8 @@ Concretely the agent must:
 ```bash
 git add .ai-fe-design/
 git commit -m "fe-design: v2 (answers v1→v2 questions)"
-git push -u origin fe-design-v2
-# open a PR into experimental-aw-fe
+git push origin HEAD:experimental-aw-fe-v2
+# (do NOT push to experimental-aw-fe — it is frozen at v1)
 ```
 
 ---
