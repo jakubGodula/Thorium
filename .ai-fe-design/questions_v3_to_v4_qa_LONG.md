@@ -151,3 +151,117 @@ commit a built artifact / tag per version? **Answer:** _<!-- … -->_
 > push with the remote URL **prominent in the last commit**. English-only, IPFS-safe,
 > token-cautious (≤1–2 improve rounds, max 3 deployments / 2 preferred). Don't ask the
 > user — decide and document; put residual ambiguity in the long Q&A.
+
+---
+---
+
+# ⬇ APPENDED 2026-06-20 — CR-2 + THE FINAL ITERATION (append-only)
+
+> This document is **append-only**. Everything above is preserved. Below: **every**
+> remark from `input/cr/cr-2.md` (so none is lost) + the Final-Iteration concerns.
+> Each item: the finding · **Decision needed / Answer:** (fill inline).
+
+## Part G — CR-2 Part 1: quality of the CR-1 fixes
+- **G-R1-1 🟡 Adapter wired but inert.** `querySuiEvents` is **never called** (no
+  polling loop); `connectLive` runs but `cfg.mock=true`/`wsUrl=""` make it a no-op and
+  `applyLiveEvent` is empty. Flipping `mock:false` changes nothing silently. *Fix needs
+  a `setInterval(querySuiEvents,10s)` stub gated on `!mock`, and an event→state map in
+  `applyLiveEvent` (AgentRegistered→fleet/KPI · TelemetryReported→cpu/ram/sparkline ·
+  IncidentReport→phase=isolated+drawer+banner · ClassificationReported→Talus).*
+  **Answer:** _<!-- … -->_
+- **G-R1-2 🔴 Walrus fetch URL is malformed.** `${gw}/${blobId}` with `gw=…/v1` and
+  `blobId="walrus:blob:7f3a"` → `…/v1/walrus:blob:7f3a` (wrong path; aggregator is
+  `/v1/blobs/{digest}`; `7f3a` isn't a real ~43-char digest; colon not URL-safe). The
+  "real fetch" **always 404s** → fallback. **Decision:** (a) provide a real test blob
+  digest + build `${gw}/blobs/${digest}`, or (b) be honest — drop the fetch guard and
+  always use the labelled demo blob. **Answer:** _<!-- … -->_
+- **G-R1-3 🟡 NOT-OK logs only on Telemetry tab.** The CC* primary view is
+  Overview/Endpoints; a judge won't see the logs unless they navigate. Surface a log
+  strip on Overview or in the drawer too. **Answer:** _<!-- … -->_
+- **G-R1-4 🟢 Incident-tree row not clickable.** `t-root` is a `div`; clicking INC-991
+  does nothing. Add `onclick → tab='overview'; drawerOpen=true` (1-line, high payoff).
+  **Answer:** _<!-- … -->_
+- **G-R1-5 🟡 Claude-Code modal disconnected.** Modal hardcodes `0x9aBc…01`; drawer
+  shows `0x9aBcDeF…01` (different truncation). Use one constant. Reword "Mock — no
+  agent invoked" → more aspirational ("the agent loop is defined…"). **Answer:** _<!-- … -->_
+- **G-R1-6 🟢 "Mute" actually resets the whole scenario** (`reset()`): in a booth a
+  passerby wipes the incident. Make Mute hide the banner only (`bannerVisible=false`),
+  keep `phase=isolated`; move reset to its own button. **Answer:** _<!-- … -->_
+- **G-R1-7 🟢 "Copy command" doesn't copy** — toast says "Copied" but no
+  `navigator.clipboard.writeText`. **Answer:** _<!-- … -->_
+
+## Part H — CR-2 Part 2: new code-quality findings (vYY)
+- **H-N2-1 🔴 CSS dual-definitions / dead legacy CSS.** `.layout`, `.cards`, `.banner`,
+  `.panel` defined twice; old top-tab `.nav`/`.tab` rules never render. Critically
+  `.cards` resolves to `auto-fill 220px` (~4 cols) overriding the intended 2-col Talus/
+  badges layout → sparse look on wide screens. Dedupe + mark/remove legacy. **Answer:** _<!-- … -->_
+- **H-N2-2 🟡 ⌘K caps at 8 with no "N more" hint** — 12 commands hidden silently. **Answer:** _<!-- … -->_
+- **H-N2-3 🟡 Demo loop too fast at the peak** — banner/drawer vanish after 4.5s; a
+  first-time reader needs ~7s. Dwell ~8s + fade before reset. **Answer:** _<!-- … -->_
+- **H-N2-4 🟡 No nav badge/count on active alert** — Incidents/Alerts rail items show no
+  `1` badge during `isolated` (Datadog/Defender convention; discoverability). **Answer:** _<!-- … -->_
+- **H-N2-5 🟢 `.topbar{position:sticky}` has no `top`** → behaves relative; verify it
+  actually sticks on scroll in the rail layout. **Answer:** _<!-- … -->_
+- **H-N2-6 🟢 ⌘K shows mock destinations unlabelled** — add `(mock)`/`(soon)` to palette
+  labels to keep the two-fidelity honesty. **Answer:** _<!-- … -->_
+
+## Part I — CR-2 Part 3: missed intentions from answers.md
+- **I-M3-1 🔴 I14 incident status lifecycle absent.** Alerts shows hardcoded "Open"; no
+  Ack/Escalate/Resolve; Audit Trail says "Acknowledged" but the badge stays "Open"
+  (inconsistent). Add a mock **Acknowledge** (badge→Acked client-side + append audit).
+  **Answer:** _<!-- … -->_
+- **I-M3-2 🔴 I3 "your version" implies a comparison.** The "partly implemented" tree
+  was never surfaced; vYY may diverge from existing code. (Mirrors L-A3.) **Answer:** _<!-- … -->_
+- **I-M3-3 🟡 G7 Audit Trail static** — should populate as the analyst acts (e.g., open
+  drawer in `isolated` → "Opened INC-991" appears). **Answer:** _<!-- … -->_
+- **I-M3-4 🟡 G8 SIEM rows all "mock"** — undifferentiated. Show Splunk "Connected
+  (mock)", others "Configure"; on `isolated`, Splunk flashes "1 alert forwarded". **Answer:** _<!-- … -->_
+- **I-M3-5 🟡 G2 Governance DAO vote static** — add a conditional card after `isolated`:
+  "New vote: emergency threshold 0.85→0.75 (auto-triggered by INC-991)". **Answer:** _<!-- … -->_
+- **I-M3-6 🟡 I13 empty/loading/error states still missing** on most tabs; `offline`
+  toggles a lockbar but no panel reflects offline (Chain Activity should show
+  "⚠ Disconnected from Sui RPC"). **Answer:** _<!-- … -->_
+- **I-M3-7 🟢 U2 booth framing** — demo mode lacks a "live demo running — click to take
+  over" overlay for cold passersby. **Answer:** _<!-- … -->_
+
+## Part J — CR-2 Part 4: UI interaction gaps
+- **J-F4-1 🔴 Incident tree → drawer** (biggest demo gap; mirrors G-R1-4). **Answer:** _<!-- … -->_
+- **J-F4-2 🔴 Alerts "Acknowledge" missing** — only tab where the analyst should act has
+  no action; add Ack → status Acked + audit append + banner red→amber. **Answer:** _<!-- … -->_
+- **J-F4-3 🟡 "Connect Wallet" dead button** — no tag/feedback; mock wallet selector or
+  a toast. **Answer:** _<!-- … -->_
+- **J-F4-4 🟡 Onboarding has no "Simulate registration"** tie-in to the CC* stepper
+  (`phase='connected'`) — would connect onboarding to DEMO.md step 1. **Answer:** _<!-- … -->_
+- **J-F4-5 🟡 KPI tiles don't animate on phase change** (CR-1 B-2, still open) — count-up/
+  flash on "new agent connected". **Answer:** _<!-- … -->_
+- **J-F4-6 🟡 Offline Lockdown doesn't affect data panels** (G11) — Chain/Telemetry/
+  rail-foot should reflect offline/stale. **Answer:** _<!-- … -->_
+- **J-F4-7 🟢 On-chain evidence is one static line** — should accumulate per phase like
+  the timeline. **Answer:** _<!-- … -->_
+- **J-F4-8 🟢 ⌘K lacks "View incident"/"Acknowledge" commands** (only when compromised).
+  **Answer:** _<!-- … -->_
+
+## Part K — CR-2 Part 5: style/architecture
+- **K-S5-1 🟡 `App.svelte` becoming a monolith** (~340 script + ~230 template, all 18
+  tabs inline). Extract `lib/tabs/*.svelte` + a scenario store. Not blocking, but each
+  round compounds. **Answer:** _<!-- … -->_
+- **K-S5-2 🟢 Inline styles in template** → move to utility classes. **Answer:** _<!-- … -->_
+- **K-S5-3 🟢 CR-iteration comments in `app.css`** should be removed once stable
+  (history belongs in ADRs). **Answer:** _<!-- … -->_
+
+## Part L2 — CR-2 Part 6: explicit decisions needed (Q1–Q7)
+| # | Question | Why it blocks | **Answer** |
+|---|---|---|---|
+| C2-Q1 | Real Walrus blob IDs for fixtures? | else `fetchWalrusBlob` can never succeed | _<!-- … -->_ |
+| C2-Q2 | Click INC-991 → open drawer? | high UX, trivial | _<!-- … -->_ |
+| C2-Q3 | "Mute" = dismiss banner without reset? | presenter/booth UX | _<!-- … -->_ |
+| C2-Q4 | Interactive incident status (Open/Ack/Resolved)? | completes analyst loop | _<!-- … -->_ |
+| C2-Q5 | "Connect Wallet" → mock selector or toast? | dead button in primary nav | _<!-- … -->_ |
+| C2-Q6 | Demo dwell 8s vs 4.5s at CRITICAL? | loop too fast for booth | _<!-- … -->_ |
+| C2-Q7 | ⌘K palette: keep as experiment or promote to main? | ADR-0009 marks it experiment | _<!-- … -->_ |
+
+## Part M — CR-2 Part 7: MUST PRESERVE (do not regress)
+adapter.ts structure · per-row `decryptedText`+spinner · `$derived connectCmd` ·
+`onDestroy` cleanup · grey connected sparkline · Claude-Code modal (build on it) ·
+MSSP tenant cycling · ⌘K palette (autofocus + Escape) · invite token `inv_8Qm4…` ·
+NOT-OK logs panel. **(Carry this list into every future ADR's "consequences".)**
