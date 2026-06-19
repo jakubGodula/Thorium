@@ -229,3 +229,78 @@ the generation of demo will be after the sign-off that everything is clear. you 
 **Clarifying answers (Turn 5):** capability home = **Both, maximal** (repo-root
 README + `.ai-fe-design/README.md` + AGENTS.md); v3 handling = **No v3 file;
 questions only**; archive fidelity = **verbatim prompts + decision log**.
+
+---
+
+## Turn 6 — (call it gen-v2 generation method; improve CC*)
+
+```
+now one more thing:
+1) it produced effect. terrific. let's call it v2 of the generation method prompt. Please commit work
+2) please commit work ie: a) input/DEMO.md b) prompts/init verbatim c) the top level in readme capabilities of this project d) the steps to generate the demo from v2 version using v2 the generation prompt (I prefer v2. but if you suggest v1, I can leave with it). e) make sure everything exists. and git commit
+3) now we will work on v2 (or v3, ie. next iteration) generating demo method. So another prompt. The previous one made a terrific result. and it is ok. This work is committed.
+4) now in order to achieve point 3 … we need to do:
+a) you will constantly in loop or with spawned agents with eg. cheaper haiku or 4.6 model try to improve the demo. ie. the (CC*) critical path
+b) you will output the screens if possible of alerts etc. from your environement if you can run it in browser / docker / disposible headless / selenium scripts. up to you. or just output the expected demo path (maybe with selenium script?)
+c) make the list of v3 questions more exhaustive. add "Final chapter optional" of all choices how to do (CC*) path the best. … document in design v2 to v3 folder
+Please continue. If not sure ask. But I would like you to spend 10-15 min analysing or generating demo. Up to you. After 15 mins output assumptions, clarifying questions, results
+```
+
+## Turn 7 — (two source files; restructure v2→v3 into Parts)
+
+```
+1) there are two more files … roadmap_en.html / presentation_en.html …
+a) finish work b) document … in readme suitable c) compare final output with roadmap_en.html / presentation_en.html and results put into the optional 2nd / 3rd topics or rounds or groups of questions in v2 to v3 …
+6) … do the deep analysis … Try to make more precise and better and more v2 to v3 questions. But organize like: Part 1 Critical => up to 5 questions; Part 2 Important => all others, maybe even 20; Part 3 Plus the diff between new files roadmap_en.html / presentation_en.html and actual demo, in the form of questions; Part 4 very optional — UX materials and questions … Include prompt for another AI agent in Part 4. Go.
+```
+
+## Turn 8 — (Alfa/Beta scopes; scaffold demo, Alfa default)
+
+```
+=> Go. One more thing. I noticed there are actually two scopes of questions related to demo from design v2, v3.
+Version Alfa: only critical part of application, similar to Defender, with look and feel of Walrus, similar to ELK, Datadog with capacities but with blockchain domain.
+Version Beta: Version Alfa, "but please add two files very big and important: roadmap_en.html / presentation_en.html"
+… So we focus on: a) document … Version Alfa / Version Beta b) if possible adjust v2 to v3 questions Part 4 with this context c) … d) then you may "go — scaffold the demo" BUT VERY IMPORTANT - WITH VERSION ALFA BY DEFAULT. include it in script.
+… a) give up to 1 min to ask 1-2 clarifying questions b) execute … "go — scaffold the demo" WITH VERSION ALFA BY DEFAULT: generated demo / live locally / with mocks, adrs, docs, ai context / clickable / with demo to manually go through / possible to deploy on remote server (do not do this … add it to top-level capabilities)
+```
+**Clarifying answers (Turn 8):** Alfa = focused SOC console + CC* (Beta = + Part-3
+breadth); scaffold = CC*-first vertical slice.
+
+## Turn 9 — (fix path; document + do remote deploy; audit log; no questions)
+
+```
+1. cd .ignored/fe-demo/demo_designV2_genV2/app … did not work. I think you forgot the absolute path.
+2. describe local and remote deployment process in top-level readme.md or a new adjacent readme-deployment.md …
+3. deploy on remote using already documented execution. 4. test (CC*) on remote. if not satisfactory increment and do a better deployment script with … versioning of fe delivery …
+5. document remote url … 6. after that git push … 7. do not ask questions … document … in .ai-fe-design/ai_internal_audit_log new folder.
+8. … we deploy alfa version. you proceed until you finish task … open and verify remote deployment and local deployment. do not ask questions … 9. go, proceed
+```
+
+## Turn 10 — (keep trying for unrestricted public access)
+
+```
+In the meantime see: /Users/macbook/work/Thorium/.ai-fe-design/input/deploy
+You will have some feedback from deployment. if not possible try another method.
+Please keep trying. I would really like to see:
+a) remote unrestricted public access with live demo with (CC*) path clickable through mocks
+b) the newest v2 to v3 questions file pushed
+c) the last commit pushed to git origin to indicate only precisely prominently the url of your latest deployment that you verified
+try better. you can spawn new sub agents or burn too much token. or change model to save tokens … be smart. deliver.
+```
+
+## Turn 11 — (precise: v1 + v2 verifiable deployments; archive prompts)
+
+```
+I will even be more precise:
+a) as soon as you have deployed verifiable (… you open … and confirm what you see on that remote page and confirm it with internal (CC*) requirements … IE. REAL VERSION ALFA FOR MVP OR MOCKUP. … document it. log audit. commit. and push. And make sure the latest v2 to v3 questions are pushed … And make sure the last commit just contain "deployment success : url <with life URL>" …
+Let's call this … verifiable deployment with comit deployment pushed to origin as a last commit. with MORE OR LESS MVP v1 deployment.
+b) when you pushed you may commit your work or save session
+c) you proceed with v2 of deployment: i) you have MVP deployment … ii) you work on your internal processes so that you can improve the proximity of the requirements for hackathon and ai docs and (CC*) requirements. iii) if you have a version that has SUFFICIENTLY closer requirements … you do a v2 second deployment. … only have v1 and v2 remote deployments. Document both remote v1 and v2 remote urls in latest commit in a prominent place. push to git remote.
+iv) … now document all these prompts to: /Users/macbook/work/Thorium/.ai-fe-design/prompts/init verbatim ; /Users/macbook/work/Thorium/.ai-fe-design/input/deploy and push … finish your work. Good work
+```
+
+**Outcome (Turns 9–11):** local demo verified; remote GitHub Pages blocked (private
+repo); **two live public Cloudflare-tunnel deployments** — v1
+`roller-flag-smtp-landscape.trycloudflare.com`, v2 (improved)
+`survival-montana-duration-rachel.trycloudflare.com`. FE delivery versioned v1
+(gh-pages) / v2 (Actions) / v3 (Cloudflare tunnel).
