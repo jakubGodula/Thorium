@@ -18,10 +18,15 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 ```
 .ai-fe-design/
 ├── README.md                      ← you are here (the guide / flow)
-├── fe_design_v1.md                ← (A) the precise v1 FE spec to implement
-├── questions_v1_to_v2_qa.md       ← (B) open questions; answer them INLINE to unlock v2
-├── assumptions_v1.md              ← (C) assumptions behind v1 + CONFIRMED on-chain data model
-├── prompt_verbatim.md             ← the original prompt that generated v1 (verbatim)
+├── fe_design_v1.md                ← v1 FE spec (history; frozen)
+├── fe_design_v2.md                ← (A) CURRENT spec = v1 + decisions
+├── questions_v1_to_v2_qa.md       ← v1→v2 ORIGINAL questions (clean)
+├── questions_v1_to_v2_qa_AUDIT.md ← v1→v2 ANSWERS (user's decisions, verbatim)
+├── questions_v2_to_v3_qa.md       ← (B) NEXT round: questions + assumptions; answer INLINE
+├── assumptions_v1.md              ← (C) assumptions + CONFIRMED on-chain data model
+├── adr/                           ← Architecture Decision Records (Tailwind, charts, realtime…)
+├── brand/                         ← suggested Thorium logo / favicon / palette
+├── prompt_verbatim.md             ← the original prompt(s), verbatim
 └── input/                         ← raw context used for the analysis
     ├── prompt.txt                 ← original short prompt
     ├── conversation.txt           ← requirements (Defender / Sentinel / SUI / Stripe…)
@@ -60,40 +65,41 @@ git pull --ff-only
 Open `.ai-fe-design/` and read, in order:
 
 1. `README.md` (this file) — the flow.
-2. `fe_design_v1.md` — the current design you're improving.
-3. `assumptions_v1.md` — the assumptions v1 rests on + the **confirmed on-chain
-   data model** (Sui testnet package, event schemas). Each assumption maps to a
-   question below.
-4. `input/` — the raw source material (requirements + reference screenshots).
-5. `prompt_verbatim.md` — the exact instruction that produced v1.
+2. **`fe_design_v2.md`** — the CURRENT design (v1 + decisions). `fe_design_v1.md`
+   is history.
+3. `assumptions_v1.md` — assumptions + the **confirmed on-chain data model** (Sui
+   testnet package, event schemas).
+4. `adr/` — why the big calls were made (Tailwind, charts, realtime, mock backend,
+   Sui-primary read).
+5. **`questions_v2_to_v3_qa.md`** — the open round you're answering now.
+6. `input/` + `prompt_verbatim.md` — raw source material + original prompts.
+
+> Current state: **v2 is done.** The active task is answering
+> `questions_v2_to_v3_qa.md` to produce **v3** (the first implemented demo).
 
 ### B3. Drive the loop with an AI agent (or by hand)
 
-Give your agent (Claude Code / Antigravity / Codex / Cursor) this instruction:
+The loop is the same every round (here: v2 → v3). Give your agent this instruction:
 
-> Read `.ai-fe-design/fe_design_v1.md` and `.ai-fe-design/questions_v1_to_v2_qa.md`.
-> (a) Summarize the v1 design. (b) For every open question, propose a recommended
-> answer and write it inline under the question. (c) Once questions are answered,
-> produce `.ai-fe-design/fe_design_v2.md` that folds the answers into a revised,
-> more precise spec, and `.ai-fe-design/questions_v2_to_v3_qa.md` with the next
-> round of open questions. Do not ask me clarifying questions — make and record
-> reasoned decisions.
+> Read `.ai-fe-design/fe_design_v2.md` and `.ai-fe-design/questions_v2_to_v3_qa.md`.
+> (a) Summarize the current design. (b) Answer each open question inline. (c) Once
+> answered, save an answered copy as `questions_v2_to_v3_qa_AUDIT.md`, restore the
+> original questions file clean, then produce `fe_design_v3.md` that folds the
+> decisions in, plus `questions_v3_to_v4_qa.md` for anything still open. Do not ask
+> me clarifying questions — make and record reasoned decisions.
 
-Concretely the agent must:
+Concretely each round:
 
-- **a) List the v1 design** — enumerate screens, components, the design system,
-  and the JSON/RPC contract from `fe_design_v1.md`.
-- **b) Answer the v1→v2 questions** — edit `questions_v1_to_v2_qa.md` in place,
-  filling each `**Answer:**` line. (The analysis and recommended defaults are
-  already provided for each question — accept, override, or refine them.)
-- **c) Compute v2** — write `fe_design_v2.md` = v1 + all the answered decisions,
-  plus a fresh `questions_v2_to_v3_qa.md`.
+- **a) List the current design** — screens, components, data contract, ADRs.
+- **b) Answer the questions** — fill each `**Answer:**` inline.
+- **c) Compute the next version** — `fe_design_vN.md` = previous + decisions, plus
+  a fresh `questions_vN_to_v(N+1)_qa.md`.
 
-### B4. Commit the v2
+### B4. Commit
 
 ```bash
 git add .ai-fe-design/
-git commit -m "fe-design: v2 (answers v1→v2 questions)"
+git commit -m "fe-design: v3 (answers v2→v3 questions)"
 git push origin HEAD:experimental-aw-fe-v2
 # (do NOT push to experimental-aw-fe — it is frozen at v1)
 ```
@@ -102,30 +108,35 @@ git push origin HEAD:experimental-aw-fe-v2
 
 ## Suggested next prompts (copy/paste)
 
-These are good follow-ups once v1 is reviewed:
-
-- **Implement v1 in code**
-  > Implement `fe_design_v1.md` in `ui/` (Svelte 5 + TS + Vite). Refactor the
-  > monolithic `ui/src/App.svelte` into the component tree the spec defines.
-  > Keep the existing Sui wallet + `/api/*` contract working. Build must stay
-  > IPFS-deployable (relative asset paths, hash routing, no SSR).
+- **Build the v3 demo + mock backend** (the planned separate prompt → point 5)
+  > Build `.ignored/fe-demo` from `fe_design_v2.md`: a Svelte 5 + TS + Vite +
+  > Tailwind app using ECharts/uPlot, implementing the screens + the new on-chain
+  > tabs (Chain Activity, Fleet Telemetry, Alerts). Also scaffold the dockerized
+  > `mock-backend/` per `adr/0004-mock-backend.md` (emulates the Mowa `/api/*`
+  > contract + a Sui event mock from the schemas in `assumptions_v1.md` §1).
+  > English only, IPFS-deployable (`base:'./'`, hash routing).
 
 - **Design system pass (Claude design / v0 / Figma Make)**
-  > From `fe_design_v1.md`'s "Design System" section, generate a token file
-  > (`ui/src/lib/theme.css`) and 6 base components: Card, StatTile, Badge,
-  > DataTable, SeverityPill, Drawer. Match Datadog/Stripe density + the dark
-  > "Defender-style" palette.
+  > From `fe_design_v2.md` §2 + the v1 §3.1 tokens, generate the Tailwind theme
+  > (`tailwind.config`/`@theme`) and base components (Card, StatTile, SeverityPill,
+  > DataTable, Drawer, Chart) with shadcn-svelte/bits-ui. Stripe/ELK/Walrus polish.
 
 - **Single-screen deep dives**
-  > Produce a pixel-level spec + Svelte component for the **Overview** screen
-  > only, using the JSON shapes in `fe_design_v1.md` §"Data contract".
+  > Produce a pixel-level spec + Svelte component for the **Overview** (or **Fleet
+  > Telemetry**) screen, using the event shapes in `assumptions_v1.md` §1.
 
 ---
 
 ## Conventions
 
-- Versions are immutable: never edit `fe_design_v1.md` to "fix" it — supersede it
-  with `fe_design_v2.md`. The `_v1`, `_v2`… suffix is the history.
-- Questions files are **edited in place** (you write answers inline), then the
-  answered file is carried forward as the rationale record for the next version.
-- Keep everything dependency-light and IPFS-friendly (see the spec's deploy notes).
+- **Immutable versions:** never edit `fe_design_vN.md` to "fix" it — supersede it
+  with `fe_design_v(N+1).md`. The `_v1`, `_v2`… suffix is the history.
+- **Questions / AUDIT split:** `questions_vN_to_v(N+1)_qa.md` stays the **clean
+  original questions**. The user's inline answers are preserved verbatim in
+  `questions_vN_to_v(N+1)_qa_AUDIT.md` (the decision of record). The next version
+  is computed from the AUDIT file.
+- **ADRs:** significant, hard-to-reverse decisions get a record under `adr/`.
+- **No Polish** in any UI string (English only); Mowa wire keys stay Polish but are
+  mapped to English view-models in the data adapter.
+- IPFS-friendly build (relative paths, hash routing, no SSR); bundle-size
+  optimization is a deliberate later pass (heavy is OK in early iterations).
