@@ -1,0 +1,18 @@
+# Thorium XDR demo mock — Stoplight Prism, contract-driven from the OpenAPI spec.
+# Usage:  docker compose -f docker-compose.prism.yml up
+# Then:   FE config.json -> { "agentApiBase": "http://localhost:4010",
+#                             "suiRpcUrl":   "http://localhost:4010/sui",
+#                             "walrusGateway":"http://localhost:4010/walrus",
+#                             "mock": true }
+services:
+  prism:
+    image: stoplight/prism:5
+    command: >
+      mock -h 0.0.0.0 --port 4010
+      /openapi/thorium-xdr.openapi.yaml
+    ports:
+      - "4010:4010"
+    volumes:
+      - ../openapi:/openapi:ro
+    # --dynamic can be added to vary responses; default serves the `example`s,
+    # which is what the clickable demo wants (deterministic, realistic data).

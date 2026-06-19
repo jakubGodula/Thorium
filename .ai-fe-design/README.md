@@ -18,6 +18,7 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 ```
 .ai-fe-design/
 ├── README.md                      ← you are here (the guide / flow)
+├── AGENTS.md                      ← portable entrypoint for ANY model (read first)
 ├── fe_design_v1.md                ← v1 FE spec (history; frozen)
 ├── fe_design_v2.md                ← (A) CURRENT spec = v1 + decisions
 ├── questions_v1_to_v2_qa.md       ← v1→v2 ORIGINAL questions (clean)
@@ -26,6 +27,8 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
 ├── assumptions_v1.md              ← (C) assumptions + CONFIRMED on-chain data model
 ├── adr/                           ← Architecture Decision Records (Tailwind, charts, realtime…)
 ├── brand/                         ← suggested Thorium logo / favicon / palette
+├── demo-gen/                      ← versioned demo+mock GENERATORS (design ⊗ generator matrix)
+│   └── gen-v1/                    ← gen-v1 (pinned to design v2): PROMPT + OpenAPI + Prism mock
 ├── prompt_verbatim.md             ← the original prompt(s), verbatim
 └── input/                         ← raw context used for the analysis
     ├── prompt.txt                 ← original short prompt
@@ -33,6 +36,7 @@ v1 design  ──▶  answer "v1 → v2" questions  ──▶  v2 design  ──
     ├── WhatsApp Image …21.47.04.jpeg  ← Thorium XDR roadmap reference
     └── WhatsApp Image …22.17.11.jpeg  ← Microsoft 365 Defender UI reference
 ```
+(Claude Code also has a `/fe-demo-gen` skill at `.claude/skills/fe-demo-gen/`.)
 
 `fe_design_v1.md` was produced **from a real analysis of this repository** (the
 existing `ui/` Svelte app, the `thorium_agent.mowa` JSON/RPC contract, and the
@@ -108,13 +112,12 @@ git push origin HEAD:experimental-aw-fe-v2
 
 ## Suggested next prompts (copy/paste)
 
-- **Build the v3 demo + mock backend** (the planned separate prompt → point 5)
-  > Build `.ignored/fe-demo` from `fe_design_v2.md`: a Svelte 5 + TS + Vite +
-  > Tailwind app using ECharts/uPlot, implementing the screens + the new on-chain
-  > tabs (Chain Activity, Fleet Telemetry, Alerts). Also scaffold the dockerized
-  > `mock-backend/` per `adr/0004-mock-backend.md` (emulates the Mowa `/api/*`
-  > contract + a Sui event mock from the schemas in `assumptions_v1.md` §1).
-  > English only, IPFS-deployable (`base:'./'`, hash routing).
+- **Build the demo (gen-v1 ⊗ design v2)** — now via the versioned generator:
+  > Run the `fe-demo-gen` skill (or follow `demo-gen/gen-v1/PROMPT.md` verbatim)
+  > to generate `.ignored/fe-demo/demo_designV2_genV1/`: a Svelte 5 + TS + Vite +
+  > Tailwind app (ECharts/uPlot) + the Prism mock from
+  > `demo-gen/gen-v1/openapi/`. Do it in two passes — **scaffold** (app + mock +
+  > a few wired screens) for sign-off, then **full demo** (all screens, polish).
 
 - **Design system pass (Claude design / v0 / Figma Make)**
   > From `fe_design_v2.md` §2 + the v1 §3.1 tokens, generate the Tailwind theme
