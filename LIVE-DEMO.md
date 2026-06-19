@@ -5,21 +5,19 @@
 > resolve Cloudflare-tunnel hostnames** (intermittent NXDOMAIN). Below are URLs that
 > need **no flaky DNS**. Serving the **v2** (improved) Alfa build.
 
-## ✅ Open this — guaranteed, no DNS, no interstitial
-### http://localhost:5173   ·   CC*: http://localhost:5173/?cc=1
-(you're on this Mac — this just works)
+## 🌐 vX+1 (latest) — public/remote, share with your friend
+### https://4ae4-213-134-178-35.ngrok-free.app   ·   CC*: …/?cc=1
+- **ngrok** (resolves on your router 192.168.0.1 → 18.158.249.75; HTTP 200 verified).
+- One-time **"You are about to visit…" page → click "Visit Site"**, then it loads.
+- New left-rail SOC console: Monitor / Detect / Respond / Platform — incidents tree,
+  Talus, vulns (Walrus decrypt), threat-intel, onboarding, compliance, governance,
+  personas, integrations, audit, modules, "other" — CC* still the hero.
 
-### http://192.168.0.251:5173   ·   CC*: http://192.168.0.251:5173/?cc=1
-(LAN IP — reachable from any device on your network; it's an IP, so no DNS at all)
-
-> Verified rendering over the LAN IP (proof:
-> [`.ai-fe-design/demo-gen/gen-v2/mockup/public-reachable-cc.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/public-reachable-cc.png)).
-
-## 🌐 Public/remote URL (resolves on your router; one-time warning)
-### https://c0e2-213-134-178-35.ngrok-free.app   ·   CC*: …/?cc=1
-- **ngrok** (resolves via your 192.168.0.1 → 18.158.249.75, HTTP 200 verified).
-- ngrok-free shows a **one-time "You are about to visit…" page — click "Visit Site"**,
-  then the demo loads. (That interstitial is ngrok's, not the app.)
+## ✅ Local / LAN — guaranteed, no DNS, no interstitial
+### http://localhost:5174   ·   CC*: http://localhost:5174/?cc=1   (this Mac)
+### http://192.168.0.251:5174   ·   CC*: …/?cc=1   (LAN — any device, no DNS)
+> vX (v2, archived) stays reachable on LAN: **http://192.168.0.251:5173**.
+> Proof of vX+1 render: [`.ai-fe-design/demo-gen/gen-v2/mockup/vX1-cc-alert.png`](./.ai-fe-design/demo-gen/gen-v2/mockup/vX1-cc-alert.png).
 
 ## What you'll see (CC* — the critical path)
 Observed pod **alma9-edge-01**: connect → healthy → **kernel exploit** → anomaly 0.91

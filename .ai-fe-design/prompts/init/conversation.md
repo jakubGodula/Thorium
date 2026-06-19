@@ -304,3 +304,45 @@ repo); **two live public Cloudflare-tunnel deployments** — v1
 `roller-flag-smtp-landscape.trycloudflare.com`, v2 (improved)
 `survival-montana-duration-rachel.trycloudflare.com`. FE delivery versioned v1
 (gh-pages) / v2 (Actions) / v3 (Cloudflare tunnel).
+
+## Turn 12 — (1-min explainer; remote first)
+```
+ok, so 1 min of read explanation how can I and my friend open it - first focus on remote deployment
+```
+
+## Turn 13 — (can't reach URL; redeploy until it works)
+```
+now make the v3 design from v2 to v3 answers: [image] ===
+I do not think it went great. See: input/deploy/Zrzut ekranu 2026-06-19 o 20.28.55.png
+I cannot reach the url that you pointed to me that should be accessible and should meet the initial requirements. it does not look good.
+proceed until you understand, make new deployments. do not ask until you reach that goal
+```
+**Root cause found:** the user's router DNS (192.168.0.1) doesn't resolve
+`*.trycloudflare.com` (ERR_NAME_NOT_RESOLVED). Earlier checks used 1.1.1.1, masking
+it. **Fix:** ngrok (resolves on the router) + IP/LAN URLs (no DNS). Also generated
+`fe_design_v3.md` (from adopted assumptions, since answers weren't provided yet).
+
+## Turn 14 — (archive vX; build answers-driven vX+1; ADRs/audit/v3→v4/prompts)
+```
+1) the existing deployment last (v1 or v2, let's call it vX) a) archive b) make sure it is the last commit with only this note c) make sure that the links to each deployment - here vX remain after the next deployment. … the next agent can do this work again. or drop hints in git.
+2) Now, let's do version vX+1. We have a new file: input/answers.md … treat them the most important things.
+A) answers.md => must-have, the first principle … follow regardless
+B) (CC*) Demo requirements … in the context of A)
+C) the previous docs … the SUI hackathon contract, the existing code base - follow optional. … Always follow in the context of A) and then B).
+a) doing the local deployment of vX+1 … b) improving it … careful with tokens and max 1-2 iterations c) … it is called vX+1.
+i) make a decision ii) write adr.md, explain choice and alternatives iii) … add an audit log of these adr.md decisions. And prepare CAREFULLY the v3 to v4 questions and answers. … max 25-50% length of previos v2 to v3 … and prompts iv) document these prompts in /init/ prompts folder d) version vX+1 is deployed to origin … a remote deployment url is visible in the last commit.
+MOST IMPORTANT: 1) directly follow deployment of vX and vX+1 … 2) max 3 deployments: vX, vX+1, vX+2, but two are prefered 3) must at least deploy one next version that follows A),B),C) 4) must verbatim document this chat and these exactly words 5) v3 to v4 questions … max 25%-50% … 6) push all your commits 7) y
+```
+
+## Turn 15 — (1-min summary + repeatable runbook for future agents)
+```
+7) you must summarize output at max 1 min read
++ one more thing. make sure once I have answers from v3 to v4 you can follow the next deployment and follow exactly the previous steps. I expect it to be listed very detailed like a step of previous execution and that a new agent codex / claude / antigravity will know how to perform the deployment from new iterations of answers eg. from v5 to v6 in future. the same steps are documented.
+Please follow the work
+```
+**Outcome (Turns 14–15):** vX (v2) archived (LAN-reachable); **vX+1** built from
+`answers.md` (left-rail SOC + Beta-as-mock surfaces + incident tree + onboarding +
+Walrus decrypt + K8s preview + WS markers; ADR-0008) and **deployed live** at
+`https://4ae4-213-134-178-35.ngrok-free.app`. Added `delivery/ITERATION-RUNBOOK.md`
+(repeatable vN→vN+1 steps) + `questions_v3_to_v4_qa.md` (concise) +
+`ai_internal_audit_log` updates.

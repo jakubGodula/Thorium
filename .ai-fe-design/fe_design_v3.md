@@ -3,12 +3,22 @@
 > Status: **v3** · Supersedes [`fe_design_v2.md`](./fe_design_v2.md) (v2 stays as
 > history). · Branch: `experimental-aw-fe-v2`.
 >
-> **How v3 was derived:** the v2→v3 questions were **not answered explicitly** by the
-> user. Per the established pattern ("the recommendation is a reasonable assumption"),
-> v3 **adopts each question's documented `Assumption (v2)` as the decision**. The
-> mapping is recorded in
-> [`questions_v2_to_v3_qa_AUDIT.md`](./questions_v2_to_v3_qa_AUDIT.md). v3 also folds
-> in what the **shipped Alfa demo** actually implemented and what deployment taught us.
+> **How v3 was derived — UPDATED:** the user then provided **real answers**
+> ([`input/answers.md`](./input/answers.md), saved as
+> [`questions_v2_to_v3_qa_AUDIT.md`](./questions_v2_to_v3_qa_AUDIT.md)). These
+> **supersede** the earlier "adopted assumptions" draft and **expand scope**: keep a
+> single role (C1) and CC* #1 (C3), but **surface most Beta concepts as labeled
+> mock/non-functional tabs** (personas/roles, governance+$THOR, compliance/NIS2
+> auditor view, MSSP tenant switcher, module catalog, web terminal, audit trail,
+> SIEM integrations, privacy badges, offline-lockdown, threat-intel/deception,
+> "other"), **plus real** additions: incident **correlation tree** (I3), **onboarding
+> command generator** with mock invite (I12), **browser Walrus/Seal decrypt** (I4),
+> **Talus correlation demo** (I5), **K8s example UI** (C2, non-functional), and
+> **WebSocket integration markers** (I2). Live data = config + code markers, mock by
+> default (C5); deploy target = **Unstoppable Domains + IPFS** (I9/I10). This is
+> realized in the shipped **vX+1** build and recorded in
+> [`adr/0008-vX1-answers-scope-leftrail.md`](./adr/0008-vX1-answers-scope-leftrail.md).
+> Build/iteration procedure: [`delivery/ITERATION-RUNBOOK.md`](./delivery/ITERATION-RUNBOOK.md).
 
 ---
 

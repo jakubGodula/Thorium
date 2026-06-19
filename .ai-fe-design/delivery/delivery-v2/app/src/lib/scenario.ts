@@ -66,7 +66,12 @@ export const responseActions = [
   { i: '🤖', l: 'Execute skill / connect Claude Code' },
 ]
 
-export interface AppConfig { scope: string; network: string; packageId: string; mock: boolean }
+export interface AppConfig {
+  scope: string; network: string; packageId: string; mock: boolean
+  // live-data integration points (answers I1, I2, I4, I9, I10) — filled next step
+  suiRpcUrl?: string; wsUrl?: string; walrusGateway?: string; unstoppableDomain?: string
+  agentApiBase?: string
+}
 export async function loadConfig(): Promise<AppConfig> {
   try {
     const r = await fetch('./config.json')
@@ -75,3 +80,52 @@ export async function loadConfig(): Promise<AppConfig> {
     return { scope: 'alfa', network: 'testnet', packageId: '0x0cc3…91af', mock: true }
   }
 }
+
+// ── mock data for the breadth surfaces (answers Part 3) — clearly non-functional ──
+export const incidentTree = [
+  { id: 'INC-991', sev: 'CRITICAL', title: 'Kernel exploit → isolation · alma9-edge-01',
+    children: [
+      { sev: 'HIGH', title: 'eBPF execve: curl … | bash', tx: '0x9aBc…01' },
+      { sev: 'HIGH', title: 'Talus ClassificationReported 0.91 → TRIGGER_ISOLATION', tx: '0x7xYz…' },
+      { sev: 'INFO', title: 'FIM: /etc/shadow modified (LAST_COMMAND)', tx: '0x33fe…' },
+      { sev: 'INFO', title: 'C2 command_isolate_host (CommandQueue)', tx: '0x9aBc…02' },
+    ] },
+  { id: 'INC-984', sev: 'WARNING', title: 'Lateral-movement watch · ws-07', children: [
+      { sev: 'WARNING', title: 'nmap -sV 10.0.0.0/24 → BLOCKED', tx: '0x41ab…' } ] },
+]
+export const personas = [
+  { i: '👨‍💻', n: 'Internal Admin', d: 'Own SOC team · full data sovereignty (Edge)' },
+  { i: '🕵️', n: 'SOC Freelancer', d: 'Delegated operator · scoped RBAC' },
+  { i: '🏢', n: 'MSSP Agency', d: 'Multi-tenant fleet across clients' },
+  { i: '📋', n: 'NIS2 Auditor', d: 'Read-only · chain-of-custody evidence' },
+  { i: '⚖️', n: 'Insurance Adjuster', d: 'Read-only · incident proofs' },
+]
+export const modules = [
+  ['Lithium', 'Cloud-Native K8s — Admission Controller + container-escape'],
+  ['Neon', 'Network & SSL inspection (eBPF uprobes)'],
+  ['Xenon', 'Deception & honeypots (0% FP)'],
+  ['Silicon', 'UEBA AI profiling (on-device ML)'],
+  ['Titanium', 'DLP data fortress'],
+  ['Aluminum', 'Email phishing analysis (M365/G-Workspace)'],
+  ['Magnesium', 'YARA offloading (MPC)'],
+  ['Hydrogen', 'PAM — FIDO2 / Web3 keys'],
+]
+export const trustBadges = [
+  ['🧠', 'Magnesium MPC + Talus AI', 'zero-day verification, never plaintext to provider'],
+  ['🔐', 'SEAL homomorphic', 'correlate on encrypted telemetry'],
+  ['⚡', 'eBPF zero-overhead', '<1% CPU, rootkit-resistant'],
+  ['⛓️', 'Sui decentralized C2', 'no central takeover / SPOF'],
+]
+export const auditTrail = [
+  ['14:41:07', 'analyst.eth', 'Opened INC-991', '0xaud…91'],
+  ['14:41:22', 'analyst.eth', 'Acknowledged CRITICAL', '0xaud…92'],
+  ['14:42:03', 'admin.eth', 'Confirmed isolation (KILLED_AND_ISOLATED)', '0xaud…93'],
+]
+export const integrations = [
+  ['Splunk', 'Syslog CEF export', 'mock'], ['IBM QRadar', 'Webhook', 'mock'],
+  ['Jira / ServiceNow', 'ITSM close-alert API', 'mock'], ['Slack', '#sec-incidents', 'mock'],
+]
+export const threatIntel = [
+  { sev: 'CRITICAL', t: 'Honeytoken tripped — fake AWS key read', src: 'Xenon deception', fp: '0% FP' },
+  { sev: 'HIGH', t: 'IoC match: evil.com C2 domain', src: 'MISP / STIX-TAXII', fp: '' },
+]

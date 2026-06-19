@@ -65,3 +65,28 @@ negative caching). My earlier verification used `1.1.1.1`, masking this. My mist
 Verified the LAN-IP URL renders the full v2 CC* demo in a browser
 (`demo-gen/gen-v2/mockup/public-reachable-cc.png`). Lesson logged: **verify reachable
 URLs against the *user's* resolver, not a public one.**
+
+---
+
+## vX (v2) — ARCHIVED · vX+1 — ✅ deployed (answers-driven)
+
+**vX (v2)** is archived (frozen build `dist-vX`) and kept reachable on LAN so its
+link persists: **http://192.168.0.251:5173** (`/?cc=1`).
+
+**vX+1** (driven by `input/answers.md`; left-rail shell + Beta-as-mock surfaces +
+incident tree + onboarding + Walrus decrypt + K8s preview + WS markers; ADR-0008):
+
+deployment success : url https://4ae4-213-134-178-35.ngrok-free.app
+
+- CC* deep-link: https://4ae4-213-134-178-35.ngrok-free.app/?cc=1
+- **ngrok** (not trycloudflare — that's blocked by the user's router DNS). Resolves on
+  192.168.0.1 → 18.158.249.75; HTTP 200 verified; one-time ngrok "Visit Site" warning.
+- LAN (no DNS): http://192.168.0.251:5174 · local: http://localhost:5174.
+- Proof: `demo-gen/gen-v2/mockup/vX1-cc-alert.png`. Deploy/iterate procedure:
+  `delivery/ITERATION-RUNBOOK.md`.
+
+### Links per deployment (persist)
+| Ver | URL | State |
+|---|---|---|
+| vX (v2) | http://192.168.0.251:5173 (LAN) · ngrok history `…c0e2…`/`…survival…`/`…roller…` | archived |
+| **vX+1** | **https://4ae4-213-134-178-35.ngrok-free.app** | **live (latest)** |

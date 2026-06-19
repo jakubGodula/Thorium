@@ -1,13 +1,14 @@
 # Thorium XDR
 
-> ### 🔴 LIVE DEMO (Alfa, v2 build) — **open one of these** (no flaky DNS)
-> - **Local:** **http://localhost:5173** · CC*: `http://localhost:5173/?cc=1`
-> - **LAN IP (no DNS):** **http://192.168.0.251:5173** · CC*: `…/?cc=1`
-> - **Public (ngrok):** **https://c0e2-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(click the one-time "Visit Site")*
+> ### 🔴 LIVE DEMO — **vX+1** (answers-driven; left-rail SOC + CC*)
+> - **Public (ngrok):** **https://4ae4-213-134-178-35.ngrok-free.app** · CC*: `…/?cc=1` *(click the one-time "Visit Site")*
+> - **LAN (no DNS):** **http://192.168.0.251:5174** · **Local:** **http://localhost:5174**
+> - **vX (v2, archived):** http://192.168.0.251:5173 (kept reachable on LAN)
 >
-> ⚠️ The earlier `*.trycloudflare.com` URLs failed for you (`ERR_NAME_NOT_RESOLVED`)
-> because your router DNS doesn't reliably resolve Cloudflare-tunnel hostnames. The
-> URLs above avoid that. Full detail + refresh: [`LIVE-DEMO.md`](./LIVE-DEMO.md).
+> ⚠️ Don't use the old `*.trycloudflare.com` links — your router DNS doesn't resolve
+> them. Detail/refresh: [`LIVE-DEMO.md`](./LIVE-DEMO.md) · log:
+> [`deployments.md`](./.ai-fe-design/ai_internal_audit_log/deployments.md) · repeatable
+> steps: [`ITERATION-RUNBOOK.md`](./.ai-fe-design/delivery/ITERATION-RUNBOOK.md).
 
 A **Web3-native Extended Detection & Response (XDR)** platform: eBPF endpoint
 agents (written in the **Mowa** language) whose registry, incidents, telemetry, and
