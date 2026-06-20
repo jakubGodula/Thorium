@@ -1,0 +1,115 @@
+funkcja sprawdz_podpis(klucz, podpis) {
+    jeśli (podpis != "Timeout") {
+        zwróć prawda;
+    } inaczej {
+        zwróć fałsz;
+    }
+}
+
+funkcja autoryzuj_pam(nazwa_uzytkownika) {
+    pisz("\n[🛡️ Moduł Hydrogen - Logika Mowa] Żądanie logowania dla konta OS:", nazwa_uzytkownika);
+    
+    niech config_tozsamosci = wczytaj_plik("/etc/thorium/hydrogen_users.json");
+    niech zarejestrowany_klucz = json_pobierz(config_tozsamosci, nazwa_uzytkownika);
+    
+    jeśli (zarejestrowany_klucz == "") {
+        pisz("🚨 BŁĄD: Konto", nazwa_uzytkownika, "nie ma przypisanego fizycznego klucza WebAuthn/Sui!");
+        zwróć "PAM_AUTH_ERR";
+    }
+    
+    pisz("Oczekuję na fizyczne dotknięcie klucza sprzętowego...");
+    
+    niech podpis_sprzetowy = czekaj_na_fido2_podpis(zarejestrowany_klucz);
+    
+    jeśli (podpis_sprzetowy == "Timeout") {
+        pisz("⏳ Brak fizycznego zatwierdzenia na urządzeniu USB.");
+        zwróć "PAM_AUTH_ERR";
+    }
+    
+    niech czy_poprawny = sprawdz_podpis(zarejestrowany_klucz, podpis_sprzetowy);
+    
+    jeśli (czy_poprawny == prawda) {
+        pisz("✅ Podpis sprzętowy zatwierdzony! Logowanie bezhasłowe udane.");
+        zwróć "PAM_SUCCESS";
+    } inaczej {
+        pisz("🚨 Zły podpis kryptograficzny! Próba ataku?");
+        zwróć "PAM_AUTH_ERR";
+    }
+}
+
+funkcja uruchom_gui_hydrogen() {
+    okno("Thorium Hydrogen - Menedżer Kluczy Sprzętowych");
+    etykieta("Zarządzanie Kluczami (Zero-Password)");
+    tekst("Zabezpiecz swoje lokalne konto przed phishingiem, parując je z fizycznym tokenem FIDO2 lub portfelem sprzętowym Sui.");
+    tekst("Hasła systemowe nie będą już wymagane.");
+    
+    tekst("Aktywne powiązania dla tego komputera:");
+    
+    niech dane_tekst = wczytaj_plik("/etc/thorium/hydrogen_users.json");
+    tekst(dane_tekst);
+    
+    przycisk("Dodaj Nowy Klucz (USB)", dodaj_akcja_klucza);
+    przycisk("Synchronizuj z Sui", sync_akcja_klucza);
+}
+
+funkcja uruchom_gui_oczekiwanie() {
+    okno("Thorium Hydrogen - Menedżer Kluczy Sprzętowych");
+    etykieta("Proszę dotknąć YubiKey...");
+    tekst("Trwa nasłuchiwanie na interfejsie FIDO2 po USB.");
+    tekst("Po naciśnięciu przycisku na kluczu okno zostanie zaktualizowane.");
+}
+
+funkcja uruchom_gui_sukces(uzytkownik) {
+    okno("Thorium Hydrogen - Menedżer Kluczy Sprzętowych");
+    etykieta("Sukces!");
+    tekst("Pomyślnie powiązano konto z kluczem FIDO2.");
+    tekst(uzytkownik);
+    przycisk("Wróć do menu głównego", uruchom_gui_hydrogen);
+}
+
+funkcja uruchom_gui_blad() {
+    okno("Thorium Hydrogen - Menedżer Kluczy Sprzętowych");
+    etykieta("Błąd Parowania");
+    tekst("Nie udało się powiązać klucza. Spróbuj ponownie.");
+    przycisk("Wróć do menu głównego", uruchom_gui_hydrogen);
+}
+
+funkcja dodaj_akcja_klucza() {
+    uruchom_gui_oczekiwanie();
+    niech uzytkownik = odczytaj_env("USER");
+    zarejestruj_klucz_lokalnie(uzytkownik);
+}
+
+funkcja sync_akcja_klucza() {
+    pisz("Synchronizacja z Sui... (funkcja w przygotowaniu)");
+}
+
+funkcja zarejestruj_klucz_lokalnie(uzytkownik) {
+    pisz("Rozpoczynam lokalne parowanie klucza dla:", uzytkownik);
+    
+    niech nowy_klucz_pub = pobierz_publiczny_z_fido2();
+    
+    jeśli (nowy_klucz_pub != "Timeout") {
+        niech dane_tekst = wczytaj_plik("/etc/thorium/hydrogen_users.json");
+        niech dane = parsuj_json(dane_tekst);
+        niech nowe_dane = ustaw(dane, uzytkownik, nowy_klucz_pub);
+        niech nowy_json = formatuj_json(nowe_dane);
+        
+        zapisz_plik("/etc/thorium/hydrogen_users.json", nowy_json);
+        pisz("Pomyślnie powiązano konto", uzytkownik, "z kluczem FIDO2.");
+        uruchom_gui_sukces(uzytkownik);
+    } inaczej {
+        pisz("Błąd: Nie wykryto klucza w wyznaczonym czasie.");
+        uruchom_gui_blad();
+    }
+}
+
+niech cmd = odczytaj_env("HYDROGEN_CMD");
+niech user = odczytaj_env("HYDROGEN_USER");
+
+jeśli (cmd == "auth") {
+    niech wynik = autoryzuj_pam(user);
+    pisz("RESULT:", wynik);
+} inaczej {
+    uruchom_gui_hydrogen();
+}

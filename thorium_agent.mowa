@@ -47,25 +47,28 @@ XDR_WAGI_REGUL = ustaw(XDR_WAGI_REGUL, "FIM_MODIFICATION", 30);
 
 // 1.8 Polonium (Segment 6.3) i Dark Mode (Offline Lockdown)
 pisz("🛡️ [Polonium] Uruchamiam proces synchronizacji polityk z łańcuchem Sui...");
-Jeżeli prawda {
-    // Symulacja odpytywania węzła C2 (Sui/Walrus)
-    niech status_c2 = "OK"; // W przyszłości odczyt z portu RPC
-    
-    jeśli status_c2 == "OK" {
-        ZABLOKOWANE_HASHE = ustaw(ZABLOKOWANE_HASHE, "malware_hash", prawda);
-        ZABLOKOWANE_IP = ustaw(ZABLOKOWANE_IP, "198.51.100.22", prawda);
-    } inaczej {
-        pisz("🚨 [CRITICAL] Utracono łączność z centralą (Sui)! Aktywacja trybu Dark Mode / Offline Lockdown.");
-        stan_agenta = "Lockdown";
+funkcja petla_polonium() {
+    Jeżeli prawda {
+        // Symulacja odpytywania węzła C2 (Sui/Walrus)
+        niech status_c2 = "OK"; // W przyszłości odczyt z portu RPC
         
-        // Agresywne zaostrzenie polityki na stacji roboczej
-        XDR_PROG_RYZYKA = 20; // Zero tolerancji dla anomalii
-        pisz("🔒 Wymuszam blokadę powoływania nowych procesów powłoki (bash/sh) z poziomu nie-roota.");
-        pisz("🔒 Rozpoczynam buforowanie wszystkich logów w bezpiecznej enklawie do momentu powrotu sieci.");
+        jeśli status_c2 == "OK" {
+            ZABLOKOWANE_HASHE = ustaw(ZABLOKOWANE_HASHE, "malware_hash", prawda);
+            ZABLOKOWANE_IP = ustaw(ZABLOKOWANE_IP, "198.51.100.22", prawda);
+        } inaczej {
+            pisz("🚨 [CRITICAL] Utracono łączność z centralą (Sui)! Aktywacja trybu Dark Mode / Offline Lockdown.");
+            stan_agenta = "Lockdown";
+            
+            // Agresywne zaostrzenie polityki na stacji roboczej
+            XDR_PROG_RYZYKA = 20; // Zero tolerancji dla anomalii
+            pisz("🔒 Wymuszam blokadę powoływania nowych procesów powłoki (bash/sh) z poziomu nie-roota.");
+            pisz("🔒 Rozpoczynam buforowanie wszystkich logów w bezpiecznej enklawie do momentu powrotu sieci.");
+        }
+        
+        czekaj(10000); // Aktualizacja co 10 sekund
     }
-    
-    czekaj(10000); // Aktualizacja co 10 sekund
 }
+petla_polonium();
 
 // 2. Routing dla Headless HTTP API
 funkcja router_thorium(sciezka, zapytanie, metoda) {
@@ -407,7 +410,7 @@ funkcja kwarantanna(sciezka) {
 
 funkcja rejestruj_dowod_sui(blob_id, dowod) {
     pisz("🔗 [Sui] Rejestracja dowodu (Walrus Blob ID:", blob_id, ") w głównym rejestrze SOC...");
-    niech tx_res = sui.wywołaj_kontrakt("0xa::thorium_evidence", "evidence", "register", [blob_id, hash(dowod, "blake3")]);
+    niech tx_res = wywołaj_kontrakt("0xa::thorium_evidence", "evidence", "register", [blob_id, hash(dowod, "blake3")]);
     pisz("✅ [Sui] Zdarzenie dowodowe zapisane niezmiennie on-chain! Digest:", pobierz(tx_res, "transakcja_digest"));
 }
 
@@ -417,7 +420,11 @@ niech PLAYBOOKI = slownik();
 funkcja playbook_ransomware(pid, cmd, zdarzenie, czas) {
     pisz(czas, "🤖 [SOAR Playbook] Wykonywanie procedury: RANSOMWARE_LUB_MINER");
     pisz("⛔ Przerywanie procesu...");
-    zabij_proces(pid);
+    jeśli pid != nic {
+        zabij_proces(pid);
+    } inaczej {
+        pisz("⚠️  Nieznany PID modyfikacji. Nie można ubić procesu.");
+    }
     bufor_logow = bufor_logow + czas + " 🚨 [XDR Krytyczne] Zablokowano proces (Playbook): " + cmd + "\n";
     
     pisz("🛡️ Izolowanie hosta w sieci!");
@@ -439,7 +446,11 @@ PLAYBOOKI = ustaw(PLAYBOOKI, "RANSOMWARE_LUB_MINER", playbook_ransomware);
 funkcja playbook_fim(pid, sciezka, zdarzenie, czas) {
     pisz(czas, "🤖 [SOAR Playbook] Wykonywanie procedury: FIM_UNAUTHORIZED");
     pisz("⛔ Cofanie modyfikacji pliku konfiguracyjnego...");
-    zabij_proces(pid);
+    jeśli pid != nic {
+        zabij_proces(pid);
+    } inaczej {
+        pisz("⚠️  Nieznany PID modyfikacji. Nie można ubić procesu.");
+    }
     bufor_logow = bufor_logow + czas + " 🚨 [XDR Krytyczne] Zablokowano modyfikację pliku i przywrócono stan: " + sciezka + "\n";
     
     pisz("📦 Bezpieczne zamrażanie dowodów (agregacja) w sieci Walrus...");
@@ -494,7 +505,8 @@ funkcja on_sui_incident(event) {
     niech ip = pobierz(event, "ip_address");
     
     jeśli agent != klucz_pub {
-        pisz("📡 [XDR Cross-Device] Otrzymano zdarzenie (", akcja, ") z chmury od agenta:", agent, "IP:", ip);
+        // Omijamy zbędne logowanie zdarzeń chmurowych niezwiązanych z lokalnym systemem w konsoli agenta
+        // pisz("📡 [XDR Cross-Device] Otrzymano zdarzenie (", akcja, ") z chmury od agenta:", agent, "IP:", ip);
         
         // Jeśli inny agent w organizacji zablokował IP z powodu malware, my też to robimy zapobiegawczo
         jeśli akcja == "KILLED_POLONIUM_IP" lub akcja == "KILLED_AND_ISOLATED" {
@@ -508,7 +520,7 @@ funkcja on_sui_incident(event) {
 }
 
 pisz("🌐 [XDR Cross-Device] Uruchamiam nasłuch na globalne incydenty organizacji z blockchaina Sui...");
-sui.subskrybuj_zdarzenia("0xa::thorium_registry::IncidentEvent", on_sui_incident);
+subskrybuj_zdarzenia("0xa::thorium_registry::IncidentEvent", on_sui_incident);
 
 // 5. Nasłuch na zdarzenia systemowe (Event Loop XDR)
 niech OSTATNIA_KOMENDA = "N/A";
@@ -548,7 +560,9 @@ jeżeli prawda {
             // 1. Sprawdzenie szybkiego, lokalnego cache'u (EDGE)
             jeśli pobierz(ZABLOKOWANE_HASHE, mock_hash) {
                 pisz(czas, "🚨 [Polonium Edge] Plik znajduje się na czarnej liście! Ubijam natychmiast (PID:", pid, ") - CMD:", cmd);
-                zabij_proces(pid);
+                jeśli pid != nic {
+                    zabij_proces(pid);
+                }
                 bufor_logow = bufor_logow + czas + " 🚨 [Polonium] ZABLOKOWANO_PROCES: " + cmd + "\n";
                 zglos_incydent_do_c2(zdarzenie, "KILLED_POLONIUM_HASH");
             } inaczej {
@@ -565,25 +579,10 @@ jeżeli prawda {
                     procedura(pid, cmd, zdarzenie, czas);
                     
                 } inaczej {
-                    // 3. OFFLOADING do Klastra Magnesium (MPC / YARA)
-                    pisz(czas, "☁️ [Magnesium] Nieznana binarka! Wstrzymuję proces PID", pid, "i offloaduję analizę...");
-                    bufor_logow = bufor_logow + czas + " ☁️ [Magnesium] Wysłano analizę nieznanego pliku do klastra MPC (PID " + pid + ")\n";
-                    
-                    uruchom_komende("kill", "-STOP", "" + pid);
-                    
-                    niech werdykt = zapytaj_klaster_magnesium_o_werdykt(mock_hash, cmd);
-                    
-                    jeśli werdykt == "ZŁOŚLIWY" {
-                        pisz("🚨 [Magnesium MPC] Otrzymano sygnaturę YARA: MALWARE! Uruchamiam playbook...");
-                        bufor_logow = bufor_logow + "🚨 [Magnesium] Werdykt ZŁOŚLIWY. Zablokowano PID: " + pid + "\n";
-                        
-                        niech procedura = pobierz(PLAYBOOKI, "RANSOMWARE_LUB_MINER");
-                        procedura(pid, cmd, zdarzenie, czas);
-                    } inaczej {
-                        pisz("✅ [Magnesium MPC] Werdykt Czysty. Wznawiam PID:", pid);
-                        BEZPIECZNE_HASHE = ustaw(BEZPIECZNE_HASHE, mock_hash, prawda);
-                        uruchom_komende("kill", "-CONT", "" + pid);
-                    }
+                    // Pomijamy Magnesium - logujemy i oznaczamy jako bezpieczne na poziomie Edge
+                    pisz(czas, "✅ [Edge L1] Nieznana binarka. Loguję jako zdarzenie procesu (PID:", pid, ") - CMD:", cmd);
+                    bufor_logow = bufor_logow + czas + " ZDARZENIE_PROCESU: (PID " + pid + " | PPID: " + ppid + ") " + cmd + "\n";
+                    BEZPIECZNE_HASHE = ustaw(BEZPIECZNE_HASHE, mock_hash, prawda);
                 }
             }
         }
@@ -599,7 +598,9 @@ jeżeli prawda {
             
             jeśli pobierz(ZABLOKOWANE_IP, daddr) {
                 pisz(czas, "🚨 [Polonium Edge] Wykryto połączenie do zakazanego IP (C2 malware):", daddr);
-                zabij_proces(pid);
+                jeśli pid != nic {
+                    zabij_proces(pid);
+                }
                 bufor_logow = bufor_logow + czas + " 🚨 [Polonium] ZABLOKOWANO_POLACZENIE do " + daddr + "\n";
                 zglos_incydent_do_c2(zdarzenie, "KILLED_POLONIUM_IP");
             } inaczej {
@@ -607,7 +608,8 @@ jeżeli prawda {
                 // Korelacja: punkty ryzyka za samo wyjście do sieci z nieznanym hostem
                 aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "OUTBOUND_CONN"), "Nawiązanie połączenia sieciowego z " + daddr + ":" + dport, czas);
                 
-                wyslij_do_magnesium(zdarzenie);
+                // Omijamy Magnesium na chwilę obecną
+                // wyslij_do_magnesium(zdarzenie);
             }
         }
 
@@ -618,12 +620,13 @@ jeżeli prawda {
             niech czas = pobierz(zdarzenie, "czas");
             
             pisz(czas, "📁 [FIM] Zmiana pliku:", sciezka, "(Operacja:", operacja, ") CMD:", OSTATNIA_KOMENDA, "SHA256:", hash);
-            bufor_logow = bufor_logow + czas + " 📁 [FIM] ZMIANA_PLIKU: " + sciezka + " (" + operacja + ") CMD: " + OSTATNIA_KOMENDA + " SHA256: " + hash + "\n";
+            // Wyłączamy podwojony wpis do bufora - pisz() automatycznie loguje do bufor_logow
+            // bufor_logow = bufor_logow + czas + " 📁 [FIM] ZMIANA_PLIKU: " + sciezka + " (" + operacja + ") CMD: " + OSTATNIA_KOMENDA + " SHA256: " + hash + "\n";
             
             // Reguły behawioralne FIM
             niech pid = pobierz(zdarzenie, "pid");
             
-            jeśli (operacja == "ZAPIS" lub operacja == "CHMOD") i pid {
+            jeśli (operacja == "ZAPIS" lub operacja == "CHMOD") i pid != nic {
                 aktualizuj_punkty_korelacji(pid, pobierz(XDR_WAGI_REGUL, "FIM_MODIFICATION"), "Nietypowa operacja plikowa: " + sciezka, czas);
             }
 

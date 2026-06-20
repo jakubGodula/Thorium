@@ -1115,7 +1115,14 @@
 
   $: {
     if (liveLogs && logsViewMode === "tree") {
-      const lines = liveLogs.split('\n').filter(l => l.trim() !== '');
+      const rawLines = liveLogs.split('\n').filter(l => l.trim() !== '');
+      const lines = rawLines.filter(line => {
+        let l = line.trim();
+        if (l === "" || l.includes("--- POCZĄTEK") || l.includes("--------------------")) return false;
+        if (l.includes("Uruchamiam") || l.includes("załadowany pomyślnie") || l.includes("nasłuchuje na")) return false;
+        if (l.includes("rejestrację agenta") || l.includes("Rejestracja w C2") || l.includes("aktywowany dla kluczowych")) return false;
+        return true;
+      });
       let nodes = {};
       let roots = [];
       
@@ -1149,6 +1156,20 @@
         }
       });
 
+      // Zbuduj hierarchię brakujących rodziców (agregacja głęboka)
+      let addedAny = true;
+      while (addedAny) {
+        addedAny = false;
+        const currentNodes = Object.values(nodes);
+        for (let i = 0; i < currentNodes.length; i++) {
+          const node = currentNodes[i];
+          if (node.ppid !== "0" && node.ppid !== "unknown" && !nodes[node.ppid]) {
+            nodes[node.ppid] = { pid: node.ppid, ppid: "unknown", cmd: "Proces nadrzędny (aktywny)", type: 'process', children: [], network: [] };
+            addedAny = true;
+          }
+        }
+      }
+
       Object.values(nodes).forEach(node => {
         if (node.ppid !== "0" && node.ppid !== "unknown" && nodes[node.ppid]) {
           nodes[node.ppid].children.push(node);
@@ -1159,25 +1180,62 @@
       
       let out = "";
       
-      let otherEvents = lines.filter(l => l.includes('FIM') || l.includes('Krytyczne') || l.includes('🚨') || l.includes('ZMIANA_PLIKU'));
+      let otherEvents = lines.filter(l => l.includes('FIM') || l.includes('Krytyczne') || l.includes('🚨') || l.includes('ZMIANA_PLIKU') || l.includes('izoluj_siec') || l.includes('RANSOMWARE'));
       if (otherEvents.length > 0) {
-        out += "--- INNE ZDARZENIA (FIM / KRYTYCZNE) ---\n";
+        out += `<div style="margin-bottom: 12px; padding: 10px; background: rgba(239, 68, 68, 0.05); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 6px;">`;
+        out += `<div style="color: #f87171; font-weight: bold; margin-bottom: 8px; font-size: 12px; text-transform: uppercase;">⚠️ INNE ZDARZENIA (FIM / KRYTYCZNE)</div>`;
         otherEvents.forEach(l => {
-          out += l + "\n";
+          let eventColor = l.includes('Krytyczne') || l.includes('🚨') || l.includes('RANSOMWARE') ? '#ef4444' : '#f59e0b';
+          out += `<div style="color: ${eventColor}; font-size: 13px; font-family: monospace; margin-bottom: 4px; padding-left: 8px; border-left: 2px solid ${eventColor};">${l.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>`;
         });
-        out += "\n";
+        out += `</div>`;
       }
 
-      const printNode = (node, depth) => {
-        let indent = "   ".repeat(depth);
-        let prefix = depth === 0 ? "▶ " : "└─ ";
-        out += `${indent}${prefix}[PID: ${node.pid}] ${node.cmd}\n`;
-        node.network.forEach(net => {
-           out += `${indent}   🌐 Połączenie do: ${net}\n`;
+      const renderTree = (node, prefix = "", isLast = true, isRoot = true) => {
+        let branch = isRoot ? "▶ " : (isLast ? "└── " : "├── ");
+        let nextPrefix = isRoot ? "" : (isLast ? "    " : "│   ");
+        
+        let nodeHTML = `<div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; margin-bottom: 2px; color: #e2e8f0; display: block;">`;
+        
+        // Render tree branch characters
+        nodeHTML += `<span style="color: #475569; font-weight: bold;">${prefix}${branch}</span>`;
+        
+        // Render PID badge
+        nodeHTML += `<span style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3); padding: 1px 4px; border-radius: 4px; font-weight: bold; font-size: 11px; margin-right: 6px; font-family: monospace;">PID ${node.pid}</span> `;
+        
+        // Render command
+        let isParent = node.cmd.includes('Proces nadrzędny');
+        let cmdColor = node.cmd === 'Wcześniejszy proces' ? '#64748b' : (isParent ? '#94a3b8' : '#38bdf8');
+        let cmdStyle = (node.cmd === 'Wcześniejszy proces' || isParent) ? 'font-style: italic;' : 'font-weight: bold;';
+        let icon = isParent ? "⚙️ " : "";
+        nodeHTML += `<span style="color: ${cmdColor}; ${cmdStyle}">${icon}${node.cmd}</span>`;
+        nodeHTML += `</div>`;
+
+        // Render network connections
+        if (node.network.length > 0) {
+          node.network.forEach((net, idx) => {
+            let isLastNet = (idx === node.network.length - 1) && (node.children.length === 0);
+            let netBranch = isLastNet ? "└── " : "├── ";
+            nodeHTML += `<div style="font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; margin-bottom: 2px; display: block;">`;
+            nodeHTML += `<span style="color: #475569; font-weight: bold;">${prefix}${nextPrefix}${netBranch}</span>`;
+            nodeHTML += `<span style="color: #34d399; font-weight: bold; margin-right: 4px;">🌐</span>`;
+            nodeHTML += `<span style="background: rgba(16, 185, 129, 0.1); color: #34d399; border: 1px dotted rgba(16, 185, 129, 0.3); padding: 1px 5px; border-radius: 4px; font-size: 11px;">Połączenie: ${net}</span>`;
+            nodeHTML += `</div>`;
+          });
+        }
+
+        // Render children
+        node.children.forEach((child, idx) => {
+          let isLastChild = idx === node.children.length - 1;
+          nodeHTML += renderTree(child, prefix + nextPrefix, isLastChild, false);
         });
-        node.children.forEach(c => printNode(c, depth + 1));
+
+        return nodeHTML;
       };
-      roots.forEach(r => printNode(r, 0));
+
+      roots.forEach((r, idx) => {
+        out += renderTree(r, "", idx === roots.length - 1, true);
+      });
 
       treeFormattedLogs = out || "Brak zagnieżdżonych procesów lub oczekiwanie...";
     }
@@ -1185,7 +1243,14 @@
 
   const formatRawLogs = (logs, sortCritical = false) => {
     if (!logs) return "";
-    let lines = logs.split('\n');
+    let rawLines = logs.split('\n');
+    let lines = rawLines.filter(line => {
+      let l = line.trim();
+      if (l === "" || l.includes("--- POCZĄTEK") || l.includes("--------------------")) return false;
+      if (l.includes("Uruchamiam") || l.includes("załadowany pomyślnie") || l.includes("nasłuchuje na")) return false;
+      if (l.includes("rejestrację agenta") || l.includes("Rejestracja w C2") || l.includes("aktywowany dla kluczowych")) return false;
+      return true;
+    });
     let criticalLines = [];
     let normalLines = [];
 
@@ -3251,7 +3316,7 @@
           {#if logsViewMode === 'raw'}
             <pre class="log-viewer">{@html formatRawLogs(liveLogs, true)}</pre>
           {:else}
-            <pre class="log-viewer">{@html formatRawLogs(treeFormattedLogs, false)}</pre>
+            <div class="log-viewer" style="white-space: normal !important; padding: 16px; background: rgba(15, 23, 42, 0.5); border-radius: 6px; display: flex; flex-direction: column; gap: 8px; overflow-x: hidden;">{@html treeFormattedLogs}</div>
           {/if}
         </div>
       </div>
