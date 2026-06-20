@@ -24,16 +24,23 @@ security/XDR SOC dashboard (Sui blockchain registry, Walrus storage, eBPF agents
 written in the Mowa language). The frontend is Svelte 5 + Vite, deployed static to
 IPFS.
 
+## ⏱ CURRENT STATE (bump this every round)
+- **Design:** `fe_design_v5.md` (v1–v4 are history). **Branch:** `experimental-aw-fe-v3`.
+- **Open Q&A:** `questions_v5_to_v6_qa_LONG.md` (driven by CR-3) + the short
+  `questions_v5_to_v6_qa.md`. **Vision RFI:** `questions_v4_to_v5_qa_LONG.md`.
+- **Canonical app (tracked, per L-C2):** `.ai-fe-design/delivery/delivery-v2/app`
+  (build/run there). Latest deployment: see `ai_internal_audit_log/deployments.md`.
+
 ## The two loops (don't confuse them)
-1. **Design loop** — `fe_design_v1 → v2 → v3 …`. Driven by Q&A files. Current: v2
-   done; `questions_v2_to_v3_qa.md` open.
+1. **Design loop** — `fe_design_v1 → … → v5 …`. Driven by Q&A files. Current: **v5**
+   done; `questions_v5_to_v6_qa_LONG.md` open.
 2. **Demo loop** — `demo-gen/gen-v1 → gen-v2 …`, each pinned to a design version,
    producing runnable demos. See `demo-gen/README.md` (the design ⊗ generator
    matrix).
 
 ## Read order
 1. `README.md` — the flow + conventions.
-2. `fe_design_v2.md` — current design (v1 is history).
+2. `fe_design_v5.md` — current design (v1–v4 are history).
 3. `assumptions_v1.md` §1 — **confirmed on-chain data model** (the real schemas).
 4. `adr/` — binding decisions (Tailwind, ECharts+uPlot, polling, Prism, Sui-read).
 5. `demo-gen/` — how to generate demos.
@@ -48,7 +55,9 @@ IPFS.
 - Procedures (`demo-gen/*/PROMPT.md`) are **run verbatim** — make reasoned
   decisions, don't stop to ask; record deviations in the generated artifact, not
   here.
-- **Git:** work on `experimental-aw-fe-v2`; `experimental-aw-fe` is frozen at v1.
+- **Git:** work on `experimental-aw-fe-v3` (current); older `…-v2`/`…-fe` are history.
+  The canonical app is **tracked** at `delivery/delivery-v2/app` (per L-C2) — *not* under
+  `.ignored/` anymore.
   Demos are generated under `.ignored/` (gitignored) — don't commit build output.
 
 ## Ground-truth facts

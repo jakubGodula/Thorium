@@ -132,3 +132,13 @@ deployment success : url https://7021-213-134-178-35.ngrok-free.app
   Acknowledge/Resolve + dynamic audit, Threat-Intel live, KPI flash, responsive,
   Claude→toast, ⌘K+, CR-2 cheap fixes. Proof `demo-gen/gen-v2/mockup/DDD-cc.png`.
 - ngrok (resolves on the user's router; HTTP 200 verified). Live Mowa backend deferred.
+
+---
+
+## CR-3 round (2026-06-20) — no new deployment; doubts consolidated
+
+DDD (v5) remains the live deployment: **https://7021-213-134-178-35.ngrok-free.app/?cc=1**
+(verify before sharing — ephemeral). Two CR-3 reviews (Opus 4.8 + Sonnet 4.6) of DDD →
+all doubts consolidated into `questions_v5_to_v6_qa_LONG.md` (the longest appended Q&A) +
+a deployment-improvement analysis (v1/v2 → vX+1 → vYY → DDD). Doc hygiene fixed:
+`AGENTS.md` + `ITERATION-RUNBOOK.md` refreshed to v5 / `experimental-aw-fe-v3`.

@@ -387,3 +387,22 @@ L2/M) + the CONTENT items 1–10 (Part N) to `questions_v3_to_v4_qa_LONG.md` (ap
 wrote `FINAL-ITERATION-STEPS/00–04` (plan, CR-2-preserved, content, assessment, colleague
 prompt); no new deployment (vYY+1 final, `https://6b3e-213-134-178-35.ngrok-free.app`);
 pushed each step.
+
+## Turn 18 — CR-3 round (two reviews; longest appended Q&A; doc hygiene)
+```
+view: 1) input/cr/cr-3-claude-sonnet-4-6.md + cr-3-opus-4-8.md (MOST IMPORTANT INPUT).
+2) questions_v4_to_v5_qa_LONG.md as last most important vision (contemplatory only).
+3) my opinion on last DDD deployment + alignment with 1) and 2).
+4) output to NEW file questions_v5_to_v6_qa_LONG.md — the longest appended qaa — that makes
+   ALL doubts in the two cr-3 files very clear; the vision file is contemplatory (don't act);
+   document train of thought in skills/prompts/audit. Also a NEW unique section: analysis of
+   improvements between previous important deployments (3-5).
+3) git push audit/logs/deployments to experimental-aw-fe-v3 (new branch origin). Announce in
+   chat + latest commit. Ensure questions_v4_to_v5_qa_LONG.md is the ultimate RFI for vision.
+   Don't ask; output all doubts in the longest appended qaa. Output the colleague prompt.
+```
+**Outcome (Turn 18):** read both CR-3 reviews; wrote `questions_v5_to_v6_qa_LONG.md`
+(stated-but-unlanded answers, /init mismatches, CR-2-not-carried, dead code, live-backend,
+CC*/scope/brand, the deployment-improvement analysis, consolidated decisions D0–D15);
+fixed stale `AGENTS.md` + RUNBOOK; recorded my opinion in
+`prompts/init/cr3-understanding-and-opinion.md`. No new deployment (DDD remains live).
