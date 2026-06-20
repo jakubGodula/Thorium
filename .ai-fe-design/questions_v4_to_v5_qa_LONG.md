@@ -417,3 +417,111 @@ theme)? **A:** _<!-- -->_
 > If you pick **Regenerate** anywhere, the next agent runs the gen-v2 loop as a brand/
 > theme pass (`demo-gen/gen-v2/improve-loop.md`) → 2–3 themed variants + a recommendation,
 > then re-skins the build via the design tokens (`brand/` + `app.css` theme vars).
+
+---
+---
+
+# ⬇ APPENDED 2026-06-20 — Part P · CR-3 FINAL RFI REFINEMENTS (append-only)
+
+> **Why this section exists:** this file is the **ultimate, precise RFI for the frontend
+> vision**, and it is **append-only** (nothing above is changed). Before the *final*
+> vision is locked, two CR-3 reviews of the DDD (v5) build —
+> [`input/cr/cr-3-opus-4-8.md`](./input/cr/cr-3-opus-4-8.md) (Opus 4.8) +
+> [`input/cr/cr-3-claude-sonnet-4-6.md`](./input/cr/cr-3-claude-sonnet-4-6.md) (Sonnet 4.6)
+> — surfaced remarks that must be folded back into the RFI so no ambiguity survives. Each
+> item is a **clarification of an existing answer** or a **decision the RFI still lacks**.
+> Answer inline. *(O = Opus · S = Sonnet · B = both converged.)*
+>
+> The operational, per-finding ledger lives in
+> [`questions_v5_to_v6_qa_LONG.md`](./questions_v5_to_v6_qa_LONG.md); this is the
+> **vision-level** distillation kept inside the RFI itself.
+
+## P.0 🔴 The governing rule (B · CR-3 #U1/Q0) — never explicitly confirmed
+The whole build assumes priority **A `answers.md` → B CC\* `DEMO.md` → C prior docs / Sui
+contract**. Confirm it is **permanent**, or state where CC\* may override an answer. *Every
+agent decision traces back to this.* **Answer:** _<!-- -->_
+
+## P.1 — Clarify YOUR Part A–E answers where the build diverged (highest signal)
+> Both reviewers' #1 class: *you answered, the code shipped something else.* These refine
+> the RFI's existing answers — please confirm intent.
+- **P.1a 🔴 (B) Domain (refines L-A8 "thorium.her").** `.her` is **not a valid Unstoppable
+  TLD** (UD = `.crypto/.x/.nft/.wallet/.hi/…`) and the build still ships `thorium.crypto`.
+  **What is the real domain** the footer + onboarding `curl https://<domain>/agent` should
+  show? **Answer:** _<!-- -->_
+- **P.1b 🔴 (B) "Do Walrus **now**" (refines L-E5).** Shipped as **client-side state only**
+  (Ack/Resolve toasts "→ Walrus audit"; no Walrus write, no Mowa). Did you mean a **real**
+  browser/Mowa Walrus write **now** (needs `@mysten/walrus` or the Mowa backend + sui-cli/
+  cargo), or is the client-side mock acceptable for the demo (Walrus post-demo)? **Answer:** _<!-- -->_
+- **P.1c 🔴 (B) IPFS hash (refines L-C1).** CID `bafybeici77…czq` is **unpinned** (only-hash)
+  → it will **not open** on a public gateway. For a durable, sendable link, **pin it** (a
+  Pinata / web3.storage token, or your IPFS node) — or is the hash-only artifact enough and
+  the live URL stays ngrok/LAN? **Answer:** _<!-- -->_
+- **P.1d 🔴 (B) Talus "first 2 cards static" (refines L-A5).** Card **1 reacts** to the
+  attack, yet the panel caption literally says "first two cards are fixed model status" —
+  a self-contradiction a judge will catch. Should card 1 be a **static AI-model card** (with
+  the endpoint reactions on cards 3–4), or was "first 2 static" approximate (then I just fix
+  the caption)? **Answer:** _<!-- -->_
+- **P.1e 🔴 (S) KPI flash (refines L-B2 "you can, thank you").** `kpiFlash` is set/cleared in
+  state but **never rendered** (no `class:flash`, no CSS) — so L-B2 is effectively un-shipped
+  though `fe_design_v5.md` calls it done. **Confirm you want the visual flash** (1-line + a
+  keyframe). **Answer:** _<!-- -->_
+- **P.1f 🔴 (B) Walrus fetch URL (CR-2 G-R1-2, still unfixed).** `${gw}/${blobId}` →
+  `…/v1/walrus:blob:7f3a` is malformed (wrong path, unsafe colon, `7f3a` not a real digest);
+  inert today but 404s the moment `mock:false`. **(a)** real testnet digest + `/blobs/{digest}`
+  or **(b)** drop the fetch and own the demo blob honestly? **Answer:** _<!-- -->_
+
+## P.2 🔴 Answer Parts G–O **once** (the real root of ambiguity · B)
+The build made **~25–30 judgment calls** purely because **Parts G–O above carry no
+answers** (CR-2 items, N1 priority, N2 CC\*-consistency, N3 scope, **Part O brand**). One
+pass — even a blanket *"use your judgment, I trust the defaults"* — **permanently removes**
+the misunderstanding risk. Will you (a) answer G–O, or (b) bless the defaults? **Answer:** _<!-- -->_
+
+## P.3 🔴 `/init` self-description (B · the "repo misdescribes itself" risk)
+`AGENTS.md` + `ITERATION-RUNBOOK.md` pointed **three versions back** (v2 / `…-v2`) — a fresh
+agent would work on the wrong branch/design. **I refreshed them to v5 / `experimental-aw-fe-v3`
+with a self-updating "Current state" header.** Confirm that approach (vs pinning historical).
+Also: is `my-app/` (a stray root SvelteKit scaffold) **deletable/ignorable**, and do you want
+a root "the app is HERE → `delivery/delivery-v2/app`" pointer? **Answer:** _<!-- -->_
+
+## P.4 🟡 CR-2 items answered-in-spirit but **not in the code** (B) — tick what lands
+SIEM differentiation (Splunk "Connected"+"1 forwarded" on isolate) · Governance reactive
+DAO card after isolate · Offline state actually changing Chain/Telemetry panels ·
+On-chain evidence accumulating per phase · empty/loading states on idle tabs · onboarding
+"Simulate registration" → CC\* step 1 · the booth "live demo running" overlay · the `.cards`
+2-col Talus layout (still ~4 sparse cols). **Which of these are in the final vision?** **Answer:** _<!-- -->_
+
+## P.5 🟡 Dead code cleanup (S) — confirm
+OK to remove: static `auditTrail` export, `fleet()` (superseded by `fleetAt`), the unused
+`defended` derive (or wire it into the Alerts row), legacy `.nav`/`.tab` CSS, the duplicate
+`.cards{1fr 1fr}`, and the dead `{#if claudeModal}` 20-line block (L-B5 = toast)? **Answer:** _<!-- -->_
+
+## P.6 🔴 The live-backend track (B) — the #1 technical risk for the final vision
+`querySuiEvents` is defined but **never called** (no polling loop) and the WS path is a
+no-op — there is **no live data path**, only the seam. To make the final vision *real* I
+need: **(a)** Mowa backend build/run cmds or a running endpoint; **(b)** WS endpoint +
+**message schema** (event type → fields); **(c)** Sui RPC URL + which `queryEvents`
+(module/type); **(d)** real **Walrus** gateway + blob digests; **(e)** auth model
+(wallet-signed / API key / open); **(f)** **who owns the backend repo** tomorrow; **(g)**
+must a public-demo backend be auth'd/CORS/rate-limited, or local-only? **Answer:** _<!-- -->_
+
+## P.7 🟡 CC\* semantics, scope & brand — the vision-defining calls (B)
+- **P.7a CC\* (N2):** K8s framing (namespace cols/Lithium) correct, or revert to generic
+  host? · `NOT WORTHY` = `is_active=false` or a distinct on-chain `worthiness` field? · who
+  triggers (presenter / autoplay-booth / both)? · kernel-only or also DDoS? **Answer:** _<!-- -->_
+- **P.7b Scope (N3):** final demo = **Alfa + mock-Beta tabs** (current) / **pure Alfa** /
+  **fully-implemented Beta**? (If pure Alfa, ~half the left-rail is clutter.) **Answer:** _<!-- -->_
+- **P.7c Brand (Part O):** Keep / Tweak / **Regenerate** the theme, mark, typography, CC\*
+  alert styling, motion? The build assumes **Keep**; "Regenerate" triggers a brand pass
+  *before* more features. **Answer:** _<!-- -->_
+
+## P.8 🟢 The two questions that actually define "the FINAL vision"
+- **P.8a** When you say *final* frontend vision — is it (i) a **polished mock demo** for the
+  hackathon (no live backend, durable IPFS URL), or (ii) a **wired product** against the real
+  Mowa/Sui backend? The whole v6 plan forks here. **Answer:** _<!-- -->_
+- **P.8b** What is the **one** thing that, if wrong, makes the demo fail for you tomorrow?
+  (So we protect it above all.) **Answer:** _<!-- -->_
+
+> **Net (both reviewers agree):** the build is demo-ready; the *understanding* is not yet
+> pinned. The blockers are **not in the Svelte** — they are the unanswered Parts G–O/P, the
+> three stated-but-unlanded answers (domain, Walrus-now, IPFS-pin), and the live-backend
+> spec. Answer P.0–P.8 and the next pass yields the **final** frontend vision.
