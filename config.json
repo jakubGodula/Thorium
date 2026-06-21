@@ -1,9 +1,0 @@
-{
-  "scope": "alfa",
-  "network": "testnet",
-  "packageId": "0x0cc3f972285b0486b2590b5edc9321813ec32a253a26cffa687da5a1131491af",
-  "agentApiBase": "http://localhost:4010",
-  "suiRpcUrl": "http://localhost:4010/sui",
-  "walrusGateway": "http://localhost:4010/walrus",
-  "mock": true
-}
